@@ -1,3 +1,4 @@
 #include "file_tools.h"
 #include "string_tools.h"
 #include "vector_tools.h"
+#include "algorithm_tools.h"
