@@ -143,9 +143,13 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\noname_tools\algorithm_tools.h" />
     <ClInclude Include="..\src\noname_tools\file_tools.h" />
     <ClInclude Include="..\src\noname_tools\string_tools.h" />
     <ClInclude Include="..\src\noname_tools\vector_tools.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\noname_tools\tools" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

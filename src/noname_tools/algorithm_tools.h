@@ -6,6 +6,9 @@ namespace noname {
 
 	namespace tools {
 
+		// TODO: Add strict_unique_copy implementation without p
+		// TODO: Add some kind of method to split range into unique and non-unique elements
+
 		//! Copies the elements from the specified range to dest in such a way that all groups of consecutive equal objects are omitted
 		template< class InputIt, class OutputIt, class BinaryPredicate >
 		OutputIt strict_unique_copy(InputIt first, InputIt last, OutputIt dest, BinaryPredicate p)
@@ -28,9 +31,7 @@ namespace noname {
 					*dest++ = *first;
 				}
 
-				// Store current result as previous
-				std::swap(prev_check, cur_check);
-				// Use next elment as current and get it to next element
+				prev_check = cur_check;
 				first = next;
 				next = std::next(first);
 			}
