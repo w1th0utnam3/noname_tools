@@ -37,6 +37,19 @@ namespace noname
 			*dest++ = last;
 		}
 
+		//! Applies the given function object to every element and its successor
+		template <typename InputIt, typename Func>
+		Func for_each_and_successor(InputIt first, InputIt last, Func f)
+		{
+			auto next = std::next(first);
+			for(; next != last; ++next) {
+				f(*first, *next);
+				first = next;
+			}
+
+			return std::move(f);
+		}
+
 		//! Returns the first element in the specified range that is unequal to its predecessor
 		template <typename InputIt>
 		InputIt find_unequal_successor(InputIt first, InputIt last)
