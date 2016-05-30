@@ -15,15 +15,16 @@ namespace noname
 		{
 			// Inspired from: https://codereview.stackexchange.com/questions/106773/dividing-a-range-into-n-sub-ranges
 
-			static_assert(std::is_same<InputIt, typename std::iterator_traits<OutputIt>::value_type>::value,
+			static_assert(std::is_same<InputIt, typename OutputIt::container_type::value_type>::value,
 				"Error: The output iterator value type has to be the same as the input iterator type!");
 
 			if (n == 0) return;
+			if (first == last) return;
 
 			const auto dist = std::distance(first, last);
 			n = std::min<size_t>(n, dist);
 			const auto chunk = dist / n;
-			const auto remainder = dist % n;
+			auto remainder = dist % n;
 
 			*dest++ = first;
 
@@ -41,10 +42,12 @@ namespace noname
 		template <typename InputIt, typename Func>
 		Func for_each_and_successor(InputIt first, InputIt last, Func f)
 		{
-			auto next = std::next(first);
-			for(; next != last; ++next) {
-				f(*first, *next);
-				first = next;
+			if(first != last) {
+				auto next = std::next(first);
+				for (; next != last; ++next) {
+					f(*first, *next);
+					first = next;
+				}
 			}
 
 			return std::move(f);
