@@ -1,6 +1,7 @@
 ﻿#include "catch.hpp"
 
 #include <numeric>
+#include <functional>
 
 #include <noname_tools\tools>
 
@@ -39,9 +40,9 @@ TEST_CASE("Testing n_subranges")
 	// TODO: Test with n > length
 
 	// Number of subranges to divide source range into
-	const size_t n = 3;
+	const int n = 3;
 	// Minimum number of elements per subrange
-	const size_t factor = 5;
+	const int factor = 5;
 
 	// Source vector
 	std::vector<size_t> source;
@@ -120,38 +121,131 @@ TEST_CASE("Testing n_subranges")
 	}
 }
 
-TEST_CASE("Testing find_unequal_usccessor")
+TEST_CASE("Testing for_each_and_successor")
 {
-	// TODO: Test with custom comparison predicate
+	// Value type for the test container
+	typedef size_t value_t;
 
-	// Start with emptry source vector
-	std::vector<int> source;
+	// Start with empty source vector
+	std::vector<value_t> source;
 	REQUIRE(source.size() == 0) ;
 
-	SECTION("Repeated application on returned iterator") {
-		source = {1, 1, 1, 2, 2, 3};
+	// Functor that will be applied to all elements
+	struct accumulator
+	{
+		void operator()(const value_t& a, const value_t& b)
+		{
+			x += a;
+			x += b;
+		}
 
-		auto it = tools::find_unequal_successor(source.begin(), source.end());
-		REQUIRE(*it == 2) ;
+		value_t value() const
+		{
+			return x;
+		}
 
-		it = tools::find_unequal_successor(it, source.end());
-		REQUIRE(*it == 3) ;
+	private:
+		value_t x = 0;
+	};
+	accumulator acc;
+	REQUIRE(acc.value() == 0) ;
 
-		it = tools::find_unequal_successor(it, source.end());
-		REQUIRE(it == source.end()) ;
+	// Make sure that accumulator works as intended
+	SECTION("Testing accumulator functor") {
+		acc(42, 4711);
+		REQUIRE(acc.value() == 4753) ;
 	}
 
-	SECTION("Input range with equal elements") {
-		source = {1, 1, 1};
+	SECTION("Testing with ascending input range") {
+		source = {0, 1, 2, 3, 4};
 
-		const auto it = tools::find_unequal_successor(source.begin(), source.end());
+		const auto acc_return = tools::for_each_and_successor(source.begin(), source.end(), acc);
 
-		REQUIRE(it == source.end()) ;
+		REQUIRE(acc_return.value() == 16) ;
 	}
 
-	SECTION("Empty input range") {
-		const auto it = tools::find_unequal_successor(source.begin(), source.end());
+	SECTION("Testing with empty input range") {
+		const auto acc_return = tools::for_each_and_successor(source.begin(), source.end(), acc);
 
-		REQUIRE(it == source.end()) ;
+		REQUIRE(acc_return.value() == 0) ;
+	}
+
+	SECTION("Testing with one elment in input range") {
+		source = {42};
+
+		const auto acc_return = tools::for_each_and_successor(source.begin(), source.end(), acc);
+
+		REQUIRE(acc_return.value() == 0) ;
+	}
+}
+
+TEST_CASE("Testing find_unequal_usccessor")
+{
+	// Start with emptry source vector
+	std::vector<size_t> source;
+	REQUIRE(source.size() == 0) ;
+
+	SECTION("Using equal operator for comparison") {
+
+		SECTION("Repeated application on returned iterator") {
+			source = {1, 1, 1, 2, 2, 3};
+
+			auto it = tools::find_unequal_successor(source.begin(), source.end());
+			REQUIRE(*it == 2) ;
+
+			it = tools::find_unequal_successor(it, source.end());
+			REQUIRE(*it == 3) ;
+
+			it = tools::find_unequal_successor(it, source.end());
+			REQUIRE(it == source.end()) ;
+		}
+
+		SECTION("Input range with equal elements") {
+			source = {1, 1, 1};
+
+			const auto it = tools::find_unequal_successor(source.begin(), source.end());
+
+			REQUIRE(it == source.end()) ;
+		}
+
+		SECTION("Empty input range") {
+			const auto it = tools::find_unequal_successor(source.begin(), source.end());
+
+			REQUIRE(it == source.end()) ;
+		}
+
+	}
+
+	SECTION("Using predicate for comparison") {
+
+		// Get default equal operator function
+		const auto equal = std::equal_to<decltype(source)::value_type>();
+
+		SECTION("Repeated application on returned iterator") {
+			source = {1, 1, 1, 2, 2, 3};
+
+			auto it = tools::find_unequal_successor(source.begin(), source.end(), equal);
+			REQUIRE(*it == 2) ;
+
+			it = tools::find_unequal_successor(it, source.end(), equal);
+			REQUIRE(*it == 3) ;
+
+			it = tools::find_unequal_successor(it, source.end(), equal);
+			REQUIRE(it == source.end()) ;
+		}
+
+		SECTION("Input range with equal elements") {
+			source = {1, 1, 1};
+
+			const auto it = tools::find_unequal_successor(source.begin(), source.end(), equal);
+
+			REQUIRE(it == source.end()) ;
+		}
+
+		SECTION("Empty input range") {
+			const auto it = tools::find_unequal_successor(source.begin(), source.end(), equal);
+
+			REQUIRE(it == source.end()) ;
+		}
 	}
 }
