@@ -141,12 +141,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="testcases.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\noname_tools\algorithm_tools.h" />
     <ClInclude Include="..\src\noname_tools\file_tools.h" />
     <ClInclude Include="..\src\noname_tools\string_tools.h" />
     <ClInclude Include="..\src\noname_tools\vector_tools.h" />
+    <ClInclude Include="catch.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\noname_tools\tools" />
