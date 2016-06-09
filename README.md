@@ -7,13 +7,13 @@ all other headers. The repository contains a project with test-cases for the too
 the [Catch](https://github.com/philsquared/Catch) header-only unit-test framework which is
 licensed under the [Boost Software License](https://github.com/philsquared/Catch/blob/master/LICENSE_1_0.txt)
 and the required header is included in the project. Compilation was tested with VS 2015 Update 2
-and you probably have to turn on C++14 support if this isn't your compiler's default setting.
+and GCC 6.1.0. You probably have to turn on C++14 support if this isn't your compiler's default setting.
 The code of this project written by contributors of this repository is licensed under the 
 [MIT License](https://github.com/w1th0utnam3/noname_tools/blob/master/LICENSE). 
 
 ## Todos
 
-- Try to compile with C++11 and gcc/clang
+- Try to compile with C++11 and clang
 - Add missing unit-tests
 - Make more awesome and useful tools
 
