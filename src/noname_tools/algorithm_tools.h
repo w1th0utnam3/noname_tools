@@ -41,7 +41,7 @@ namespace noname
 		template <typename InputIt, typename Func>
 		Func for_each_and_successor(InputIt first, InputIt last, Func f)
 		{
-			if(first != last) {
+			if (first != last) {
 				auto next = std::next(first);
 				for (; next != last; ++next) {
 					f(*first, *next);

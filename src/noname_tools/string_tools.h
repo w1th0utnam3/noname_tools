@@ -12,7 +12,7 @@ namespace noname
 		StrT truncate_string(const StrT& str, CharT ch)
 		{
 			auto pos = str.find_first_of(ch);
-			return ( (pos != std::string::npos) ? str.substr(0, pos) : str );
+			return ((pos != std::string::npos) ? str.substr(0, pos) : str);
 		}
 
 		//! Returns a vector of substrings of the original string, split at every occurance of the specified character
