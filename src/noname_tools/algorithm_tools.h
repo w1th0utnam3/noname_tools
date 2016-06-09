@@ -1,6 +1,5 @@
 #pragma once
 
-#include <vector>
 #include <iterator>
 
 namespace noname
@@ -38,7 +37,7 @@ namespace noname
 			*dest++ = last;
 		}
 
-		//! Applies the given function object to every element and its successor
+		//! Applies the given function object to every element and its successor, returns copy/move of functor
 		template <typename InputIt, typename Func>
 		Func for_each_and_successor(InputIt first, InputIt last, Func f)
 		{
@@ -53,7 +52,7 @@ namespace noname
 			return std::move(f);
 		}
 
-		//! Returns the first element in the specified range that is unequal to its predecessor
+		//! Returns the first element in the specified range that is unequal to its predecessor, uses not-equal (!=) operator for comparison
 		template <typename InputIt>
 		InputIt find_unequal_successor(InputIt first, InputIt last)
 		{
@@ -68,14 +67,14 @@ namespace noname
 			return last;
 		}
 
-		//! Returns the first element in the specified range that is unequal to its predecessor, uses p to compare two elements for equality
+		//! Returns the first element in the specified range that is unequal to its predecessor, uses p to compare two elements for inequality
 		template <typename InputIt, typename BinaryPredicate>
 		InputIt find_unequal_successor(InputIt first, InputIt last, BinaryPredicate p)
 		{
 			if (first != last) {
 				InputIt next = std::next(first);
 				while (next != last) {
-					if (!p(*first, *next)) return next;
+					if (p(*first, *next)) return next;
 					first = next;
 					++next;
 				}
