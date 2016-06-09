@@ -33,30 +33,30 @@ Below is a list of all methods from these headers. All declarations are in the `
 
 ```c++
 //! Returns the first element in the specified range that is unequal to its predecessor, uses not-equal (!=) operator for comparison
-InputIt find_unequal_successor(InputIt first, InputIt last)
+InputIt find_unequal_successor(InputIt first, InputIt last);
 //! Returns the first element in the specified range that is unequal to its predecessor, uses p to compare two elements for inequality
-InputIt find_unequal_successor(InputIt first, InputIt last, BinaryPredicate p)
+InputIt find_unequal_successor(InputIt first, InputIt last, BinaryPredicate p);
 
 //! Applies the given function object to every element and its successor, returns copy/move of functor
-Func for_each_and_successor(InputIt first, InputIt last, Func f)
+Func for_each_and_successor(InputIt first, InputIt last, Func f);
 
 //! Divides a range in n (nearly) equal sized subranges and writes every subrange's begin- and end-iterator into dest without duplicates (i.e. dest will have n+1 entries)
-void n_subranges(InputIt first, InputIt last, OutputIt dest, std::size_t n)
+void n_subranges(InputIt first, InputIt last, OutputIt dest, std::size_t n);
 
 //! Copies the elements from the specified range to dest in such a way that all groups of consecutive equal objects are omitted, uses equal operator for comparison
-OutputIt strict_unique_copy(InputIt first, InputIt last, OutputIt dest)
+OutputIt strict_unique_copy(InputIt first, InputIt last, OutputIt dest);
 //! Copies the elements from the specified range to dest in such a way that all groups of consecutive equal objects are omitted, uses p to compare elements for equality
-OutputIt strict_unique_copy(InputIt first, InputIt last, OutputIt dest, BinaryPredicate p)
+OutputIt strict_unique_copy(InputIt first, InputIt last, OutputIt dest, BinaryPredicate p);
 ```
 
 ### file_tools.h
 
 ```c++
 //! Reads all lines from the specified file to a vector
-inline std::vector<std::string> read_all_lines(const std::string& file_path)
+inline std::vector<std::string> read_all_lines(const std::string& file_path);
 
 //! Reads the specified number of lines from a file or reads the whole file if number of lines is zero
-inline std::vector<std::string> read_lines(const std::string& file_path, size_t number_of_lines = 0)
+inline std::vector<std::string> read_lines(const std::string& file_path, size_t number_of_lines = 0);
 ```
 
 ### range_tools.h
@@ -68,24 +68,24 @@ class iterator_range<begin_t, end_t = void>
 class iterator_range<iterator_t>
 
 //! Creates an iterator_range object, deducing the target type from the types of arguments
-constexpr iterator_range<typename std::decay<begin_t>::type, typename std::decay<end_t>::type> make_range(begin_t&& begin, end_t&& end)
+constexpr iterator_range<typename std::decay<begin_t>::type, typename std::decay<end_t>::type> make_range(begin_t&& begin, end_t&& end);
 ```
 
 ### string_tools.h
 
 ```c++
 //! Truncates a string at the first occurrence of the specified character or returns the full string if the character was not found
-StringT truncate_string(const StringT& str, CharT ch)
+StringT truncate_string(const StringT& str, CharT ch);
 
 //! Returns a vector of substrings of the original string, split at every occurrence of the specified character
-std::vector<StringT> split_string(const StringT& str, CharT ch)
+std::vector<StringT> split_string(const StringT& str, CharT ch);
 ```
 
 ### vector_tools.h
 
 ```c++
 //! Returns a sorted vector constructed from the supplied initializer list
-std::vector<T> sorted_vector(std::initializer_list<T> in)
+std::vector<T> sorted_vector(std::initializer_list<T> in);
 //! Sorts the supplied r-value vector and returns it
-std::vector<T> sorted_vector(std::vector<T>&& vector)
+std::vector<T> sorted_vector(std::vector<T>&& vector);
 ```
