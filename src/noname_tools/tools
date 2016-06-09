@@ -2,3 +2,4 @@
 #include "string_tools.h"
 #include "vector_tools.h"
 #include "algorithm_tools.h"
+#include "range_tools.h"
