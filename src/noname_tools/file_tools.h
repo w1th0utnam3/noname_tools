@@ -32,6 +32,21 @@ namespace noname
 	{
 		// TODO: Make methods templated in string type
 
+		//! Reads a complete file into a string
+		inline std::string read_file(const std::string& file_path)
+		{
+			std::string contents;
+			std::ifstream input(file_path, std::ios::in | std::ios::binary);
+			if (input) {
+				input.seekg(0, std::ios::end);
+				contents.resize(input.tellg());
+				input.seekg(0, std::ios::beg);
+				input.read(&contents[0], contents.size());
+				input.close();
+			}
+			return contents;
+		}
+
 		//! Reads all lines from the specified file to a vector
 		inline std::vector<std::string> read_all_lines(const std::string& file_path)
 		{
