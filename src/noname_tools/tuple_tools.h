@@ -42,7 +42,7 @@ namespace noname
 			}
 		}
 
-		//! Calls a function for each elemnt of a tuple in order and returns the function
+		//! Calls a function for each element of a tuple in order and returns the function
 		template <typename Tuple, typename F>
 		F tuple_for_each(Tuple&& tuple, F&& f)
 		{
