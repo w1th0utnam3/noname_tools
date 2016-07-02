@@ -25,6 +25,7 @@ At the moment `noname_tools` contains the following headers:
 - `file_tools.h`
 - `range_tools.h`
 - `string_tools.h`
+- `tuple_tools.h`
 - `vector_tools.h`
 
 Below is a list of all methods from these headers. All declarations are in the `noname::tools` namespace.
@@ -79,6 +80,13 @@ StringT truncate_string(const StringT& str, CharT ch);
 
 //! Returns a vector of substrings of the original string, split at every occurrence of the specified character
 std::vector<StringT> split_string(const StringT& str, CharT ch);
+```
+
+### tuple_tools.h
+
+```c++
+//! Calls a function for each elemnt of a tuple in order and returns the function
+F tuple_for_each(Tuple&& tuple, F&& f);
 ```
 
 ### vector_tools.h

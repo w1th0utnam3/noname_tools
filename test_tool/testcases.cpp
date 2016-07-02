@@ -25,6 +25,8 @@
 #include <numeric>
 #include <functional>
 #include <type_traits>
+#include <vector>
+#include <tuple>
 
 #include <noname_tools\tools>
 
@@ -328,5 +330,98 @@ TEST_CASE("Testing iterator_range")
 
 		REQUIRE(range.begin() == i) ;
 		REQUIRE(range.end() == 47.11f) ;
+	}
+}
+
+TEST_CASE("Testing tuple_for_each")
+{
+	SECTION("Testing with tuple size of 3 and l-value") {
+		std::tuple<int, double, float> tuple{ 2, 42.5, 33.5f };
+
+		std::vector<double> target;
+		REQUIRE(target.size() == 0);
+
+		tools::tuple_for_each(tuple, [&target](auto x)
+		{
+			target.emplace_back(x);
+		});
+
+		REQUIRE(target.size() == 3);
+		REQUIRE(target.at(0) == 2);
+		REQUIRE(target.at(1) == 42.5);
+		REQUIRE(target.at(2) == 33.5);
+	}
+
+	SECTION("Testing with tuple size of 1 and r-value") {
+		std::string source = "SourceString";
+		std::string out;
+
+		tools::tuple_for_each(std::make_tuple(source), [&out](const std::string& x)
+		{
+			out = x;
+		});
+
+		REQUIRE(out == source);
+	}
+
+	SECTION("Testing return value of functor")
+	{
+		std::tuple<int, double, float> tuple{ 2, 42.5, 33.5f };
+		
+		// Define functor that increments counter on call
+		struct Functor
+		{
+			int i;
+			Functor(int i) : i(i) {};
+			void operator() (double d) {
+				i++;
+			}
+		};
+
+		// Check preconditions
+		const int offset = 10;
+		REQUIRE(Functor(offset).i == offset);
+
+		auto f = tools::tuple_for_each(tuple, Functor(offset));
+
+		// Check whether return works
+		REQUIRE(f.i == offset+3);
+	}
+
+	SECTION("Testing with pairs")
+	{
+		std::pair <double, double> pair{ 42,24 };
+
+		std::vector<double> target;
+		REQUIRE(target.size() == 0);
+
+		tools::tuple_for_each(pair, [&target](auto x)
+		{
+			target.emplace_back(x);
+		});
+
+		REQUIRE(target.size() == 2);
+		REQUIRE(target.at(0) == 42);
+		REQUIRE(target.at(1) == 24);
+	}
+
+	SECTION("Testing modification of tuple using references")
+	{
+		std::tuple<int, double, float> tuple{ 2, 42.5, 33.5f };
+
+		// Test preconditions
+		REQUIRE(std::get<0>(tuple) != 42);
+		REQUIRE(std::get<1>(tuple) != 42);
+		REQUIRE(std::get<2>(tuple) != 42);
+
+		tools::tuple_for_each(tuple, [](auto& val)
+		{
+			val = 42;
+		});
+
+		// Check whether modification of tuple values with reference works
+		REQUIRE(std::get<0>(tuple) == 42);
+		REQUIRE(std::get<1>(tuple) == 42);
+		REQUIRE(std::get<2>(tuple) == 42);
 	}
 }

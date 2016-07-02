@@ -148,6 +148,7 @@
     <ClInclude Include="..\src\noname_tools\file_tools.h" />
     <ClInclude Include="..\src\noname_tools\range_tools.h" />
     <ClInclude Include="..\src\noname_tools\string_tools.h" />
+    <ClInclude Include="..\src\noname_tools\tuple_tools.h" />
     <ClInclude Include="..\src\noname_tools\vector_tools.h" />
     <ClInclude Include="catch.hpp" />
   </ItemGroup>
