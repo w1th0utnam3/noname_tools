@@ -31,7 +31,7 @@ namespace noname
 		namespace _detail
 		{
 			template <typename Tuple, typename F, std::size_t ...Indices>
-			F tuple_for_each_impl(Tuple&& tuple, F&& f, std::index_sequence<Indices...>)
+			F tuple_for_each_impl(Tuple&& tuple, F f, std::index_sequence<Indices...>)
 			{
 				using swallow = int[];
 				(void)swallow {
@@ -44,7 +44,7 @@ namespace noname
 
 		//! Calls a function for each element of a tuple in order and returns the function
 		template <typename Tuple, typename F>
-		F tuple_for_each(Tuple&& tuple, F&& f)
+		F tuple_for_each(Tuple&& tuple, F f)
 		{
 			// Code from: https://codereview.stackexchange.com/questions/51407/stdtuple-foreach-implementation
 			constexpr std::size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;

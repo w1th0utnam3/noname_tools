@@ -86,7 +86,7 @@ std::vector<StringT> split_string(const StringT& str, CharT ch);
 
 ```c++
 //! Calls a function for each element of a tuple in order and returns the function
-F tuple_for_each(Tuple&& tuple, F&& f);
+F tuple_for_each(Tuple&& tuple, F f);
 ```
 
 ### vector_tools.h
