@@ -1,15 +1,7 @@
 # noname_tools
 
-This collection of C++ header files contains algorithms and small helper classes that I wrote
-during several small coding projects I worked on. To use the tools just copy the files from
-the `src/noname_tools` folder into your project. Including the `tools` file automatically includes
-all other headers. The repository contains a project with test-cases for the tools. It's based on 
-the [Catch](https://github.com/philsquared/Catch) header-only unit-test framework which is
-licensed under the [Boost Software License](https://github.com/philsquared/Catch/blob/master/LICENSE_1_0.txt)
-and the required header is included in the project. Compilation was tested with VS 2015 Update 2
-and GCC 6.1.0. You probably have to turn on C++14 support if this isn't your compiler's default setting.
-The code of this project that is written by contributors of this repository is licensed under the 
-[MIT License](https://github.com/w1th0utnam3/noname_tools/blob/master/LICENSE). 
+This collection of C++ header files contains algorithms and small helper classes that I wrote during several small coding projects I worked on. To use the tools just copy the files from the `src/noname_tools` folder into your project. Including the `tools` file automatically includes all other headers. The repository contains a project with test-cases for the tools. It's based on 
+the [Catch](https://github.com/philsquared/Catch) header-only unit-test framework which is licensed under the [Boost Software License](https://github.com/philsquared/Catch/blob/master/LICENSE_1_0.txt) and it is included as a submodule. Compilation was tested with VS"15" Preview Update 4 and GCC 6.1.0. You probably have to turn on C++14 support if this isn't your compiler's default setting. The code of this project that is written by contributors of this repository is licensed under the [MIT License](https://github.com/w1th0utnam3/noname_tools/blob/master/LICENSE). 
 
 ## Todos
 
