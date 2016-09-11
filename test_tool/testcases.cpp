@@ -438,7 +438,7 @@ TEST_CASE("Testing optional")
 {
 	typedef tools::optional<std::string> op_type;
 
-	REQUIRE((std::is_same_v<std::string, op_type::value_type>));
+	REQUIRE((std::is_same<std::string, op_type::value_type>::value));
 	REQUIRE(sizeof(op_type) == sizeof(bool) + sizeof(std::string));
 
 	// Empty state
@@ -858,7 +858,7 @@ TEST_CASE("Testing optional")
 		{
 			const auto op = tools::make_optional("Test_String"s);
 
-			REQUIRE((std::is_same_v<decltype(op), const op_type>));
+			REQUIRE((std::is_same<decltype(op), const op_type>::value));
 			REQUIRE(op.has_value() == true);
 			REQUIRE(op.value() == "Test_String"s);
 		}
@@ -867,7 +867,7 @@ TEST_CASE("Testing optional")
 		{
 			const auto op = tools::make_optional<std::string>("Test_String"s, 0, 4);
 
-			REQUIRE((std::is_same_v<decltype(op), const op_type>));
+			REQUIRE((std::is_same<decltype(op), const op_type>::value));
 			REQUIRE(op.has_value() == true);
 			REQUIRE(op.value() == "Test"s);
 		}
@@ -876,7 +876,7 @@ TEST_CASE("Testing optional")
 		{
 			const auto op = tools::make_optional<std::string>({'T','e','s','t'});
 
-			REQUIRE((std::is_same_v<decltype(op), const op_type>));
+			REQUIRE((std::is_same<decltype(op), const op_type>::value));
 			REQUIRE(op.has_value() == true);
 			REQUIRE(op.value() == "Test"s);
 		}

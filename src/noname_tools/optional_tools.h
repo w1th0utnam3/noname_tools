@@ -85,7 +85,7 @@ namespace noname
 			optional(const optional& other)
 				: _hasValue(other._hasValue), _memory()
 			{
-				static_assert(std::is_copy_constructible_v<T>, "The value type must meet the requirements of CopyConstructible in order to use construction by copy.");
+				static_assert(std::is_copy_constructible<T>::value, "The value type must meet the requirements of CopyConstructible in order to use construction by copy.");
 				if (_hasValue) new(_memory) T(*other);
 			}
 
@@ -93,7 +93,7 @@ namespace noname
 			optional(optional&& other)
 				: _hasValue(other._hasValue), _memory()
 			{
-				static_assert(std::is_move_constructible_v<T>, "The value type must meet the requirements of MoveConstructible in order to use construction by move.");
+				static_assert(std::is_move_constructible<T>::value, "The value type must meet the requirements of MoveConstructible in order to use construction by move.");
 				if (_hasValue) new(_memory) T(std::move(*other));
 			}
 
@@ -101,7 +101,7 @@ namespace noname
 			constexpr optional(const T& value)
 				: _hasValue(true), _memory()
 			{
-				static_assert(std::is_copy_constructible_v<T>, "The value type must meet the requirements of CopyConstructible in order to use construction by copy.");
+				static_assert(std::is_copy_constructible<T>::value, "The value type must meet the requirements of CopyConstructible in order to use construction by copy.");
 				new(_memory) T(value);
 			}
 
@@ -109,7 +109,7 @@ namespace noname
 			constexpr optional(T&& value)
 				: _hasValue(true), _memory()
 			{
-				static_assert(std::is_move_constructible_v<T>, "The value type must meet the requirements of MoveConstructible in order to use construction by move.");
+				static_assert(std::is_move_constructible<T>::value, "The value type must meet the requirements of MoveConstructible in order to use construction by move.");
 				new(_memory) T(std::move(value));
 			}
 
@@ -118,7 +118,7 @@ namespace noname
 			constexpr explicit optional(in_place_t, Args&&... args)
 				: _hasValue(true), _memory()
 			{
-				static_assert(std::is_constructible_v<T, Args&&...>, "The value type must be constructible from the supplied Args.");
+				static_assert(std::is_constructible<T, Args&&...>::value, "The value type must be constructible from the supplied Args.");
 				new(_memory) T(std::forward<Args>(args)...);
 			}
 
@@ -127,14 +127,14 @@ namespace noname
 			constexpr explicit optional(in_place_t, std::initializer_list<U> ilist, Args&&... args)
 				: _hasValue(true), _memory()
 			{
-				static_assert(std::is_constructible_v<T, std::initializer_list<U>&, Args&&...>, "The value type must be constructible from std::initializer_list and supplied Args.");
+				static_assert(std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value, "The value type must be constructible from std::initializer_list and supplied Args.");
 				new(_memory) T(ilist, std::forward<Args>(args)...);
 			}
 
 			//! Calls the constructor of the contained value if it is not trivially destructible.
 			~optional()
 			{
-				if (_hasValue && !std::is_trivially_destructible_v<T>) (*this)->~T();
+				if (_hasValue && !std::is_trivially_destructible<T>::value) (*this)->~T();
 			}
 
 			//! If *this contains a value before the call, the contained value is destroyed by calling its destructor.
@@ -150,7 +150,7 @@ namespace noname
 			//! Replaces contents of *this with the contents of other.
 			optional& operator=(const optional& other)
 			{
-				static_assert(std::is_copy_constructible_v<T> && std::is_copy_assignable_v<T>, "The value type must meet the requirements of CopyConstructible and CopyAssignable in order to use construction by move.");
+				static_assert(std::is_copy_constructible<T>::value && std::is_copy_assignable<T>::value, "The value type must meet the requirements of CopyConstructible and CopyAssignable in order to use construction by move.");
 
 				if (_hasValue && other._hasValue) {
 					(**this) = *other;
@@ -169,7 +169,7 @@ namespace noname
 			//! Replaces contents of *this with the contents of other.
 			optional& operator=(optional&& other)
 			{
-				static_assert(std::is_move_constructible_v<T> && std::is_move_assignable_v<T>, "The value type must meet the requirements of MoveConstructible and MoveAssignable in order to use construction by move.");
+				static_assert(std::is_move_constructible<T>::value && std::is_move_assignable<T>::value, "The value type must meet the requirements of MoveConstructible and MoveAssignable in order to use construction by move.");
 
 				if (_hasValue && other._hasValue) {
 					(**this) = std::move(*other);
@@ -258,8 +258,8 @@ namespace noname
 			template<class U>
 			constexpr T value_or(U&& default_value) const&
 			{
-				static_assert(std::is_copy_constructible_v<T>, "The value type must meet the requirements of CopyConstructible in order to use this value_or overload.");
-				static_assert(std::is_convertible_v<U, T>, "The supplied default value must be convertible to the value type of the optional.");
+				static_assert(std::is_copy_constructible<T>::value, "The value type must meet the requirements of CopyConstructible in order to use this value_or overload.");
+				static_assert(std::is_convertible<U, T>::value, "The supplied default value must be convertible to the value type of the optional.");
 
 				return bool(*this) ? **this : static_cast<T>(std::forward<U>(default_value));
 			}
@@ -268,8 +268,8 @@ namespace noname
 			template<class U>
 			constexpr T value_or(U&& default_value) &&
 			{
-				static_assert(std::is_move_constructible_v<T>, "The value type must meet the requirements of MoveConstructible in order to use this value_or overload.");
-				static_assert(std::is_convertible_v<U, T>, "The supplied default value must be convertible to the value type of the optional.");
+				static_assert(std::is_move_constructible<T>::value, "The value type must meet the requirements of MoveConstructible in order to use this value_or overload.");
+				static_assert(std::is_convertible<U, T>::value, "The supplied default value must be convertible to the value type of the optional.");
 
 				return bool(*this) ? std::move(**this) : static_cast<T>(std::forward<U>(default_value));
 			}
@@ -304,7 +304,7 @@ namespace noname
 			template< class... Args >
 			void emplace(Args&&... args)
 			{
-				static_assert(std::is_constructible_v<T, Args&&...>, "The value type must be constructible from the supplied Args.");
+				static_assert(std::is_constructible<T, Args&&...>::value, "The value type must be constructible from the supplied Args.");
 				if (_hasValue) (*this)->T::~T();
 				new(_memory) T(std::forward<Args>(args)...);
 				_hasValue = true;
@@ -314,7 +314,7 @@ namespace noname
 			template< class U, class... Args >
 			void emplace(std::initializer_list<U> ilist, Args&&... args)
 			{
-				static_assert(std::is_constructible_v<T, std::initializer_list<U>&, Args&&...>, "The value type must be constructible from std::initializer_list and supplied Args.");
+				static_assert(std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value, "The value type must be constructible from std::initializer_list and supplied Args.");
 				if (_hasValue) (*this)->T::~T();
 				new(_memory) T(ilist, std::forward<Args>(args)...);
 				_hasValue = true;
