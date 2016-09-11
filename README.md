@@ -23,6 +23,7 @@ At the moment `noname_tools` contains the following headers:
 
 - `algorithm_tools.h`
 - `file_tools.h`
+- `optional_tools.h`
 - `range_tools.h`
 - `string_tools.h`
 - `tuple_tools.h`
@@ -58,6 +59,30 @@ inline std::vector<std::string> read_all_lines(const std::string& file_path);
 
 //! Reads the specified number of lines from a file or reads the whole file if number of lines is zero
 inline std::vector<std::string> read_lines(const std::string& file_path, size_t number_of_lines = 0);
+```
+
+### optional_tools.h
+
+Custom implementation of [std::optional](http://en.cppreference.com/w/cpp/utility/optional) from the C++17 draft for use in C++14. The interface is identical to the reference except for the fact that the comparison operators and std::hash specialization are not yet implemented. All constructors, assignments and access operations are implemented. Unit tested to conform to the reference documentation.
+```c++
+//! The class template optional manages an optional contained value, i.e. a value that may or may not be present.
+class optional<T>
+
+//! Creates an optional object from value.
+constexpr optional<std::decay_t<T>> make_optional(T&& value)
+//! Creates an optional object constructed in-place from args....
+constexpr optional<T> make_optional(Args&&... args)
+//! Creates an optional object constructed in-place from il and args....
+constexpr optional<T> make_optional(std::initializer_list<U> il, Args&&... args)
+
+//! Defines a type of object to be thrown by optional::value when accessing an optional object that does not contain a value.
+class bad_optional_access : public std::logic_error;
+
+//! nullopt_t is an empty class type used to indicate optional type with uninitialized state.
+struct nullopt_t;
+
+//! Disambiguation tag to construct an optional in-place. Actually calling any of the in_place functions results in undefined behavior.
+in_place_tag in_place();
 ```
 
 ### range_tools.h

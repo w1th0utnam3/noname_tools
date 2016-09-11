@@ -41,6 +41,9 @@
     <ClInclude Include="..\src\noname_tools\tuple_tools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\noname_tools\optional_tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\noname_tools\tools">
