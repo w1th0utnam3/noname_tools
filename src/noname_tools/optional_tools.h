@@ -134,14 +134,14 @@ namespace noname
 			//! Calls the constructor of the contained value if it is not trivially destructible.
 			~optional()
 			{
-				if (_hasValue && !std::is_trivially_destructible<T>::value) (*this)->~T();
+				if (_hasValue) (**this).~T();
 			}
 
 			//! If *this contains a value before the call, the contained value is destroyed by calling its destructor.
 			optional& operator=(nullopt_t)
 			{
 				if (_hasValue) {
-					(*this)->T::~T();
+					(**this).~T();
 					_hasValue = false;
 				}
 				return *this;
@@ -156,7 +156,7 @@ namespace noname
 					(**this) = *other;
 				}
 				else if (_hasValue) {
-					(*this)->T::~T();
+					(**this).~T();
 					_hasValue = false;
 				}
 				else if (other._hasValue) {
@@ -175,7 +175,7 @@ namespace noname
 					(**this) = std::move(*other);
 				}
 				else if (_hasValue) {
-					(*this)->T::~T();
+					(**this).~T();
 					_hasValue = false;
 				}
 				else if (other._hasValue) {
@@ -283,7 +283,7 @@ namespace noname
 				}
 				else if (_hasValue) {
 					new(other._memory) T(std::move(**this));
-					(*this)->T::~T();
+					(**this).~T();
 					std::swap(this->_hasValue, other._hasValue);
 				}
 				else if (other._hasValue) {
@@ -296,7 +296,7 @@ namespace noname
 			//! If *this contains a value, destroy that value as if by value().T::~T(). Otherwise, there are no effects. *this does not contain a value after this call.
 			void reset()
 			{
-				if (_hasValue) (*this)->T::~T();
+				if (_hasValue) (**this).~T();
 				_hasValue = false;
 			}
 
@@ -305,7 +305,7 @@ namespace noname
 			void emplace(Args&&... args)
 			{
 				static_assert(std::is_constructible<T, Args&&...>::value, "The value type must be constructible from the supplied Args.");
-				if (_hasValue) (*this)->T::~T();
+				if (_hasValue) (**this).~T();
 				new(_memory) T(std::forward<Args>(args)...);
 				_hasValue = true;
 			}
@@ -315,7 +315,7 @@ namespace noname
 			void emplace(std::initializer_list<U> ilist, Args&&... args)
 			{
 				static_assert(std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value, "The value type must be constructible from std::initializer_list and supplied Args.");
-				if (_hasValue) (*this)->T::~T();
+				if (_hasValue) (**this).~T();
 				new(_memory) T(ilist, std::forward<Args>(args)...);
 				_hasValue = true;
 			}

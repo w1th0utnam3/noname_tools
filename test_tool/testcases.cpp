@@ -881,4 +881,23 @@ TEST_CASE("Testing optional")
 			REQUIRE(op.value() == "Test"s);
 		}
 	}
+
+	// Playing around with pointer as value type
+	{
+		tools::optional<std::string*> test;
+
+		REQUIRE(test.has_value() == false);
+
+		std::string str1("Hallo1");
+		std::string str2("Hallo2");
+
+		test = &str1;
+		REQUIRE(test.has_value() == true);
+		REQUIRE(*test == &str1);
+		REQUIRE(**test == str1);
+		REQUIRE((*test)->compare("Hallo1"s) == 0);
+
+		test = &str2;
+		REQUIRE((*test)->compare("Hallo2"s) == 0);
+	}
 }
