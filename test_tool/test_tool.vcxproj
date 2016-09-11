@@ -131,7 +131,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\submodules\Catch\include;$(ProjectDir)..\src</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,7 +151,6 @@
     <ClInclude Include="..\src\noname_tools\string_tools.h" />
     <ClInclude Include="..\src\noname_tools\tuple_tools.h" />
     <ClInclude Include="..\src\noname_tools\vector_tools.h" />
-    <ClInclude Include="catch.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\noname_tools\tools" />
