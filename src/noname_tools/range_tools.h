@@ -24,7 +24,7 @@
 
 #include <utility>
 #include <type_traits>
-#include <iostream>
+#include <iterator>
 
 namespace noname
 {
@@ -90,6 +90,12 @@ namespace noname
 			constexpr end_type end() const
 			{
 				return last;
+			}
+
+			//! Returns the size of the range
+			size_t size() const
+			{
+				return std::distance(first, last);
 			}
 
 		private:
