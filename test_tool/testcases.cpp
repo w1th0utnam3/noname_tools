@@ -965,4 +965,13 @@ TEST_CASE("Testing typetraits")
 		REQUIRE((tools::is_referenceable<double&>::value == true));
 		REQUIRE((tools::is_referenceable<void>::value == false));
 	}
+
+	SECTION("Testing is_swappable")
+	{
+		REQUIRE((tools::is_swappable_with<double, double>::value == true));
+		REQUIRE((tools::is_swappable_with<double, void>::value == false));
+
+		REQUIRE((tools::is_swappable<double>::value == true));
+		REQUIRE((tools::is_swappable<void>::value == false));
+	}
 }

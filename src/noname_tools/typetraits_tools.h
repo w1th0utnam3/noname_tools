@@ -22,6 +22,9 @@
 
 #pragma once
 
+#include <utility>
+#include <algorithm>
+
 namespace noname
 {
 	namespace tools
@@ -30,12 +33,14 @@ namespace noname
 		{
 			//! Helper used for void_t and required by MSVC
 			template <class...>
-			struct make_void { using type = void; };
+			struct _make_void { using type = void; };
 		}
+
+		using namespace _detail;
 
 		//! Utility metafunction that maps a sequence of any types to the type void
 		template <typename... T>
-		using void_t = typename _detail::make_void<T...>::type;
+		using void_t = typename _detail::_make_void<T...>::type;
 
 		//! Helper alias template for std::integral_constant for the common case where T is bool.
 		template <bool B>
@@ -60,24 +65,53 @@ namespace noname
 		namespace _detail
 		{
 			template<template<class...> class Z, class = void, class...Ts>
-			struct is_well_formed : std::false_type {};
+			struct _is_well_formed : std::false_type {};
 
 			template<template<class...> class Z, class...Ts>
-			struct is_well_formed<Z, void_t<Z<Ts...>>, Ts...> : std::true_type {};
+			struct _is_well_formed<Z, void_t<Z<Ts...>>, Ts...> : std::true_type {};
 		}
 
 		//! Checks if the supplied template template argument Z is well formed after substituting the supplied template arguments Ts into it. Is either std::true_type or std::false_type.
 		template<template<class...> class Z, class...Ts>
-		using is_well_formed = _detail::is_well_formed<Z, void, Ts...>;
+		using is_well_formed = _detail::_is_well_formed<Z, void, Ts...>;
 
 		namespace _detail
 		{
 			//! Unevaluated reference T&
 			template<class T>
-			using reference_t = decltype(std::declval<T&>());
+			using _reference_t = decltype(std::declval<T&>());
+
+			//! Unevaluated swap(T&,U&)
+			template<class T, class U>
+			using _swap_with_overload = decltype(swap(std::declval<T&>(), std::declval<U&>()));
+
+			//! Unevaluated std::swap(T&,U&)
+			template<class T, class U>
+			using _swap_with_std = decltype(std::swap(std::declval<T&>(), std::declval<U&>()));
+
+			//! Checks if swap(std::declval<T>(), std::declval<U>()) is a valid expression
+			template<class T, class U>
+			using _is_swappable_with_overload = is_well_formed<_swap_with_overload, T, U>;
+
+			//! Checks if std::swap(std::declval<T>(), std::declval<U>()) is a valid expression
+			template<class T, class U>
+			using _is_swappable_with_std = is_well_formed<_swap_with_std, T, U>;
+
+			//! Checks if swap(std::declval<T>(), std::declval<U>()) or std::swap(std::declval<T>(), std::declval<U>()) is a valid expression
+			template<class T, class U>
+			using _is_swappable_with_unidirectional = disjunction<_is_swappable_with_overload<T, U>, _is_swappable_with_std<T, U>>;
 		}
 
+		//! Checks if the supplied type is referenceable, i.e. whether T& is a well-formed type
 		template<class T>
-		using is_referenceable = is_well_formed<_detail::reference_t, T>;
+		using is_referenceable = is_well_formed<_detail::_reference_t, T>;
+
+		//! Checks if the expressions swap(std::declval<T>(), std::declval<U>()) and swap(std::declval<U>(), std::declval<T>()) are both well formed after "using std::swap"
+		template<class T, class U>
+		using is_swappable_with = conjunction<_detail::_is_swappable_with_unidirectional<T, U>, _detail::_is_swappable_with_unidirectional<U, T>>;
+
+		//! Checks if a type is referenceable and whether std::is_swappable_with<T&, T&>::value is true
+		template<class T>
+		using is_swappable = conjunction<is_referenceable<T>, is_swappable_with<T,T>>;
 	}
 }
