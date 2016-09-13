@@ -882,22 +882,87 @@ TEST_CASE("Testing optional")
 		}
 	}
 
-	// Playing around with pointer as value type
+	// Test pointer as value type
 	{
 		tools::optional<std::string*> test;
 
 		REQUIRE(test.has_value() == false);
 
-		std::string str1("Hallo1");
-		std::string str2("Hallo2");
+		std::string str1("Test1");
+		std::string str2("Test2");
 
 		test = &str1;
 		REQUIRE(test.has_value() == true);
 		REQUIRE(*test == &str1);
 		REQUIRE(**test == str1);
-		REQUIRE((*test)->compare("Hallo1"s) == 0);
+		REQUIRE((*test)->compare("Test1"s) == 0);
 
 		test = &str2;
-		REQUIRE((*test)->compare("Hallo2"s) == 0);
+		REQUIRE((*test)->compare("Test2"s) == 0);
+
+		str2 = "Test3"s;
+		REQUIRE((*test)->compare("Test3"s) == 0);
+	}
+
+	// Test array as value type
+	{
+		int is[5] = {0,1,2,3,4};
+		auto op = tools::make_optional(is);
+
+		REQUIRE(op.has_value() == true);
+		REQUIRE(op.value()[4] == 4);
+		REQUIRE((*op)[3] == 3);
+	}
+}
+
+TEST_CASE("Testing typetraits")
+{
+	SECTION("Testing void_t")
+	{
+		// TODO: Test if void_t really works for its intended use case
+		REQUIRE((std::is_same<tools::void_t<bool, int, double>, void>::value == true));
+	}
+
+	SECTION("Testing bool_constant")
+	{
+		REQUIRE((tools::bool_constant<true>::value == true));
+		REQUIRE((tools::bool_constant<false>::value == false));
+	}
+
+	SECTION("Testing negation")
+	{
+		REQUIRE((tools::negation<std::true_type>::value == false));
+		REQUIRE((tools::negation<std::false_type>::value == true));
+	}
+
+	SECTION("Testing conjunction")
+	{
+		REQUIRE((tools::conjunction<std::true_type, std::true_type>::value == true));
+		REQUIRE((tools::conjunction<std::false_type, std::true_type>::value == false));
+		REQUIRE((tools::conjunction<std::true_type, std::false_type>::value == false));
+		REQUIRE((tools::conjunction<std::false_type, std::false_type>::value == false));
+		REQUIRE((tools::conjunction<std::true_type, std::true_type, std::true_type>::value == true));
+		REQUIRE((tools::conjunction<std::true_type, std::true_type, std::false_type>::value == false));
+		REQUIRE((tools::conjunction<std::false_type, std::false_type, std::true_type>::value == false));
+		REQUIRE((tools::disjunction<std::false_type, std::false_type, std::false_type>::value == false));
+	}
+
+	SECTION("Testing disjunction")
+	{
+		REQUIRE((tools::disjunction<std::true_type, std::true_type>::value == true));
+		REQUIRE((tools::disjunction<std::false_type, std::true_type>::value == true));
+		REQUIRE((tools::disjunction<std::true_type, std::false_type>::value == true));
+		REQUIRE((tools::disjunction<std::false_type, std::false_type>::value == false));
+		REQUIRE((tools::disjunction<std::true_type, std::true_type, std::true_type>::value == true));
+		REQUIRE((tools::disjunction<std::true_type, std::true_type, std::false_type>::value == true));
+		REQUIRE((tools::disjunction<std::false_type, std::false_type, std::true_type>::value == true));
+		REQUIRE((tools::disjunction<std::false_type, std::false_type, std::false_type>::value == false));
+	}
+
+	SECTION("Testing is_referenceable")
+	{
+		REQUIRE((tools::is_referenceable<double>::value == true));
+		REQUIRE((tools::is_referenceable<double&>::value == true));
+		REQUIRE((tools::is_referenceable<void>::value == false));
 	}
 }

@@ -151,6 +151,8 @@
     <ClInclude Include="..\src\noname_tools\range_tools.h" />
     <ClInclude Include="..\src\noname_tools\string_tools.h" />
     <ClInclude Include="..\src\noname_tools\tuple_tools.h" />
+    <ClInclude Include="..\src\noname_tools\typetraits_tools.h" />
+    <ClInclude Include="..\src\noname_tools\utility_tools.h" />
     <ClInclude Include="..\src\noname_tools\vector_tools.h" />
   </ItemGroup>
   <ItemGroup>

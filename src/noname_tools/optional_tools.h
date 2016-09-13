@@ -27,32 +27,16 @@
 #include <utility>
 #include <new>
 
-// TODO: As soon as MSVC has better constexpr support, all value() methods can be marked as constexpr
+// TODO: Implement copy-swap idiom
+// TODO: Add noexcept according to reference
 // TODO: Comparison operators? :/
+// TODO: Empty base optimization?
+// TODO: As soon as MSVC has better constexpr support, all value() methods can be marked as constexpr
 
 namespace noname
 {
 	namespace tools
 	{
-		//! in_place_tag is an empty class type used as the return types of the in_place functions for disambiguation.
-		struct in_place_tag { in_place_tag() = delete; };
-
-		// MSVC doesn't allow non-void methods without return - but we need it here
-		#ifdef _MSC_VER
-			#pragma warning(push)
-			#pragma warning(disable:4716)
-		#endif
-
-		//! Disambiguation tag to create an optional in-place. Actually calling any of the in_place functions results in undefined behavior.
-		in_place_tag in_place() {};
-
-		#ifdef _MSC_VER
-			#pragma warning(pop)
-		#endif
-
-		using in_place_t = in_place_tag(&)();
-		
-
 		//! nullopt_t is an empty class type used to indicate optional type with uninitialized state.
 		struct nullopt_t {
 			constexpr nullopt_t(decltype(nullptr)) {}
@@ -76,14 +60,14 @@ namespace noname
 			typedef T value_type;
 
 			//! Constructs an optional object that does not contain a value.
-			constexpr optional() : _hasValue(false), _memory() {};
+			constexpr optional() : _hasValue(false), _memory() {}
 
 			//! Constructs an optional object that does not contain a value.
-			constexpr optional(nullopt_t) : _hasValue(false), _memory() {};
+			constexpr optional(nullopt_t) : _hasValue(false), _memory() {}
 
 			//! Copy constructor: If other contains a value, initializes the contained value as if direct-initializing an object of type T with the expression *other. If other does not contain a value, constructs an object that does not contain a value.
 			optional(const optional& other)
-				: _hasValue(other._hasValue), _memory()
+				: _hasValue(other._hasValue)
 			{
 				static_assert(std::is_copy_constructible<T>::value, "The value type must meet the requirements of CopyConstructible in order to use construction by copy.");
 				if (_hasValue) new(_memory) T(*other);
@@ -91,7 +75,7 @@ namespace noname
 
 			//! Move constructor: If other contains a value, initializes the contained value as if direct-initializing an object of type T with the expression std::move(*other) and does not make other empty: a moved-from optional still contains a value, but the value itself is moved from. If other does not contain a value, constructs an object that does not contain a value.
 			optional(optional&& other)
-				: _hasValue(other._hasValue), _memory()
+				: _hasValue(other._hasValue)
 			{
 				static_assert(std::is_move_constructible<T>::value, "The value type must meet the requirements of MoveConstructible in order to use construction by move.");
 				if (_hasValue) new(_memory) T(std::move(*other));
@@ -115,7 +99,7 @@ namespace noname
 
 			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type T from the arguments std::forward<Args>(args)...
 			template< class... Args >
-			constexpr explicit optional(in_place_t, Args&&... args)
+			constexpr explicit optional(tools::in_place_t, Args&&... args)
 				: _hasValue(true), _memory()
 			{
 				static_assert(std::is_constructible<T, Args&&...>::value, "The value type must be constructible from the supplied Args.");
@@ -124,7 +108,7 @@ namespace noname
 
 			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type T from the arguments ilist, std::forward<Args>(args)....
 			template< class U, class... Args >
-			constexpr explicit optional(in_place_t, std::initializer_list<U> ilist, Args&&... args)
+			constexpr explicit optional(tools::in_place_t, std::initializer_list<U> ilist, Args&&... args)
 				: _hasValue(true), _memory()
 			{
 				static_assert(std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value, "The value type must be constructible from std::initializer_list and supplied Args.");
@@ -277,6 +261,7 @@ namespace noname
 			//! Swaps the contents with those of other.
 			void swap(optional& other)
 			{
+
 				if (_hasValue && other._hasValue) {
 					using std::swap;
 					swap(**this, *other);

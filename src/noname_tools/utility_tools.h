@@ -22,34 +22,26 @@
 
 #pragma once
 
-#include <tuple>
-
 namespace noname
 {
 	namespace tools
 	{
-		namespace _detail
-		{
-			template <typename Tuple, typename F, std::size_t ...Indices>
-			F tuple_for_each(Tuple&& tuple, F f, std::index_sequence<Indices...>)
-			{
-				using swallow = int[];
-				(void)swallow {
-					1,
-						(f(std::get<Indices>(std::forward<Tuple>(tuple))), void(), int{})...
-				};
-				return f;
-			}
-		}
+		//! in_place_tag is an empty class type used as the return types of the in_place functions for disambiguation.
+		struct in_place_tag { in_place_tag() = delete; };
 
-		//! Calls a function for each element of a tuple in order and returns the function
-		template <typename Tuple, typename F>
-		F tuple_for_each(Tuple&& tuple, F f)
-		{
-			// Code from: https://codereview.stackexchange.com/questions/51407/stdtuple-foreach-implementation
-			constexpr std::size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
-			return _detail::tuple_for_each(std::forward<Tuple>(tuple), std::forward<F>(f),
-				std::make_index_sequence<N>{});
-		}
+// MSVC doesn't allow non-void methods without return - but we need it here
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4716)
+#endif
+
+		//! Disambiguation tag to create an optional, any or variant in-place. Actually calling any of the in_place functions results in undefined behavior.
+		in_place_tag in_place() {};
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+		using in_place_t = in_place_tag(&)();
 	}
 }
