@@ -27,7 +27,7 @@
 #include <utility>
 #include <new>
 
-// TODO: Implement copy-swap idiom
+// TODO: Implement copy-swap idiom?
 // TODO: Add noexcept according to reference
 // TODO: Comparison operators? :/
 // TODO: Empty base optimization?
@@ -174,6 +174,7 @@ namespace noname
 			optional& operator=(U&& value)
 			{
 				static_assert(std::is_same<std::decay_t<U>, T>::value, "The supplied value must be of the same type as the optional value.");
+
 				if (_hasValue) {
 					(**this) = std::move(value);
 				}
@@ -261,6 +262,7 @@ namespace noname
 			//! Swaps the contents with those of other.
 			void swap(optional& other)
 			{
+				static_assert(tools::is_swappable<T>::value, "The value type must meet the requirements of Swappable.");
 
 				if (_hasValue && other._hasValue) {
 					using std::swap;
