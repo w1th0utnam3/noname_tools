@@ -15,10 +15,12 @@ At the moment `noname_tools` contains the following headers:
 
 - `algorithm_tools.h`
 - `file_tools.h`
-- `optional_tools.h`
+- `optional_tools.h` - depends on `type_traits.h` and `utility_tools.h`
 - `range_tools.h`
 - `string_tools.h`
 - `tuple_tools.h`
+- `type_traits.h`
+- `utility_tools.h` - helper types for `optional` (and possibly later `any` and `variant`)
 - `vector_tools.h`
 
 Below is a list of all methods from these headers. All declarations are in the `noname::tools` namespace.
@@ -58,13 +60,16 @@ inline std::vector<std::string> read_lines(const std::string& file_path, size_t 
 Custom implementation of [std::optional](http://en.cppreference.com/w/cpp/utility/optional) from the C++17 draft for use in C++14. The interface is identical to the reference except for the fact that the comparison operators and std::hash specialization are not yet implemented. All constructors, assignments and access operations are implemented. Unit tested to conform to the reference documentation.
 ```c++
 //! The class template optional manages an optional contained value, i.e. a value that may or may not be present.
-class optional<T>
+class optional<T>;
 
 //! Creates an optional object from value.
+template<class T>
 constexpr optional<std::decay_t<T>> make_optional(T&& value)
 //! Creates an optional object constructed in-place from args....
+template<class T, class... Args>
 constexpr optional<T> make_optional(Args&&... args)
 //! Creates an optional object constructed in-place from il and args....
+template<class T, class U, class... Args>
 constexpr optional<T> make_optional(std::initializer_list<U> il, Args&&... args)
 
 //! Defines a type of object to be thrown by optional::value when accessing an optional object that does not contain a value.
@@ -104,6 +109,59 @@ std::vector<StringT> split_string(const StringT& str, CharT ch);
 ```c++
 //! Calls a function for each element of a tuple in order and returns the function
 F tuple_for_each(Tuple&& tuple, F f);
+```
+
+### tuple_tools.h
+
+Some type traits and helper types from the C++17 draft for use in C++14. Also includes the [detection idiom](http://en.cppreference.com/w/cpp/experimental/is_detected) alias templates from Library fundamentals v2.
+```c++
+//! Utility metafunction that maps a sequence of any types to the type void
+template <typename... T>
+using void_t = ...;
+
+//! Helper alias template for std::integral_constant for the common case where T is bool.
+template <bool B>
+using bool_constant = ...;
+
+//! Forms the logical negation of the type trait B.
+template<class B>
+struct negation : ...;
+//! Forms the logical conjunction of the type traits B..., effectively performing a logical AND on the sequence of traits.
+template<class B1, class... Bn>
+struct conjunction<B1, Bn...> : ...;
+//! Forms the logical disjunction of the type traits B..., effectively performing a logical or on the sequence of traits.
+template<class B1, class... Bn>
+struct disjunction<B1, Bn...> : ...;
+
+//! Class type used by detected_t to indicate detection failure. 
+struct nonesuch;
+//! Alias for std::true_type if the template-id Op<Args...> is valid; otherwise it is an alias for std::false_type. 
+template <template<class...> class Op, class... Args>
+using is_detected = ...;
+//! Alias for Op<Args...> if that template-id is valid; otherwise it is an alias for the class nonesuch. 
+template <template<class...> class Op, class... Args>
+using detected_t = ...;
+//! If the template-id Op<Args...> is valid, then value_t is an alias for std::true_type, and type is an alias for Op<Args...>; Otherwise, value_t is an alias for std::false_type and type is an alias for Default.
+template <class Default, template<class...> class Op, class... Args>
+using detected_or = ...;
+//! Checks whether detected_t<Op, Args...> is Expected.  
+template <class Expected, template<class...> class Op, class... Args>
+using is_detected_exact = ...;
+//! Checks whether detected_t<Op, Args...> is convertible to To.
+template <class To, template<class...> class Op, class... Args>
+using is_detected_convertible = ...;
+
+//! Checks if the supplied type is referenceable, i.e. whether T& is a well-formed type
+template<class T>
+using is_referenceable = ...;
+
+//! Checks if the expressions swap(std::declval<T>(), std::declval<U>()) and swap(std::declval<U>(), std::declval<T>()) are both well formed after "using std::swap"
+template<class T, class U>
+using is_swappable_with = ...;
+
+//! Checks if a type is referenceable and whether std::is_swappable_with<T&, T&>::value is true
+template<class T>
+using is_swappable = ...;
 ```
 
 ### vector_tools.h
