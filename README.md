@@ -13,17 +13,17 @@ the [Catch](https://github.com/philsquared/Catch) header-only unit-test framewor
 
 At the moment `noname_tools` contains the following headers:
 
-- `algorithm_tools.h`
-- `file_tools.h`
-- `optional_tools.h` - depends on `type_traits.h` and `utility_tools.h`
-- `range_tools.h`
-- `string_tools.h`
-- `tuple_tools.h`
-- `type_traits.h`
-- `utility_tools.h` - helper types for `optional` (and possibly later `any` and `variant`)
-- `vector_tools.h`
+- [`algorithm_tools.h`](#algorithm_toolsh) - Additional algorithms not present in `<algorithm>`
+- [`file_tools.h`](#file_toolsh)
+- [`optional_tools.h`](#optional_toolsh) - C++17 optional for C++14, depends on `type_traits.h` and `utility_tools.h`
+- [`range_tools.h`](#range_toolsh) - Basic `iterator_range` type
+- [`string_tools.h`](#string_toolsh)
+- [`tuple_tools.h`](#tuple_toolsh)
+- [`type_traits.h`](#type_traitsh) - C++17 and Library fundamentals v2 helpers for C++14
+- [`utility_tools.h`](#utility_toolsh) - helper types for `optional` (possibly also for `any` and `variant` later)
+- [`vector_tools.h`](#vector_toolsh)
 
-Below is a list of all methods from these headers. All declarations are in the `noname::tools` namespace.
+Below is a list of all types and functions from these headers. All declarations are in the `noname::tools` namespace.
 
 ### algorithm_tools.h
 
@@ -111,7 +111,7 @@ std::vector<StringT> split_string(const StringT& str, CharT ch);
 F tuple_for_each(Tuple&& tuple, F f);
 ```
 
-### tuple_tools.h
+### typetraits_tools.h
 
 Some type traits and helper types from the C++17 draft for use in C++14. Also includes the [detection idiom](http://en.cppreference.com/w/cpp/experimental/is_detected) alias templates from Library fundamentals v2.
 ```c++
