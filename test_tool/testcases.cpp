@@ -40,7 +40,7 @@ using namespace std::string_literals;
 TEST_CASE("Testing sorted_vector")
 {
 	SECTION("Call with initializer list") {
-		const auto sortedVector = tools::sorted_vector<std::string>({"ccc","bbb","aaa"});
+		const auto sortedVector = tools::sorted_vector<std::string>({ "ccc","bbb","aaa" });
 
 		REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
 		REQUIRE(sortedVector.size() == 3);
@@ -50,7 +50,7 @@ TEST_CASE("Testing sorted_vector")
 	}
 
 	SECTION("Call with r-value vector") {
-		const auto sortedVector = tools::sorted_vector<std::string>(std::vector<std::string>({"ccc","bbb","aaa"}));
+		const auto sortedVector = tools::sorted_vector<std::string>(std::vector<std::string>({ "ccc","bbb","aaa" }));
 
 		REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
 		REQUIRE(sortedVector.size() == 3);
@@ -192,7 +192,7 @@ TEST_CASE("Testing for_each_and_successor")
 	}
 
 	SECTION("Testing with ascending input range") {
-		source = {0, 1, 2, 3, 4};
+		source = { 0, 1, 2, 3, 4 };
 
 		const auto acc_return = tools::for_each_and_successor(source.begin(), source.end(), acc);
 
@@ -206,7 +206,7 @@ TEST_CASE("Testing for_each_and_successor")
 	}
 
 	SECTION("Testing with one elment in input range") {
-		source = {42};
+		source = { 42 };
 
 		const auto acc_return = tools::for_each_and_successor(source.begin(), source.end(), acc);
 
@@ -225,10 +225,10 @@ TEST_CASE("Testing find_unequal_successor")
 	SECTION("Using equal operator for comparison") {
 
 		SECTION("Repeated application on returned iterator") {
-			source = {1, 1, 1, 2, 2, 3};
+			source = { 1, 1, 1, 2, 2, 3 };
 
 			auto it = tools::find_unequal_successor(source.begin(), source.end());
-			REQUIRE((std::is_same<decltype(it),decltype(source)::iterator>::value) == true);
+			REQUIRE((std::is_same<decltype(it), decltype(source)::iterator>::value) == true);
 			REQUIRE(*it == 2);
 
 			it = tools::find_unequal_successor(it, source.end());
@@ -239,7 +239,7 @@ TEST_CASE("Testing find_unequal_successor")
 		}
 
 		SECTION("Input range with equal elements") {
-			source = {1, 1, 1};
+			source = { 1, 1, 1 };
 
 			const auto it = tools::find_unequal_successor(source.cbegin(), source.cend());
 
@@ -262,7 +262,7 @@ TEST_CASE("Testing find_unequal_successor")
 		const auto not_equal = std::not_equal_to<decltype(source)::value_type>();
 
 		SECTION("Repeated application on returned iterator") {
-			source = {1, 1, 1, 2, 2, 3};
+			source = { 1, 1, 1, 2, 2, 3 };
 
 			auto it = tools::find_unequal_successor(source.begin(), source.end(), not_equal);
 			REQUIRE((std::is_same<decltype(it), decltype(source)::iterator>::value) == true);
@@ -276,7 +276,7 @@ TEST_CASE("Testing find_unequal_successor")
 		}
 
 		SECTION("Input range with equal elements") {
-			source = {1, 1, 1};
+			source = { 1, 1, 1 };
 
 			const auto it = tools::find_unequal_successor(source.cbegin(), source.cend(), not_equal);
 
@@ -334,7 +334,7 @@ TEST_CASE("Testing iterator_range")
 		const int i = 42;
 		const auto range = tools::make_range(i, 47.11f);
 
-		REQUIRE((std::is_same<decltype(range), const tools::iterator_range<int,float>>::value) == true);
+		REQUIRE((std::is_same<decltype(range), const tools::iterator_range<int, float>>::value) == true);
 
 		REQUIRE(range.begin() == i);
 		REQUIRE(range.end() == 47.11f);
@@ -375,7 +375,7 @@ TEST_CASE("Testing tuple_for_each")
 	SECTION("Testing return value of functor")
 	{
 		std::tuple<int, double, float> tuple{ 2, 42.5, 33.5f };
-		
+
 		// Define functor that increments counter on call
 		struct Functor
 		{
@@ -393,7 +393,7 @@ TEST_CASE("Testing tuple_for_each")
 		auto f = tools::tuple_for_each(tuple, Functor(offset));
 
 		// Check whether return works
-		REQUIRE(f.i == offset+3);
+		REQUIRE(f.i == offset + 3);
 	}
 
 	SECTION("Testing with pairs")
@@ -598,7 +598,7 @@ TEST_CASE("Testing optional")
 
 		// In-place initializer list
 		{
-			op_type op(tools::in_place, {'T', 'e', 's', 't'});
+			op_type op(tools::in_place, { 'T', 'e', 's', 't' });
 
 			REQUIRE(op.has_value() == true);
 			REQUIRE(op.value() == "Test"s);
@@ -874,7 +874,7 @@ TEST_CASE("Testing optional")
 
 		// Initializer list
 		{
-			const auto op = tools::make_optional<std::string>({'T','e','s','t'});
+			const auto op = tools::make_optional<std::string>({ 'T','e','s','t' });
 
 			REQUIRE((std::is_same<decltype(op), const op_type>::value));
 			REQUIRE(op.has_value() == true);
@@ -906,7 +906,7 @@ TEST_CASE("Testing optional")
 
 	// Test array as value type
 	{
-		int is[5] = {0,1,2,3,4};
+		int is[5] = { 0,1,2,3,4 };
 		auto op = tools::make_optional(is);
 
 		REQUIRE(op.has_value() == true);
