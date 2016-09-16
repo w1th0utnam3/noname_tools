@@ -14,14 +14,14 @@ the [Catch](https://github.com/philsquared/Catch) header-only unit-test framewor
 At the moment `noname_tools` contains the following headers:
 
 - [`algorithm_tools.h`](#algorithm_toolsh) - Additional algorithms not present in `<algorithm>`
-- [`file_tools.h`](#file_toolsh)
-- [`optional_tools.h`](#optional_toolsh) - C++17 optional for C++14, depends on `type_traits.h` and `utility_tools.h`
+- [`file_tools.h`](#file_toolsh) - Helper methods to read files to strings
+- [`optional_tools.h`](#optional_toolsh) - C++17 `std::optional` for C++14, depends on `type_traits.h` and `utility_tools.h`
 - [`range_tools.h`](#range_toolsh) - Basic `iterator_range` type
-- [`string_tools.h`](#string_toolsh)
-- [`tuple_tools.h`](#tuple_toolsh)
-- [`type_traits.h`](#type_traitsh) - C++17 and Library fundamentals v2 helpers for C++14
+- [`string_tools.h`](#string_toolsh) - String truncate, split...
+- [`tuple_tools.h`](#tuple_toolsh) - Operations on `std::tuple`
+- [`type_traits.h`](#type_traitsh) - C++17 and Library fundamentals v2 helpers for C++14 (`void_t`, `is_detected`,...)
 - [`utility_tools.h`](#utility_toolsh) - helper types for `optional` (possibly also for `any` and `variant` later)
-- [`vector_tools.h`](#vector_toolsh)
+- [`vector_tools.h`](#vector_toolsh) - Operations on `std::vector`
 
 Below is a list of all types and functions from these headers. All declarations are in the `noname::tools` namespace.
 
