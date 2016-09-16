@@ -1,6 +1,6 @@
 //	MIT License
 //
-//	Copyright (c) 2016 Fabian Löschner
+//	Copyright (c) 2016 Fabian LÃ¶schner
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ namespace noname
 			//! Helper used for void_t and required by MSVC
 			template <class...>
 			struct _make_void { using type = void; };
-		}
+		} // namespace _detail
 
 		using namespace _detail;
 
@@ -62,18 +62,53 @@ namespace noname
 		template<class B1, class... Bn>
 		struct disjunction<B1, Bn...> : std::conditional_t<B1::value != false, B1, disjunction<Bn...>> {};
 
+		// The is_detected implementation is equivalent to the reference implementation from http://en.cppreference.com/w/cpp/experimental/is_detected 
+
 		namespace _detail
 		{
-			template<template<class...> class Z, class = void, class...Ts>
-			struct _is_well_formed : std::false_type {};
+			template <class Default, class AlwaysVoid, template<class...> class Op, class... Args>
+			struct detector 
+			{
+				using value_t = std::false_type;
+				using type = Default;
+			};
+		
+			template <class Default, template<class...> class Op, class... Args>
+			struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+			{
+				using value_t = std::true_type;
+				using type = Op<Args...>;
+			};
+		} // namespace _detail
 
-			template<template<class...> class Z, class...Ts>
-			struct _is_well_formed<Z, void_t<Z<Ts...>>, Ts...> : std::true_type {};
-		}
+		//! Class type used by detected_t to indicate detection failure. 
+		struct nonesuch
+		{
+			nonesuch() = delete;
+			~nonesuch() = delete;
+			nonesuch(nonesuch const&) = delete;
+			void operator=(nonesuch const&) = delete;
+		};
+		
+		//! Alias for std::true_type if the template-id Op<Args...> is valid; otherwise it is an alias for std::false_type. 
+		template <template<class...> class Op, class... Args>
+		using is_detected = typename _detail::detector<nonesuch, void, Op, Args...>::value_t;
+		
+		//! Alias for Op<Args...> if that template-id is valid; otherwise it is an alias for the class nonesuch. 
+		template <template<class...> class Op, class... Args>
+		using detected_t = typename _detail::detector<nonesuch, void, Op, Args...>::type;
+		
+		//! If the template-id Op<Args...> is valid, then value_t is an alias for std::true_type, and type is an alias for Op<Args...>; Otherwise, value_t is an alias for std::false_type and type is an alias for Default.
+		template <class Default, template<class...> class Op, class... Args>
+		using detected_or = _detail::detector<Default, void, Op, Args...>;
 
-		//! Checks if the supplied template template argument Z is well formed after substituting the supplied template arguments Ts into it. Is either std::true_type or std::false_type.
-		template<template<class...> class Z, class...Ts>
-		using is_well_formed = _detail::_is_well_formed<Z, void, Ts...>;
+		//! Checks whether detected_t<Op, Args...> is Expected.  
+		template <class Expected, template<class...> class Op, class... Args>
+		using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+
+		//! Checks whether detected_t<Op, Args...> is convertible to To.
+		template <class To, template<class...> class Op, class... Args>
+		using is_detected_convertible = std::is_convertible<detected_t<Op, Args...>, To>;
 
 		namespace _detail
 		{
@@ -91,20 +126,20 @@ namespace noname
 
 			//! Checks if swap(std::declval<T>(), std::declval<U>()) is a valid expression
 			template<class T, class U>
-			using _is_swappable_with_overload = is_well_formed<_swap_with_overload, T, U>;
+			using _is_swappable_with_overload = is_detected<_swap_with_overload, T, U>;
 
 			//! Checks if std::swap(std::declval<T>(), std::declval<U>()) is a valid expression
 			template<class T, class U>
-			using _is_swappable_with_std = is_well_formed<_swap_with_std, T, U>;
+			using _is_swappable_with_std = is_detected<_swap_with_std, T, U>;
 
 			//! Checks if swap(std::declval<T>(), std::declval<U>()) or std::swap(std::declval<T>(), std::declval<U>()) is a valid expression
 			template<class T, class U>
 			using _is_swappable_with_unidirectional = disjunction<_is_swappable_with_overload<T, U>, _is_swappable_with_std<T, U>>;
-		}
+		} // namespace _detail
 
 		//! Checks if the supplied type is referenceable, i.e. whether T& is a well-formed type
 		template<class T>
-		using is_referenceable = is_well_formed<_detail::_reference_t, T>;
+		using is_referenceable = is_detected<_detail::_reference_t, T>;
 
 		//! Checks if the expressions swap(std::declval<T>(), std::declval<U>()) and swap(std::declval<U>(), std::declval<T>()) are both well formed after "using std::swap"
 		template<class T, class U>
