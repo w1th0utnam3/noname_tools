@@ -976,20 +976,60 @@ TEST_CASE("Testing typetraits")
 	}
 }
 
+TEST_CASE("Testing utility types")
+{
+	REQUIRE((std::is_same<tools::nth_element_t<0, int, void, double>, int>::value == true));
+	REQUIRE((std::is_same<tools::nth_element_t<1, int, void, double>, void>::value == true));
+	REQUIRE((std::is_same<tools::nth_element_t<2, int, void, double>, double>::value == true));
+
+	REQUIRE((tools::element_index_v<int, int, double, void> == 0));
+	REQUIRE((tools::element_index_v<double, int, double, void> == 1));
+	REQUIRE((tools::element_index_v<void, int, double, void> == 2));
+	REQUIRE((tools::element_index_v<std::string, int, double, void> == tools::element_not_found));
+
+	REQUIRE((tools::count_element_v<int, void, double, int, int, char, int> == 3));
+	REQUIRE((tools::count_element_v<int> == 0));
+}
+
 TEST_CASE("Testing variant")
 {
 	typedef tools::variant<double, int, char> var_t;
-	var_t v;
 
-	REQUIRE((tools::variant_size_v<var_t> == 3));
-	REQUIRE((tools::variant_size_v<const var_t> == 3));
-	REQUIRE((tools::variant_size_v<volatile var_t> == 3));
-	REQUIRE((tools::variant_size_v<const volatile var_t> == 3));
+	SECTION("Testing helper classes")
+	{
+		REQUIRE((tools::variant_size_v<var_t> == 3));
+		REQUIRE((tools::variant_size_v<const var_t> == 3));
+		REQUIRE((tools::variant_size_v<volatile var_t> == 3));
+		REQUIRE((tools::variant_size_v<const volatile var_t> == 3));
 
-	REQUIRE((std::is_same<tools::variant_alternative_t<0, var_t>, double>::value == true));
-	REQUIRE((std::is_same<tools::variant_alternative_t<1, var_t>, int>::value == true));
-	REQUIRE((std::is_same<tools::variant_alternative_t<2, var_t>, char>::value == true));
-	REQUIRE((std::is_same<tools::variant_alternative_t<1, const var_t>, const int>::value == true));
-	REQUIRE((std::is_same<tools::variant_alternative_t<1, volatile var_t>, volatile int>::value == true));
-	REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile var_t>, const volatile int>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<0, var_t>, double>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<1, var_t>, int>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<2, var_t>, char>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<1, const var_t>, const int>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<1, volatile var_t>, volatile int>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile var_t>, const volatile int>::value == true));
+	}
+
+	SECTION("Testing constructors")
+	{
+		{
+			var_t v;
+			REQUIRE(v.index() == 0);
+		}
+
+		{
+			var_t v(3.14);
+			REQUIRE(v.index() == 0);
+		}
+
+		{
+			var_t v(27);
+			REQUIRE(v.index() == 1);
+		}
+
+		{
+			var_t v('c');
+			REQUIRE(v.index() == 2);
+		}
+	}
 }

@@ -50,9 +50,9 @@ namespace noname
 		template <class... Types>
 		class variant
 		{
-			std::aligned_union_t<0, _detail::two_type_pod<Types, U>...> _memory;
+			std::aligned_union_t<0, _detail::two_type_pod<Types, std::size_t>...> _memory;
 
-			//! Returns reference to the index storage (should be constexpr)
+			//! Returns reference to the index storage (should be constexpr, but isn't because of MSVC)
 			std::size_t& _indexRef()
 			{
 				// Return reference of the index as last size_t in the aligned storage
@@ -62,11 +62,10 @@ namespace noname
 			//! Returns const reference to the index storage
 			constexpr const std::size_t& _indexRefConst() const
 			{
-				// Return reference of the index as last size_t in the aligned storage
 				return *(static_cast<const std::size_t*>(static_cast<const void*>(((&_memory) + 1))) - 1);
 			}
 
-			//! Returns pointer to the address of the contained value (should be constexpr)
+			//! Returns pointer to the address of the contained value (should be constexpr, but isn't because of MSVC)
 			void* _valueMemoryPtr()
 			{
 				// Return address of the value memory as the address of the aligned storage
@@ -76,22 +75,36 @@ namespace noname
 			//! Returns pointer to the address of the contained value
 			constexpr const void* _valueMemoryPtrConst() const
 			{
-				// Return address of the value memory as the address of the aligned storage
 				return static_cast<const void*>(&_memory);
 			}
+
+			template <typename T>
+			using alternative_index = std::conditional_t<(count_element_v<T, Types...> > 1), std::integral_constant<size_t, variant_npos>
+																								, element_index<T, Types...>>;
 
 		public:
 			constexpr variant()
 				: _memory()
 			{
 				_indexRef() = 0;
-				new(_valueMemoryPtr()) nth_element<0, Types...>();
+				new(_valueMemoryPtr()) nth_element_t<0, Types...>();
 			}
 
-			template< class T >
+			template <typename T, typename T_j = best_match<T&&, Types...>
+								, typename = typename std::enable_if<	std::is_constructible<T_j,T>::value 
+																	&& !std::is_same<std::decay_t<T>, variant>::value>::type>
 			constexpr variant(T&& t)
 				: _memory()
 			{
+				_indexRef() = alternative_index<T_j>::value;
+				new(_valueMemoryPtr()) T_j(std::forward<T>(t));
+			}
+
+			~variant()
+			{
+				if (!valueless_by_exception()) {
+					// TODO: Invoke destructor
+				}
 			}
 
 			//! Returns false if and only if the variant holds a value.
@@ -103,7 +116,7 @@ namespace noname
 			//! Returns the zero-based index of the alternative that is currently held by the variant.
 			constexpr std::size_t index() const
 			{
-				return (!valueless_by_exception()) ? _indexRef() : variant_npos;
+				return (!valueless_by_exception()) ? _indexRefConst() : variant_npos;
 			}
 		};
 
@@ -135,7 +148,7 @@ namespace noname
 		struct variant_alternative<I, variant<Types...>>
 		{
 			static_assert(I < sizeof...(Types), "Type index for variant is out of range.");
-			using type = nth_element<I, Types...>;
+			using type = nth_element_t<I, Types...>;
 		};
 
 		template <std::size_t I, class T>
