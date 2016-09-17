@@ -30,6 +30,7 @@
 #include <utility>
 #include <new>
 
+// TODO: Implement porper memory alignment for T + bool, possibly easier with helper type?
 // TODO: Implement copy-swap idiom?
 // TODO: Add noexcept according to reference
 // TODO: Comparison operators? :/
@@ -57,7 +58,11 @@ namespace noname
 
 		//! The class template optional manages an optional contained value, i.e. a value that may or may not be present.
 		template <class T>
-		class optional {
+		class optional 
+		{
+			bool _hasValue;
+			char _memory[sizeof(T)];
+
 		public:
 			//! Type of the contained value
 			typedef T value_type;
@@ -309,10 +314,6 @@ namespace noname
 				new(_memory) T(ilist, std::forward<Args>(args)...);
 				_hasValue = true;
 			}
-
-		private:
-			bool _hasValue;
-			char _memory[sizeof(T)];
 		};
 
 		//! Creates an optional object from value.
