@@ -38,17 +38,54 @@ namespace noname
 		//! This is a special value equal to the largest value representable by the type std::size_t, used as the return type of index() when valueless_by_exception() is true.
 		constexpr std::size_t variant_npos = -1;
 
+		namespace _detail
+		{
+			template <class T, class U>
+			struct two_type_pod {
+				T _; U __;
+			};
+		} // namespace _detail
+
 		//! Type-safe union. An instance of variant at any given time either holds a value of one of its alternative types, or it holds no value.
 		template <class... Types>
 		class variant
 		{
-			std::aligned_union_t<0,Types...> _memory;
+			std::aligned_union_t<0, _detail::two_type_pod<Types, U>...> _memory;
+
+			//! Returns reference to the index storage (should be constexpr)
+			std::size_t& _indexRef()
+			{
+				// Return reference of the index as last size_t in the aligned storage
+				return *(static_cast<std::size_t*>(static_cast<void*>(((&_memory) + 1))) - 1);
+			}
+
+			//! Returns const reference to the index storage
+			constexpr const std::size_t& _indexRefConst() const
+			{
+				// Return reference of the index as last size_t in the aligned storage
+				return *(static_cast<const std::size_t*>(static_cast<const void*>(((&_memory) + 1))) - 1);
+			}
+
+			//! Returns pointer to the address of the contained value (should be constexpr)
+			void* _valueMemoryPtr()
+			{
+				// Return address of the value memory as the address of the aligned storage
+				return static_cast<void*>(&_memory);
+			}
+
+			//! Returns pointer to the address of the contained value
+			constexpr const void* _valueMemoryPtrConst() const
+			{
+				// Return address of the value memory as the address of the aligned storage
+				return static_cast<const void*>(&_memory);
+			}
 
 		public:
 			constexpr variant()
 				: _memory()
 			{
-				new(&_memory) nth_element<0, Types...>();
+				_indexRef() = 0;
+				new(_valueMemoryPtr()) nth_element<0, Types...>();
 			}
 
 			template< class T >
@@ -66,7 +103,7 @@ namespace noname
 			//! Returns the zero-based index of the alternative that is currently held by the variant.
 			constexpr std::size_t index() const
 			{
-				return (!valueless_by_exception()) ? 0 : variant_npos;
+				return (!valueless_by_exception()) ? _indexRef() : variant_npos;
 			}
 		};
 
@@ -94,32 +131,32 @@ namespace noname
 		struct variant_alternative;
 
 		//! Provides compile-time indexed access to the types of the alternatives of the possibly cv-qualified variant, combining cv-qualifications of the variant (if any) with the cv-qualifications of the alternative.
-		template <size_t I, class... Types>
+		template <std::size_t I, class... Types>
 		struct variant_alternative<I, variant<Types...>>
 		{
 			static_assert(I < sizeof...(Types), "Type index for variant is out of range.");
 			using type = nth_element<I, Types...>;
 		};
 
-		template <size_t I, class T>
+		template <std::size_t I, class T>
 		struct variant_alternative<I, const T>
 		{
 			using type = std::add_const_t<typename variant_alternative<I, T>::type>;
 		};
 
-		template <size_t I, class T>
+		template <std::size_t I, class T>
 		struct variant_alternative<I, volatile T>
 		{
 			using type = std::add_volatile_t<typename variant_alternative<I, T>::type>;
 		};
 
-		template <size_t I, class T>
+		template <std::size_t I, class T>
 		struct variant_alternative<I, const volatile T>
 		{
 			using type = std::add_cv_t<typename variant_alternative<I, T>::type>;
 		};
 
-		template <size_t I, class T>
+		template <std::size_t I, class T>
 		using variant_alternative_t = typename variant_alternative<I, T>::type;
 
 		template <std::size_t I, class... Types>
