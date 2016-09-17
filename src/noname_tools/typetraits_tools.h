@@ -67,14 +67,14 @@ namespace noname
 		namespace _detail
 		{
 			template <class Default, class AlwaysVoid, template<class...> class Op, class... Args>
-			struct detector 
+			struct _detector 
 			{
 				using value_t = std::false_type;
 				using type = Default;
 			};
 		
 			template <class Default, template<class...> class Op, class... Args>
-			struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+			struct _detector<Default, void_t<Op<Args...>>, Op, Args...>
 			{
 				using value_t = std::true_type;
 				using type = Op<Args...>;
@@ -92,15 +92,15 @@ namespace noname
 		
 		//! Alias for std::true_type if the template-id Op<Args...> is valid; otherwise it is an alias for std::false_type. 
 		template <template<class...> class Op, class... Args>
-		using is_detected = typename _detail::detector<nonesuch, void, Op, Args...>::value_t;
+		using is_detected = typename _detail::_detector<nonesuch, void, Op, Args...>::value_t;
 		
 		//! Alias for Op<Args...> if that template-id is valid; otherwise it is an alias for the class nonesuch. 
 		template <template<class...> class Op, class... Args>
-		using detected_t = typename _detail::detector<nonesuch, void, Op, Args...>::type;
+		using detected_t = typename _detail::_detector<nonesuch, void, Op, Args...>::type;
 		
 		//! If the template-id Op<Args...> is valid, then value_t is an alias for std::true_type, and type is an alias for Op<Args...>; Otherwise, value_t is an alias for std::false_type and type is an alias for Default.
 		template <class Default, template<class...> class Op, class... Args>
-		using detected_or = _detail::detector<Default, void, Op, Args...>;
+		using detected_or = _detail::_detector<Default, void, Op, Args...>;
 
 		//! Checks whether detected_t<Op, Args...> is Expected.  
 		template <class Expected, template<class...> class Op, class... Args>
