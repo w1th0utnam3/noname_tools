@@ -6,4 +6,5 @@
 #include "range_tools.h"
 #include "string_tools.h"
 #include "tuple_tools.h"
+#include "variant_tools.h"
 #include "vector_tools.h"

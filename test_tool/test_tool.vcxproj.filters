@@ -50,6 +50,9 @@
     <ClInclude Include="..\src\noname_tools\typetraits_tools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\noname_tools\variant_tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\noname_tools\tools">

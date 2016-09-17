@@ -975,3 +975,21 @@ TEST_CASE("Testing typetraits")
 		REQUIRE((tools::is_swappable<void>::value == false));
 	}
 }
+
+TEST_CASE("Testing variant")
+{
+	typedef tools::variant<double, int, char> var_t;
+	var_t v;
+
+	REQUIRE((tools::variant_size_v<var_t> == 3));
+	REQUIRE((tools::variant_size_v<const var_t> == 3));
+	REQUIRE((tools::variant_size_v<volatile var_t> == 3));
+	REQUIRE((tools::variant_size_v<const volatile var_t> == 3));
+
+	REQUIRE((std::is_same<tools::variant_alternative_t<0, var_t>, double>::value == true));
+	REQUIRE((std::is_same<tools::variant_alternative_t<1, var_t>, int>::value == true));
+	REQUIRE((std::is_same<tools::variant_alternative_t<2, var_t>, char>::value == true));
+	REQUIRE((std::is_same<tools::variant_alternative_t<1, const var_t>, const int>::value == true));
+	REQUIRE((std::is_same<tools::variant_alternative_t<1, volatile var_t>, volatile int>::value == true));
+	REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile var_t>, const volatile int>::value == true));
+}
