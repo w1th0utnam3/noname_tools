@@ -26,6 +26,26 @@ namespace noname
 {
 	namespace tools
 	{
+		namespace _detail
+		{
+			// For efficiency see: http://ldionne.com/2015/11/29/efficient-parameter-pack-indexing/
+			template <std::size_t I, typename T, typename ...Ts>
+			struct nth_element_impl
+			{
+				using type = typename nth_element_impl<I - 1, Ts...>::type;
+			};
+
+			template <typename T, typename ...Ts>
+			struct nth_element_impl<0, T, Ts...>
+			{
+				using type = T;
+			};
+		} // namespace _detail
+
+		//! Alias for the I-th element of Ts
+		template <std::size_t I, typename ...Ts>
+		using nth_element = typename nth_element_impl<I, Ts...>::type;
+
 		//! in_place_tag is an empty class type used as the return types of the in_place functions for disambiguation.
 		struct in_place_tag { in_place_tag() = delete; };
 
