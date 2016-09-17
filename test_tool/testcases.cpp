@@ -439,7 +439,7 @@ TEST_CASE("Testing optional")
 	typedef tools::optional<std::string> op_type;
 
 	REQUIRE((std::is_same<std::string, op_type::value_type>::value));
-	REQUIRE(sizeof(op_type) == sizeof(bool) + sizeof(std::string));
+	REQUIRE(sizeof(op_type) == sizeof(std::aligned_storage_t<sizeof(bool) + sizeof(std::string)>));
 
 	// Empty state
 	{
