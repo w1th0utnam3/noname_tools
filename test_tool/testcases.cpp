@@ -1035,9 +1035,30 @@ TEST_CASE("Testing variant")
 
 	SECTION("Testing get_if")
 	{
-		var_t v('t');
+		{
+			var_t v('t');
 
-		REQUIRE((std::is_same<decltype(tools::get_if<2>(&v)),char*>::value == true));
-		REQUIRE((*tools::get_if<2>(&v) == 't'));
+			REQUIRE((std::is_same<decltype(tools::get_if<2>(&v)), char*>::value == true));
+			REQUIRE((*tools::get_if<2>(&v) == 't'));
+		}
+
+		{
+			var_t v(27);
+			const var_t* cv = &v;
+
+			REQUIRE((std::is_same<decltype(tools::get_if<1>(cv)), const int*>::value == true));
+			REQUIRE((*tools::get_if<1>(cv) == 27));
+		}
+
+		{
+			var_t v(3.14);
+
+			REQUIRE((std::is_same<decltype(tools::get_if<double>(&v)), double*>::value == true));
+			REQUIRE((*tools::get_if<double>(&v) == 3.14));
+
+			const var_t* cv = &v;
+			REQUIRE((std::is_same<decltype(tools::get_if<double>(cv)), const double*>::value == true));
+			REQUIRE((*tools::get_if<double>(cv) == 3.14));
+		}
 	}
 }
