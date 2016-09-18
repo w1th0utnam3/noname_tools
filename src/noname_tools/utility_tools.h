@@ -58,16 +58,16 @@ namespace noname
 
 		namespace _detail
 		{
-			template <size_t I, typename... Ts>
+			template <std::size_t I, typename... Ts>
 			struct _element_index;
 
-			template <size_t I, typename T>
-			struct _element_index<I, T> : std::integral_constant<size_t, element_not_found>
+			template <std::size_t I, typename T>
+			struct _element_index<I, T> : std::integral_constant<std::size_t, element_not_found>
 			{
 			};
 
 			template <std::size_t I, typename T, typename U, typename... Us>
-			struct _element_index<I, T, U, Us...> : std::conditional_t<std::is_same<T,U>::value, std::integral_constant<size_t, I>
+			struct _element_index<I, T, U, Us...> : std::conditional_t<std::is_same<T,U>::value, std::integral_constant<std::size_t, I>
 																							, _element_index<I+1, T, Us...>>
 			{
 			};
@@ -80,20 +80,20 @@ namespace noname
 		};
 
 		template <typename T, typename... Ts>
-		constexpr size_t element_index_v = element_index<T, Ts...>::value;
+		constexpr std::size_t element_index_v = element_index<T, Ts...>::value;
 
 		namespace _detail {
 			template<typename... Ts>
 			struct _count;
 
 			template<typename T>
-			struct _count<T> : std::integral_constant<size_t, 0>
+			struct _count<T> : std::integral_constant<std::size_t, 0>
 			{
 			};
 
 			template<typename T, typename U, typename... Us>
-			struct _count<T, U, Us...> : std::integral_constant<size_t, std::conditional_t<std::is_same<T, U>::value, std::integral_constant<size_t, 1>
-																									   , std::integral_constant<size_t, 0>
+			struct _count<T, U, Us...> : std::integral_constant<std::size_t, std::conditional_t<std::is_same<T, U>::value, std::integral_constant<std::size_t, 1>
+																														 , std::integral_constant<std::size_t, 0>
 																			 >::value
 															+ _count<T, Us...>::value>
 			{
@@ -107,7 +107,7 @@ namespace noname
 		};
 
 		template <typename T, typename... Ts>
-		constexpr size_t count_element_v = count_element<T, Ts...>::value;
+		constexpr std::size_t count_element_v = count_element<T, Ts...>::value;
 
 		namespace _detail
 		{
