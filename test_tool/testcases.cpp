@@ -1032,4 +1032,12 @@ TEST_CASE("Testing variant")
 			REQUIRE(v.index() == 2);
 		}
 	}
+
+	SECTION("Testing get_if")
+	{
+		var_t v('t');
+
+		REQUIRE((std::is_same<decltype(tools::get_if<2>(&v)),char*>::value == true));
+		REQUIRE((*tools::get_if<2>(&v) == 't'));
+	}
 }
