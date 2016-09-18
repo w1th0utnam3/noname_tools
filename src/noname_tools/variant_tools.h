@@ -31,6 +31,11 @@
 #define NONAME_CONSTEXPR_ constexpr
 #endif
 
+// TODO: Reimplement without placement new, so that constexpr actually works
+// TODO: Trivial destructor
+// TODO: Empty base optimization
+// TODO: Add noexcept according to reference
+
 namespace noname
 {
 	namespace tools
@@ -171,6 +176,31 @@ namespace noname
 			template <typename T, class... Types>
 			constexpr std::size_t alternative_index_v = alternative_index<T, Types...>::value;
 
+			template <class... Types>
+			struct _variant_destructor;
+
+			template <>
+			struct _variant_destructor<>
+			{
+				static void destroy(size_t I, void* data)
+				{
+					throw std::runtime_error("Unable to call correct destructor.");
+				}
+			};
+
+			template <class T, class... Types>
+			struct _variant_destructor<T, Types...>
+			{
+				static void destroy(size_t I, void* data)
+				{
+					if (I == 0) {
+						static_cast<T*>(data)->~T();
+					} else {
+						_variant_destructor<Types...>::destroy(I - 1, data);
+					}
+				}
+			};
+
 		} // namespace _detail
 
 		//! Type-safe union. An instance of variant at any given time either holds a value of one of its alternative types, or it holds no value.
@@ -198,7 +228,7 @@ namespace noname
 			~variant()
 			{
 				if (!valueless_by_exception()) {
-					// TODO: Invoke destructor
+					_detail::_variant_destructor<Types...>::destroy(this->_indexRefConst(), this->_valueMemoryPtr());
 				}
 			}
 
