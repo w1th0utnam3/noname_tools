@@ -35,7 +35,12 @@
 // TODO: Add noexcept according to reference
 // TODO: Comparison operators? :/
 // TODO: Empty base optimization?
-// TODO: As soon as MSVC has better constexpr support, all value() methods can be marked as constexpr
+
+#ifdef _MSC_VER
+#define NONAME_CONSTEXPR_
+#else
+#define NONAME_CONSTEXPR_ constexpr
+#endif
 
 namespace noname
 {
@@ -62,8 +67,8 @@ namespace noname
 		{
 			std::aligned_storage_t<sizeof(T) + sizeof(bool)> _memory;
 
-			//! Returns reference to the _hasValue flag (should be constexpr)
-			bool& _hasValueRef()
+			//! Returns reference to the _hasValue flag
+			NONAME_CONSTEXPR_ bool& _hasValueRef()
 			{
 				// Return reference of the _hasValue flag as last bool in the aligned storage
 				return *(static_cast<bool*>(static_cast<void*>(((&_memory)+1)))-1);
@@ -76,8 +81,8 @@ namespace noname
 				return *(static_cast<const bool*>(static_cast<const void*>(((&_memory)+1)))-1);
 			}
 
-			//! Returns pointer to the address of the contained value (should be constexpr)
-			void* _valueMemoryPtr()
+			//! Returns pointer to the address of the contained value
+			NONAME_CONSTEXPR_ void* _valueMemoryPtr()
 			{
 				// Return address of the value memory as the address of the aligned storage
 				return static_cast<void*>(&_memory);
@@ -239,7 +244,7 @@ namespace noname
 			}
 
 			//! Accesses the contained value. Returns pointer.
-			T* operator->()
+			NONAME_CONSTEXPR_ T* operator->()
 			{
 				return static_cast<T*>(_valueMemoryPtr());
 			}
@@ -251,13 +256,13 @@ namespace noname
 			}
 
 			//! Accesses the contained value. Returns ref.
-			T& operator*() &
+			NONAME_CONSTEXPR_ T& operator*() &
 			{
 				return *static_cast<T*>(_valueMemoryPtr());
 			}
 
 			//! Accesses the contained value.
-			T&& operator*() &&
+			NONAME_CONSTEXPR_ T&& operator*() &&
 			{
 				return std::move(*static_cast<T*>(_valueMemoryPtr()));
 			}
@@ -269,7 +274,7 @@ namespace noname
 			constexpr bool has_value() const { return _hasValueRefConst(); }
 
 			//! If *this contains a value, returns a reference to the contained value.
-			T& value() &
+			NONAME_CONSTEXPR_ T& value() &
 			{
 				if (_hasValueRefConst()) return **this; throw bad_optional_access();
 			}
@@ -281,7 +286,7 @@ namespace noname
 			}
 
 			//! If *this contains a value, returns a reference to the contained value.
-			T&& value() &&
+			NONAME_CONSTEXPR_ T&& value() &&
 			{
 				if (_hasValueRefConst()) return std::move(**this); throw bad_optional_access();
 			}
@@ -377,3 +382,5 @@ namespace noname
 		}
 	}
 }
+
+#undef NONAME_CONSTEXPR_
