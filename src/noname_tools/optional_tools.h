@@ -30,11 +30,12 @@
 #include <utility>
 #include <new>
 
-// TODO: Implement porper memory alignment for T + bool, possibly easier with helper type?
-// TODO: Implement copy-swap idiom?
+// TODO: Reimplement without placement new, so that constexpr actually works
+// TODO: Trivial destructor
+// TODO: Empty base optimization
+// TODO: Check exception gurantees on copy construction/assignment
 // TODO: Add noexcept according to reference
 // TODO: Comparison operators? :/
-// TODO: Empty base optimization?
 
 #ifdef _MSC_VER
 #define NONAME_CONSTEXPR_
