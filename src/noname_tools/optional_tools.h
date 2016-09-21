@@ -48,24 +48,30 @@ namespace noname
 	namespace tools
 	{
 		//! nullopt_t is an empty class type used to indicate optional type with uninitialized state.
-		struct nullopt_t {
-			constexpr nullopt_t(decltype(nullptr)) {}
+		struct nullopt_t
+		{
+			struct init {};
+			constexpr explicit nullopt_t(init) {}
 		};
 
 		//! nullopt is a constant of type nullopt_t that is used to indicate optional type with uninitialized state.
-		constexpr nullopt_t nullopt{ nullptr };
+		constexpr nullopt_t nullopt{ nullopt_t::init() };
 
 		//! Defines a type of object to be thrown by optional::value when accessing an optional object that does not contain a value.
-		class bad_optional_access : public std::logic_error 
+		class bad_optional_access : public std::logic_error
 		{
 		public:
-			bad_optional_access() : std::logic_error("Optional does not contain a value.") {}
+			explicit bad_optional_access(const std::string& what_arg) : std::logic_error{ what_arg } {}
+			explicit bad_optional_access(const char* what_arg) : std::logic_error{ what_arg } {}
 		};
 
 		//! The class template optional manages an optional contained value, i.e. a value that may or may not be present.
 		template <class T>
 		class optional 
 		{
+			static_assert(!std::is_same<typename std::decay<T>::type, nullopt_t>::value, "bad T");
+			static_assert(!std::is_same<typename std::decay<T>::type, in_place_t>::value, "bad T");
+
 			std::aligned_storage_t<sizeof(T) + sizeof(bool)> _memory;
 
 			//! Returns reference to the _hasValue flag
@@ -277,19 +283,19 @@ namespace noname
 			//! If *this contains a value, returns a reference to the contained value.
 			NONAME_CONSTEXPR_ T& value() &
 			{
-				if (_hasValueRefConst()) return **this; throw bad_optional_access();
+				if (_hasValueRefConst()) return **this; throw bad_optional_access("Optional is empty.");
 			}
 
 			//! If *this contains a value, returns a const-reference to the contained value.
 			constexpr const T & value() const &
 			{
-				if (_hasValueRefConst()) return **this; throw bad_optional_access();
+				if (_hasValueRefConst()) return **this; throw bad_optional_access("Optional is empty.");
 			}
 
 			//! If *this contains a value, returns a reference to the contained value.
 			NONAME_CONSTEXPR_ T&& value() &&
 			{
-				if (_hasValueRefConst()) return std::move(**this); throw bad_optional_access();
+				if (_hasValueRefConst()) return std::move(**this); throw bad_optional_access("Optional is empty.");
 			}
 
 			//! Returns the contained value if *this has a value, otherwise returns default_value.
