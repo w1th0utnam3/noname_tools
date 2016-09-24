@@ -29,12 +29,11 @@
 #include <type_traits>
 #include <utility>
 #include <new>
+#include <initializer_list>
+#include <cassert>
 
-// TODO: Reimplement without placement new, so that constexpr actually works
-// TODO: Trivial destructor
+// TODO: Add padding to align storage
 // TODO: Empty base optimization
-// TODO: Check exception gurantees on copy construction/assignment
-// TODO: Add noexcept according to reference
 // TODO: Comparison operators? :/
 
 #ifdef _MSC_VER
@@ -43,12 +42,12 @@
 #define NONAME_CONSTEXPR_ constexpr
 #endif
 
+#define NONAME_REQUIRES_(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
+
 namespace noname
 {
 	namespace tools
 	{
-		# define REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
-
 		//! nullopt_t is an empty class type used to indicate optional type with uninitialized state.
 		struct nullopt_t
 		{
@@ -66,6 +65,37 @@ namespace noname
 			explicit bad_optional_access(const std::string& what_arg) : std::logic_error{ what_arg } {}
 			explicit bad_optional_access(const char* what_arg) : std::logic_error{ what_arg } {}
 		};
+
+		namespace _detail
+		{
+			template <typename T>
+			struct has_overloaded_addressof
+			{
+				template <class X>
+				constexpr static bool has_overload(...) { return false; }
+
+				template <class X, size_t S = sizeof(std::declval<X&>().operator&()) >
+				constexpr static bool has_overload(bool) { return true; }
+
+				constexpr static bool value = has_overload<T>(true);
+			};
+
+			template <typename T, NONAME_REQUIRES_(!has_overloaded_addressof<T>)>
+			constexpr T* static_addressof(T& ref)
+			{
+				return &ref;
+			}
+
+			template <typename T, NONAME_REQUIRES_(has_overloaded_addressof<T>)>
+			T* static_addressof(T& ref)
+			{
+				return std::addressof(ref);
+			}
+
+			// The call to convert<A>(b) has return type A and converts b to type A iff b decltype(b) is implicitly convertible to A  
+			template <class U>
+			constexpr U convert(U v) { return v; }
+		} // namespace _detail
 
 		namespace _detail
 		{
@@ -120,7 +150,7 @@ namespace noname
 
 				constexpr _optional_base() noexcept 
 					: _init(false)
-					, _storage(_trivial_init_t)
+					, _storage(_trivial_init)
 				{
 				}
 
@@ -142,7 +172,7 @@ namespace noname
 				{
 				}
 
-				template <class U, class... Args, REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
+				template <class U, class... Args, NONAME_REQUIRES_(std::is_constructible<T, std::initializer_list<U>>)>
 				explicit _optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
 					: _init(true)
 					, _storage(il, std::forward<Args>(args)...)
@@ -185,7 +215,7 @@ namespace noname
 				{
 				}
 
-				template <class U, class... Args, REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
+				template <class U, class... Args, NONAME_REQUIRES_(std::is_constructible<T, std::initializer_list<U>>)>
 				NONAME_CONSTEXPR_ explicit _constexpr_optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
 					: _init(true), _storage(il, std::forward<Args>(args)...)
 				{
@@ -210,34 +240,29 @@ namespace noname
 			static_assert(!std::is_same<typename std::decay<T>::type, nullopt_t>::value, "bad T");
 			static_assert(!std::is_same<typename std::decay<T>::type, in_place_t>::value, "bad T");
 
-			std::aligned_storage_t<sizeof(T) + sizeof(bool)> _memory;
+			constexpr bool initialized() const noexcept { return _optional_base_t<T>::_init; }
+			typename std::remove_const<T>::type* dataptr() { return std::addressof(_optional_base_t<T>::_storage._value); }
+			constexpr const T* dataptr() const { return _detail::static_addressof(_optional_base_t<T>::_storage._value); }
 
-			//! Returns reference to the _hasValue flag
-			NONAME_CONSTEXPR_ bool& _hasValueRef()
+			constexpr const T& contained_val() const& { return _optional_base_t<T>::_storage._value; }
+
+			NONAME_CONSTEXPR_ T&& contained_val() && { return std::move(_optional_base_t<T>::_storage._value); }
+			NONAME_CONSTEXPR_ T& contained_val() & { return _optional_base_t<T>::_storage._value; }
+
+			template <class... Args>
+			void initialize(Args&&... args) noexcept(noexcept(T(std::forward<Args>(args)...)))
 			{
-				// Return reference of the _hasValue flag as last bool in the aligned storage
-				return *(static_cast<bool*>(static_cast<void*>(((&_memory)+1)))-1);
+				assert(!_optional_base_t<T>::_init);
+				::new (static_cast<void*>(dataptr())) T(std::forward<Args>(args)...);
+				_optional_base_t<T>::_init = true;
 			}
 
-			//! Returns const reference to the _hasValue flag
-			constexpr const bool& _hasValueRefConst() const
+			template <class U, class... Args>
+			void initialize(std::initializer_list<U> il, Args&&... args) noexcept(noexcept(T(il, std::forward<Args>(args)...)))
 			{
-				// Return reference of the _hasValue flag as last bool in the aligned storage
-				return *(static_cast<const bool*>(static_cast<const void*>(((&_memory)+1)))-1);
-			}
-
-			//! Returns pointer to the address of the contained value
-			NONAME_CONSTEXPR_ void* _valueMemoryPtr()
-			{
-				// Return address of the value memory as the address of the aligned storage
-				return static_cast<void*>(&_memory);
-			}
-
-			//! Returns pointer to the address of the contained value
-			constexpr const void* _valueMemoryPtrConst() const
-			{
-				// Return address of the value memory as the address of the aligned storage
-				return static_cast<const void*>(&_memory);
+				assert(!_optional_base_t<T>::_init);
+				::new (static_cast<void*>(dataptr())) T(il, std::forward<Args>(args)...);
+				_optional_base_t<T>::_init = true;
 			}
 
 		public:
@@ -245,263 +270,179 @@ namespace noname
 			typedef T value_type;
 
 			//! Constructs an optional object that does not contain a value.
-			constexpr optional() : _memory() { _hasValueRef() = false; }
-
+			constexpr optional() noexcept : _optional_base_t<T>() {};
 			//! Constructs an optional object that does not contain a value.
-			constexpr optional(nullopt_t) : _memory() { _hasValueRef() = false; }
+			constexpr optional(nullopt_t) noexcept : _optional_base_t<T>() {};
 
-			//! Copy constructor: If other contains a value, initializes the contained value as if direct-initializing an object of type T with the expression *other. If other does not contain a value, constructs an object that does not contain a value.
-			optional(const optional& other)
-				: _memory()
+			//! Copy constructor: If 'other' contains a value, initializes the contained value as if direct-initializing an object of type 'T' with the expression '*other'. If 'other' does not contain a value, constructs an object that does not contain a value.
+			optional(const optional& rhs)
+				: _optional_base_t<T>()
 			{
-				static_assert(std::is_copy_constructible<T>::value, "The value type must meet the requirements of CopyConstructible in order to use construction by copy.");
-
-				_hasValueRef() = other._hasValueRefConst();
-				if (_hasValueRef()) new(_valueMemoryPtr()) T(*other);
+				if (rhs.initialized()) {
+					::new (static_cast<void*>(dataptr())) T(*rhs);
+					_optional_base_t<T>::_init = true;
+				}
+			}
+			
+			//! Move constructor: If other contains a value, initializes the contained value as if direct-initializing an object of type 'T' with the expression std::move(*other) and does not make other empty: a moved-from optional still contains a value, but the value itself is moved from. If other does not contain a value, constructs an object that does not contain a value.
+			optional(optional&& rhs) noexcept(std::is_nothrow_move_constructible<T>::value)
+				: _optional_base_t<T>()
+			{
+				if (rhs.initialized()) {
+					::new (static_cast<void*>(dataptr())) T(std::move(*rhs));
+					_optional_base_t<T>::_init = true;
+				}
 			}
 
-			//! Move constructor: If other contains a value, initializes the contained value as if direct-initializing an object of type T with the expression std::move(*other) and does not make other empty: a moved-from optional still contains a value, but the value itself is moved from. If other does not contain a value, constructs an object that does not contain a value.
-			optional(optional&& other)
-				: _memory()
-			{
-				static_assert(std::is_move_constructible<T>::value, "The value type must meet the requirements of MoveConstructible in order to use construction by move.");
+			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type 'T' with the expression value. This constructor is constexpr if the constructor of T selected by direct-initialization is constexpr.
+			constexpr optional(const T& v) : _optional_base_t<T>(v) {}
 
-				_hasValueRef() = other._hasValueRef();
-				if (_hasValueRef()) new(_valueMemoryPtr()) T(std::move(*other));
-			}
+			//! Constructs an optional object that contains a value, initialized as if direct - initializing(but not direct-list-initializing) an object of type 'T' with the expression 'std::move(value)'.This constructor is constexpr if the constructor of 'T' selected by direct-initialization is constexpr.
+			constexpr optional(T&& v) : _optional_base_t<T>(std::move(v)) {}
 
-			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type T with the expression value. This constructor is constexpr if the constructor of T selected by direct-initialization is constexpr.
-			constexpr optional(const T& value)
-				: _memory()
-			{
-				static_assert(std::is_copy_constructible<T>::value, "The value type must meet the requirements of CopyConstructible in order to use construction by copy.");
-				
-				_hasValueRef() = true;
-				new(_valueMemoryPtr()) T(value);
-			}
+			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type 'T' from the arguments 'std::forward<Args>(args)...'.
+			template <class... Args>
+			explicit constexpr optional(in_place_t, Args&&... args)
+				: _optional_base_t<T>(in_place_t{}, std::forward<Args>(args)...) {}
 
-			//!  Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type T with the expression std::move(value). This constructor is constexpr if the constructor of T selected by direct-initialization is constexpr.
-			constexpr optional(T&& value)
-				: _memory()
-			{
-				static_assert(std::is_move_constructible<T>::value, "The value type must meet the requirements of MoveConstructible in order to use construction by move.");
-				
-				_hasValueRef() = true;
-				new(_valueMemoryPtr()) T(std::move(value));
-			}
-
-			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type T from the arguments std::forward<Args>(args)...
-			template< class... Args >
-			constexpr explicit optional(tools::in_place_t, Args&&... args)
-				: _memory()
-			{
-				static_assert(std::is_constructible<T, Args&&...>::value, "The value type must be constructible from the supplied Args.");
-
-				_hasValueRef() = true;
-				new(_valueMemoryPtr()) T(std::forward<Args>(args)...);
-			}
-
-			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type T from the arguments ilist, std::forward<Args>(args)....
-			template< class U, class... Args >
-			constexpr explicit optional(tools::in_place_t, std::initializer_list<U> ilist, Args&&... args)
-				: _memory()
-			{
-				static_assert(std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value, "The value type must be constructible from std::initializer_list and supplied Args.");
-
-				_hasValueRef() = true;
-				new(_valueMemoryPtr()) T(ilist, std::forward<Args>(args)...);
-			}
+			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type 'T' from the arguments 'ilist, std::forward<Args>(args)...'.
+			template <class U, class... Args, NONAME_REQUIRES_(std::is_constructible<T, std::initializer_list<U>>)>
+			explicit optional(in_place_t, std::initializer_list<U> il, Args&&... args)
+				: _optional_base_t<T>(in_place_t{}, il, std::forward<Args>(args)...) {}
 
 			//! Calls the constructor of the contained value if it is not trivially destructible.
-			~optional()
-			{
-				if (_hasValueRefConst()) (**this).~T();
+			~optional() = default;
+
+			//! If *this contains a value, destroy that value as if by 'value().T::~T()'. Otherwise, there are no effects. '*this' does not contain a value after this call.
+			void reset() noexcept {
+				if (initialized()) dataptr()->T::~T();
+				_optional_base_t<T>::_init = false;
 			}
 
 			//! If *this contains a value before the call, the contained value is destroyed by calling its destructor.
-			optional& operator=(nullopt_t)
+			optional& operator=(nullopt_t) noexcept
 			{
-				if (_hasValueRefConst()) {
-					(**this).~T();
-					_hasValueRef() = false;
-				}
+				reset();
 				return *this;
 			}
 
 			//! Replaces contents of *this with the contents of other.
-			optional& operator=(const optional& other)
+			optional& operator=(const optional& rhs)
 			{
-				static_assert(std::is_copy_constructible<T>::value && std::is_copy_assignable<T>::value, "The value type must meet the requirements of CopyConstructible and CopyAssignable in order to use construction by move.");
-
-				if (_hasValueRefConst() && other._hasValueRefConst()) {
-					(**this) = *other;
-				}
-				else if (_hasValueRefConst()) {
-					(**this).~T();
-					_hasValueRef() = false;
-				}
-				else if (other._hasValueRefConst()) {
-					new(_valueMemoryPtr()) T(*other);
-					_hasValueRef() = true;
-				}
+				if (initialized() == true && rhs.initialized() == false) reset();
+				else if (initialized() == false && rhs.initialized() == true)  initialize(*rhs);
+				else if (initialized() == true && rhs.initialized() == true)  contained_val() = *rhs;
 				return *this;
 			}
 
 			//! Replaces contents of *this with the contents of other.
-			optional& operator=(optional&& other)
+			optional& operator=(optional&& rhs)
+				noexcept(std::is_nothrow_move_assignable<T>::value && std::is_nothrow_move_constructible<T>::value)
 			{
-				static_assert(std::is_move_constructible<T>::value && std::is_move_assignable<T>::value, "The value type must meet the requirements of MoveConstructible and MoveAssignable in order to use construction by move.");
-
-				if (_hasValueRefConst() && other._hasValueRefConst()) {
-					(**this) = std::move(*other);
-				}
-				else if (_hasValueRefConst()) {
-					(**this).~T();
-					_hasValueRef() = false;
-				}
-				else if (other._hasValueRefConst()) {
-					new(_valueMemoryPtr()) T(std::move(*other));
-					_hasValueRef() = true;
-				}
+				if (initialized() == true && rhs.initialized() == false) reset();
+				else if (initialized() == false && rhs.initialized() == true)  initialize(std::move(*rhs));
+				else if (initialized() == true && rhs.initialized() == true)  contained_val() = std::move(*rhs);
 				return *this;
 			}
 
 			//! Replaces contents of *this with value.
-			template< class U >
-			optional& operator=(U&& value)
+			template <class U>
+			auto operator=(U&& v)
+				-> typename std::enable_if<std::is_same<typename std::decay<U>::type, T>::value, optional&>::type
 			{
-				static_assert(std::is_same<std::decay_t<U>, T>::value, "The supplied value must be of the same type as the optional value.");
-
-				if (_hasValueRefConst()) {
-					(**this) = std::move(value);
-				}
-				else {
-					new(_valueMemoryPtr()) T(std::move(value));
-					_hasValueRef() = true;
-				}
+				if (initialized()) { contained_val() = std::forward<U>(v); }
+				else { initialize(std::forward<U>(v)); }
 				return *this;
 			}
 
-			//! Accesses the contained value. Returns const-pointer.
-			constexpr const T* operator->() const
+			//! Constructs the contained value in-place. If *this already contains a value before the call, the contained value is destroyed by calling its destructor.
+			template <class... Args>
+			void emplace(Args&&... args)
 			{
-				return static_cast<const T*>(_valueMemoryPtrConst());
+				reset();
+				initialize(std::forward<Args>(args)...);
 			}
 
-			//! Accesses the contained value. Returns pointer.
-			NONAME_CONSTEXPR_ T* operator->()
+			//! Constructs the contained value in-place. If *this already contains a value before the call, the contained value is destroyed by calling its destructor.
+			template <class U, class... Args>
+			void emplace(std::initializer_list<U> il, Args&&... args)
 			{
-				return static_cast<T*>(_valueMemoryPtr());
-			}
-
-			//! Accesses the contained value. Returns const-ref.
-			constexpr const T& operator*() const&
-			{
-				return *static_cast<const T*>(_valueMemoryPtrConst());
-			}
-
-			//! Accesses the contained value. Returns ref.
-			NONAME_CONSTEXPR_ T& operator*() &
-			{
-				return *static_cast<T*>(_valueMemoryPtr());
-			}
-
-			//! Accesses the contained value.
-			NONAME_CONSTEXPR_ T&& operator*() &&
-			{
-				return std::move(*static_cast<T*>(_valueMemoryPtr()));
-			}
-
-			//! Checks whether *this contains a value.
-			constexpr explicit operator bool() const { return _hasValueRefConst(); }
-
-			//! Checks whether *this contains a value.
-			constexpr bool has_value() const { return _hasValueRefConst(); }
-
-			//! If *this contains a value, returns a reference to the contained value.
-			NONAME_CONSTEXPR_ T& value() &
-			{
-				if (_hasValueRefConst()) return **this; throw bad_optional_access("Optional is empty.");
-			}
-
-			//! If *this contains a value, returns a const-reference to the contained value.
-			constexpr const T & value() const &
-			{
-				if (_hasValueRefConst()) return **this; throw bad_optional_access("Optional is empty.");
-			}
-
-			//! If *this contains a value, returns a reference to the contained value.
-			NONAME_CONSTEXPR_ T&& value() &&
-			{
-				if (_hasValueRefConst()) return std::move(**this); throw bad_optional_access("Optional is empty.");
-			}
-
-			//! Returns the contained value if *this has a value, otherwise returns default_value.
-			template<class U>
-			constexpr T value_or(U&& default_value) const&
-			{
-				static_assert(std::is_copy_constructible<T>::value, "The value type must meet the requirements of CopyConstructible in order to use this value_or overload.");
-				static_assert(std::is_convertible<U, T>::value, "The supplied default value must be convertible to the value type of the optional.");
-
-				return bool(*this) ? **this : static_cast<T>(std::forward<U>(default_value));
-			}
-
-			//! Returns the contained value if *this has a value, otherwise returns default_value.
-			template<class U>
-			constexpr T value_or(U&& default_value) &&
-			{
-				static_assert(std::is_move_constructible<T>::value, "The value type must meet the requirements of MoveConstructible in order to use this value_or overload.");
-				static_assert(std::is_convertible<U, T>::value, "The supplied default value must be convertible to the value type of the optional.");
-
-				return bool(*this) ? std::move(**this) : static_cast<T>(std::forward<U>(default_value));
+				reset();
+				initialize<U, Args...>(il, std::forward<Args>(args)...);
 			}
 
 			//! Swaps the contents with those of other.
-			void swap(optional& other)
+			void swap(optional<T>& rhs) noexcept(std::is_nothrow_move_constructible<T>::value && noexcept(std::swap(std::declval<T&>(), std::declval<T&>())))
 			{
-				static_assert(tools::is_swappable<T>::value, "The value type must meet the requirements of Swappable.");
-
-				if (_hasValueRefConst() && other._hasValueRefConst()) {
-					using std::swap;
-					swap(**this, *other);
-				}
-				else if (_hasValueRefConst()) {
-					new(other._valueMemoryPtr()) T(std::move(**this));
-					(**this).~T();
-					std::swap(this->_hasValueRef(), other._hasValueRef());
-				}
-				else if (other._hasValueRefConst()) {
-					new(_valueMemoryPtr()) T(std::move(*other));
-					other->T::~T();
-					std::swap(this->_hasValueRef(), other._hasValueRef());
-				}
+				if (initialized() == true && rhs.initialized() == false) { rhs.initialize(std::move(**this)); reset(); }
+				else if (initialized() == false && rhs.initialized() == true) { initialize(std::move(*rhs)); rhs.reset(); }
+				else if (initialized() == true && rhs.initialized() == true) { using std::swap; swap(**this, *rhs); }
 			}
 
-			//! If *this contains a value, destroy that value as if by value().T::~T(). Otherwise, there are no effects. *this does not contain a value after this call.
-			void reset()
-			{
-				if (_hasValueRefConst()) (**this).~T();
-				_hasValueRef() = false;
+			//! Checks whether *this contains a value.
+			explicit constexpr operator bool() const noexcept { return initialized(); }
+
+			//! Checks whether *this contains a value.
+			constexpr bool has_value() const noexcept { return initialized(); }
+
+			//! Accesses the contained value. Returns const-pointer.
+			constexpr T const* operator->() const {
+				assert(initialized());
+				return dataptr();
 			}
 
-			//! Constructs the contained value in-place. If *this already contains a value before the call, the contained value is destroyed by calling its destructor.
-			template< class... Args >
-			void emplace(Args&&... args)
-			{
-				static_assert(std::is_constructible<T, Args&&...>::value, "The value type must be constructible from the supplied Args.");
-				if (_hasValueRefConst()) (**this).~T();
-				new(_valueMemoryPtr()) T(std::forward<Args>(args)...);
-				_hasValueRef() = true;
+			//! Accesses the contained value. Returns pointer.
+			NONAME_CONSTEXPR_ T* operator->() {
+				assert(initialized());
+				return dataptr();
 			}
 
-			//! Constructs the contained value in-place. If *this already contains a value before the call, the contained value is destroyed by calling its destructor.
-			template< class U, class... Args >
-			void emplace(std::initializer_list<U> ilist, Args&&... args)
+			//! Accesses the contained value. Returns const-ref.
+			constexpr T const& operator*() const& {
+				assert(initialized());
+				return contained_val();
+			}
+
+			//! Accesses the contained value. Returns ref.
+			NONAME_CONSTEXPR_ T& operator*() & {
+				assert(initialized());
+				return contained_val();
+			}
+
+			//! Accesses the contained value.
+			NONAME_CONSTEXPR_ T&& operator*() && {
+				assert(initialized());
+				return std::move(contained_val());
+			}
+
+			//! If *this contains a value, returns a const-reference to the contained value.
+			constexpr T const& value() const& {
+				return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
+			}
+
+			//! If *this contains a value, returns a reference to the contained value.
+			NONAME_CONSTEXPR_ T& value() & {
+				return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
+			}
+
+			//! If *this contains a value, returns a reference to the contained value.
+			NONAME_CONSTEXPR_ T&& value() && {
+				if (!initialized()) throw bad_optional_access("bad optional access");
+				return std::move(contained_val());
+			}
+
+			//! Returns the contained value if *this has a value, otherwise returns default_value.
+			template <class V>
+			constexpr T value_or(V&& v) const&
 			{
-				static_assert(std::is_constructible<T, std::initializer_list<U>&, Args&&...>::value, "The value type must be constructible from std::initializer_list and supplied Args.");
-				if (_hasValueRefConst()) (**this).~T();
-				new(_valueMemoryPtr()) T(ilist, std::forward<Args>(args)...);
-				_hasValueRef() = true;
+				return *this ? **this : _detail::convert<T>(std::forward<V>(v));
+			}
+
+			//! Returns the contained value if *this has a value, otherwise returns default_value.
+			template <class V>
+			NONAME_CONSTEXPR_ T value_or(V&& v) &&
+			{
+				return *this ? std::move(const_cast<optional<T>&>(*this).contained_val()) : _detail::convert<T>(std::forward<V>(v));
 			}
 		};
 
@@ -529,3 +470,4 @@ namespace noname
 }
 
 #undef NONAME_CONSTEXPR_
+#undef NONAME_REQUIRES_
