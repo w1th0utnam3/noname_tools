@@ -137,12 +137,7 @@ namespace noname
 		template <typename T, typename... Ts>
 		using best_match = _detail::best_match_impl<std::result_of_t<overload<Ts...>(T)>, Ts...>;
 
-		//! in_place_tag is an empty class type used as the return types of the in_place functions for disambiguation.
-		struct in_place_tag { in_place_tag(); };
-
 		//! Disambiguation tag to create an optional, any or variant in-place. Actually calling any of the in_place functions results in undefined behavior.
-		in_place_tag in_place() {};
-
-		using in_place_t = in_place_tag(&)();
+		constexpr struct in_place_t {} in_place{};
 	}
 }
