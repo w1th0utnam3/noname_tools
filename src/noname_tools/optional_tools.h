@@ -47,6 +47,8 @@ namespace noname
 {
 	namespace tools
 	{
+		# define REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
+
 		//! nullopt_t is an empty class type used to indicate optional type with uninitialized state.
 		struct nullopt_t
 		{
@@ -65,9 +67,145 @@ namespace noname
 			explicit bad_optional_access(const char* what_arg) : std::logic_error{ what_arg } {}
 		};
 
+		namespace _detail
+		{
+			constexpr struct _trivial_init_t {} _trivial_init{};
+
+			template <class T>
+			union _optional_storage
+			{
+				unsigned char _dummy;
+				T _value;
+
+				constexpr _optional_storage(_trivial_init_t) noexcept
+					: _dummy() 
+				{
+				}
+
+				template <class... Args>
+				constexpr _optional_storage(Args&&... args)
+					: _value(std::forward<Args>(args)...)
+				{
+				}
+
+				~_optional_storage() 
+				{
+				}
+			};
+
+			template <class T>
+			union _constexpr_optional_storage
+			{
+				unsigned char _dummy;
+				T _value;
+
+				constexpr _constexpr_optional_storage(_trivial_init_t) noexcept : _dummy()
+				{
+				};
+
+				template <class... Args>
+				constexpr _constexpr_optional_storage(Args&&... args)
+					: _value(std::forward<Args>(args)...)
+				{
+				}
+
+				~_constexpr_optional_storage() = default;
+			};
+
+			template <class T>
+			struct _optional_base
+			{
+				bool _init;
+				_optional_storage<T> _storage;
+
+				constexpr _optional_base() noexcept 
+					: _init(false)
+					, _storage(_trivial_init_t)
+				{
+				}
+
+				explicit constexpr _optional_base(const T& v)
+					: _init(true)
+					, _storage(v) 
+				{
+				}
+
+				explicit constexpr _optional_base(T&& v)
+					: _init(true)
+					, _storage(std::move(v))
+				{
+				}
+
+				template <class... Args> explicit _optional_base(in_place_t, Args&&... args)
+					: _init(true)
+					, _storage(std::forward<Args>(args)...)
+				{
+				}
+
+				template <class U, class... Args, REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
+				explicit _optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+					: _init(true)
+					, _storage(il, std::forward<Args>(args)...)
+				{
+				}
+
+				~_optional_base() 
+				{ 
+					if (_init) _storage._value.T::~T();
+				}
+			};
+
+			template <class T>
+			struct _constexpr_optional_base
+			{
+				bool _init;
+				_constexpr_optional_storage<T> _storage;
+
+				constexpr _constexpr_optional_base() noexcept
+					: _init(false)
+					, _storage(_trivial_init) 
+				{
+				};
+
+				explicit constexpr _constexpr_optional_base(const T& v)
+					: _init(true)
+					, _storage(v) 
+				{
+				}
+
+				explicit constexpr _constexpr_optional_base(T&& v)
+					: _init(true)
+					, _storage(std::move(v)) 
+				{
+				}
+
+				template <class... Args> explicit constexpr _constexpr_optional_base(in_place_t, Args&&... args)
+					: _init(true)
+					, _storage(std::forward<Args>(args)...)
+				{
+				}
+
+				template <class U, class... Args, REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
+				NONAME_CONSTEXPR_ explicit _constexpr_optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+					: _init(true), _storage(il, std::forward<Args>(args)...)
+				{
+				}
+
+				~_constexpr_optional_base() = default;
+			};
+
+			template <class T>
+			using _optional_base_t = typename std::conditional<
+				std::is_trivially_destructible<T>::value,
+				_constexpr_optional_base<typename std::remove_const<T>::type>,
+				_optional_base<typename std::remove_const<T>::type>
+			>::type;
+
+		} // namespace _detail
+
 		//! The class template optional manages an optional contained value, i.e. a value that may or may not be present.
 		template <class T>
-		class optional 
+		class optional : private _optional_base_t<T>
 		{
 			static_assert(!std::is_same<typename std::decay<T>::type, nullopt_t>::value, "bad T");
 			static_assert(!std::is_same<typename std::decay<T>::type, in_place_t>::value, "bad T");
