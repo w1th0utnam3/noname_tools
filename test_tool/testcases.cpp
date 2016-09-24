@@ -439,7 +439,7 @@ TEST_CASE("Testing optional")
 	typedef tools::optional<std::string> op_type;
 
 	REQUIRE((std::is_same<std::string, op_type::value_type>::value));
-	// REQUIRE(sizeof(op_type) == sizeof(std::aligned_storage_t<sizeof(bool) + sizeof(std::string)>));
+	REQUIRE(sizeof(op_type) == sizeof(std::aligned_storage_t<sizeof(bool) + sizeof(std::string), alignof(std::string)>));
 
 	// Empty state
 	{
@@ -762,18 +762,6 @@ TEST_CASE("Testing optional")
 
 			REQUIRE(op.value_or(cstring1) == string1);
 		}
-
-		// Test constexpr features
-		{
-			using op_double = tools::optional<double>;
-			constexpr op_double test1(3.14);
-			constexpr op_double test2;
-
-			static_assert(test2.has_value() == false, "Error");
-			static_assert(test2.value_or(2) == 2, "Error");
-			static_assert(test1.has_value() == true, "Error");
-			static_assert(test1.value() == 3.14, "Error");
-		}
 	}
 
 	// Test swap
@@ -924,6 +912,18 @@ TEST_CASE("Testing optional")
 		REQUIRE(op.has_value() == true);
 		REQUIRE(op.value()[4] == 4);
 		REQUIRE((*op)[3] == 3);
+	}
+
+	// Test constexpr features
+	{
+		using op_double = tools::optional<double>;
+		constexpr op_double test1(3.14);
+		constexpr op_double test2;
+
+		static_assert(test2.has_value() == false, "Error");
+		static_assert(test2.value_or(2) == 2, "Error");
+		static_assert(test1.has_value() == true, "Error");
+		static_assert(test1.value() == 3.14, "Error");
 	}
 }
 
