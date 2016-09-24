@@ -32,8 +32,6 @@
 #include <initializer_list>
 #include <cassert>
 
-// TODO: Add padding to align storage
-// TODO: Empty base optimization
 // TODO: Comparison operators? :/
 
 #ifdef _MSC_VER
@@ -94,7 +92,11 @@ namespace noname
 
 			// The call to convert<A>(b) has return type A and converts b to type A iff b decltype(b) is implicitly convertible to A  
 			template <class U>
-			constexpr U convert(U v) { return v; }
+			constexpr U convert(U v) 
+			{ 
+				return v;
+			}
+
 		} // namespace _detail
 
 		namespace _detail
@@ -295,38 +297,47 @@ namespace noname
 			}
 
 			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type 'T' with the expression value. This constructor is constexpr if the constructor of T selected by direct-initialization is constexpr.
-			constexpr optional(const T& v) : _optional_base_t<T>(v) {}
+			constexpr optional(const T& v) : _optional_base_t<T>(v)
+			{
+			}
 
 			//! Constructs an optional object that contains a value, initialized as if direct - initializing(but not direct-list-initializing) an object of type 'T' with the expression 'std::move(value)'.This constructor is constexpr if the constructor of 'T' selected by direct-initialization is constexpr.
-			constexpr optional(T&& v) : _optional_base_t<T>(std::move(v)) {}
+			constexpr optional(T&& v) : _optional_base_t<T>(std::move(v)) 
+			{
+			}
 
 			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type 'T' from the arguments 'std::forward<Args>(args)...'.
 			template <class... Args>
 			explicit constexpr optional(in_place_t, Args&&... args)
-				: _optional_base_t<T>(in_place_t{}, std::forward<Args>(args)...) {}
+				: _optional_base_t<T>(in_place_t{}, std::forward<Args>(args)...) 
+			{
+			}
 
 			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type 'T' from the arguments 'ilist, std::forward<Args>(args)...'.
 			template <class U, class... Args, NONAME_REQUIRES_(std::is_constructible<T, std::initializer_list<U>>)>
 			explicit optional(in_place_t, std::initializer_list<U> il, Args&&... args)
-				: _optional_base_t<T>(in_place_t{}, il, std::forward<Args>(args)...) {}
+				: _optional_base_t<T>(in_place_t{}, il, std::forward<Args>(args)...) 
+			{
+			}
 
 			//! Calls the constructor of the contained value if it is not trivially destructible.
 			~optional() = default;
 
-			//! If *this contains a value, destroy that value as if by 'value().T::~T()'. Otherwise, there are no effects. '*this' does not contain a value after this call.
-			void reset() noexcept {
+			//! If '*this' contains a value, destroy that value as if by 'value().T::~T()'. Otherwise, there are no effects. '*this' does not contain a value after this call.
+			void reset() noexcept 
+			{
 				if (initialized()) dataptr()->T::~T();
 				_optional_base_t<T>::_init = false;
 			}
 
-			//! If *this contains a value before the call, the contained value is destroyed by calling its destructor.
+			//! If '*this' contains a value before the call, the contained value is destroyed by calling its destructor.
 			optional& operator=(nullopt_t) noexcept
 			{
 				reset();
 				return *this;
 			}
 
-			//! Replaces contents of *this with the contents of other.
+			//! Replaces contents of '*this' with the contents of 'rhs'.
 			optional& operator=(const optional& rhs)
 			{
 				if (initialized() == true && rhs.initialized() == false) reset();
@@ -335,7 +346,7 @@ namespace noname
 				return *this;
 			}
 
-			//! Replaces contents of *this with the contents of other.
+			//! Replaces contents of '*this' with the contents of 'rhs'.
 			optional& operator=(optional&& rhs)
 				noexcept(std::is_nothrow_move_assignable<T>::value && std::is_nothrow_move_constructible<T>::value)
 			{
@@ -345,7 +356,7 @@ namespace noname
 				return *this;
 			}
 
-			//! Replaces contents of *this with value.
+			//! Replaces contents of '*this' with 'value'.
 			template <class U>
 			auto operator=(U&& v)
 				-> typename std::enable_if<std::is_same<typename std::decay<U>::type, T>::value, optional&>::type
@@ -355,7 +366,7 @@ namespace noname
 				return *this;
 			}
 
-			//! Constructs the contained value in-place. If *this already contains a value before the call, the contained value is destroyed by calling its destructor.
+			//! Constructs the contained value in-place. If '*this' already contains a value before the call, the contained value is destroyed by calling its destructor.
 			template <class... Args>
 			void emplace(Args&&... args)
 			{
@@ -363,7 +374,7 @@ namespace noname
 				initialize(std::forward<Args>(args)...);
 			}
 
-			//! Constructs the contained value in-place. If *this already contains a value before the call, the contained value is destroyed by calling its destructor.
+			//! Constructs the contained value in-place. If '*this' already contains a value before the call, the contained value is destroyed by calling its destructor.
 			template <class U, class... Args>
 			void emplace(std::initializer_list<U> il, Args&&... args)
 			{
@@ -371,80 +382,102 @@ namespace noname
 				initialize<U, Args...>(il, std::forward<Args>(args)...);
 			}
 
-			//! Swaps the contents with those of other.
+			//! Swaps the contents with those of 'rhs'.
 			void swap(optional<T>& rhs) noexcept(std::is_nothrow_move_constructible<T>::value && noexcept(std::swap(std::declval<T&>(), std::declval<T&>())))
 			{
-				if (initialized() == true && rhs.initialized() == false) { rhs.initialize(std::move(**this)); reset(); }
-				else if (initialized() == false && rhs.initialized() == true) { initialize(std::move(*rhs)); rhs.reset(); }
-				else if (initialized() == true && rhs.initialized() == true) { using std::swap; swap(**this, *rhs); }
+				if (initialized() == true && rhs.initialized() == false) {
+					rhs.initialize(std::move(**this)); reset();
+				} else if (initialized() == false && rhs.initialized() == true) {
+					initialize(std::move(*rhs)); rhs.reset();
+				} else if (initialized() == true && rhs.initialized() == true) {
+					using std::swap; swap(**this, *rhs);
+				}
 			}
 
-			//! Checks whether *this contains a value.
-			explicit constexpr operator bool() const noexcept { return initialized(); }
+			//! Checks whether '*this' contains a value.
+			explicit constexpr operator bool() const noexcept
+			{
+				return initialized();
+			}
 
-			//! Checks whether *this contains a value.
-			constexpr bool has_value() const noexcept { return initialized(); }
+			//! Checks whether '*this' contains a value.
+			constexpr bool has_value() const noexcept
+			{
+				return initialized();
+			}
 
 			//! Accesses the contained value. Returns const-pointer.
-			constexpr T const* operator->() const {
+			constexpr T const* operator->() const
+			{
 				assert(initialized());
 				return dataptr();
 			}
 
 			//! Accesses the contained value. Returns pointer.
-			NONAME_CONSTEXPR_ T* operator->() {
+			NONAME_CONSTEXPR_ T* operator->()
+			{
 				assert(initialized());
 				return dataptr();
 			}
 
 			//! Accesses the contained value. Returns const-ref.
-			constexpr T const& operator*() const& {
+			constexpr T const& operator*() const&
+			{
 				assert(initialized());
 				return contained_val();
 			}
 
 			//! Accesses the contained value. Returns ref.
-			NONAME_CONSTEXPR_ T& operator*() & {
+			NONAME_CONSTEXPR_ T& operator*() &
+			{
 				assert(initialized());
 				return contained_val();
 			}
 
 			//! Accesses the contained value.
-			NONAME_CONSTEXPR_ T&& operator*() && {
+			NONAME_CONSTEXPR_ T&& operator*() &&
+			{
 				assert(initialized());
 				return std::move(contained_val());
 			}
 
-			//! If *this contains a value, returns a const-reference to the contained value.
+			//! If '*this' contains a value, returns a const-reference to the contained value.
 			constexpr T const& value() const& {
 				return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
 			}
 
-			//! If *this contains a value, returns a reference to the contained value.
+			//! If '*this' contains a value, returns a reference to the contained value.
 			NONAME_CONSTEXPR_ T& value() & {
 				return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
 			}
 
-			//! If *this contains a value, returns a reference to the contained value.
+			//! If '*this' contains a value, returns a reference to the contained value.
 			NONAME_CONSTEXPR_ T&& value() && {
 				if (!initialized()) throw bad_optional_access("bad optional access");
 				return std::move(contained_val());
 			}
 
-			//! Returns the contained value if *this has a value, otherwise returns default_value.
+			//! Returns the contained value if '*this' has a value, otherwise returns 'default_value'.
 			template <class V>
 			constexpr T value_or(V&& v) const&
 			{
 				return *this ? **this : _detail::convert<T>(std::forward<V>(v));
 			}
 
-			//! Returns the contained value if *this has a value, otherwise returns default_value.
+			//! Returns the contained value if '*this' has a value, otherwise returns 'default_value'.
 			template <class V>
 			NONAME_CONSTEXPR_ T value_or(V&& v) &&
 			{
 				return *this ? std::move(const_cast<optional<T>&>(*this).contained_val()) : _detail::convert<T>(std::forward<V>(v));
 			}
 		};
+
+		//! Overloads the std::swap algorithm for optional.
+		template <class T>
+		void swap(optional<T>& x, optional<T>& y) noexcept(noexcept(x.swap(y)))
+		{
+			x.swap(y);
+		}
 
 		//! Creates an optional object from value.
 		template< class T >
