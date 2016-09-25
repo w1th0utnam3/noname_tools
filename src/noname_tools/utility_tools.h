@@ -30,6 +30,9 @@ namespace noname
 
 		namespace _detail
 		{
+			// Null type
+			struct dummy_t {};
+
 			// For efficiency see: http://ldionne.com/2015/11/29/efficient-parameter-pack-indexing/
 			template <std::size_t I, typename T, typename ...Ts>
 			struct _nth_element

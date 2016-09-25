@@ -106,11 +106,11 @@ namespace noname
 			template <class T>
 			union _optional_storage
 			{
-				unsigned char _dummy;
+				dummy_t _dummy;
 				T _value;
 
 				constexpr _optional_storage(_trivial_init_t) noexcept
-					: _dummy() 
+					: _dummy()
 				{
 				}
 
@@ -128,10 +128,11 @@ namespace noname
 			template <class T>
 			union _constexpr_optional_storage
 			{
-				unsigned char _dummy;
+				dummy_t _dummy;
 				T _value;
 
-				constexpr _constexpr_optional_storage(_trivial_init_t) noexcept : _dummy()
+				constexpr _constexpr_optional_storage(_trivial_init_t) noexcept
+					: _dummy()
 				{
 				};
 
