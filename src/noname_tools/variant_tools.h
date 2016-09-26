@@ -109,6 +109,30 @@ namespace noname
 
 		namespace _detail
 		{
+			template <std::size_t I, class... Types>
+			union _variant_storage;
+
+			template <class T>
+			union _variant_storage<0, T>
+			{
+				dummy_t _dummy;
+				T _value;
+			};
+
+			template <std::size_t I, class T, class... Types>
+			union _variant_storage<I, T, Types...>
+			{
+				dummy_t _dummy;
+				T _value;
+				_variant_storage<I-1, Types...> _subvalues;
+			};
+
+			template <class... Types>
+			class _variant_base_new
+			{
+				_variant_storage<sizeof...(Types)-1, Types...> _storage;
+			};
+
 			//! Simple POD type with fields for two different types
 			template <class T, class U>
 			struct two_type_pod
@@ -205,7 +229,7 @@ namespace noname
 
 		//! Type-safe union. An instance of variant at any given time either holds a value of one of its alternative types, or it holds no value.
 		template <class... Types>
-		class variant : public _detail::_variant_base<(sizeof...(Types)-1), Types...>
+		class variant : public _detail::_variant_base<(sizeof...(Types)-1), Types...>, public _detail::_variant_base_new<Types...>
 		{
 		public:
 			//! Default constructor. Constructs a variant holding the value-initialized value of the first alternative ('index()' is zero).
