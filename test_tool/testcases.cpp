@@ -154,6 +154,17 @@ TEST_CASE("Testing n_subranges")
 		REQUIRE(*ranges.begin() == source.begin());
 		REQUIRE(ranges.back() == source.end());
 	}
+
+	SECTION("sources.size() < n") {
+		source.resize(5);
+		std::iota(source.begin(), source.end(), 0);
+
+		tools::n_subranges(source.begin(), source.end(), std::back_inserter(ranges), 10);
+
+		REQUIRE(ranges.size() == 6);
+		REQUIRE(*ranges.begin() == source.begin());
+		REQUIRE(ranges.back() == source.end());
+	}
 }
 
 TEST_CASE("Testing for_each_and_successor")
