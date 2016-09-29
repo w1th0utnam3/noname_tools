@@ -917,13 +917,14 @@ TEST_CASE("Testing optional")
 	// Test constexpr features
 	{
 		using op_double = tools::optional<double>;
-		constexpr op_double test1(3.14);
+		constexpr double value = 3.14;
+		constexpr op_double test1(value);
 		constexpr op_double test2;
 
-		static_assert(test2.has_value() == false, "Error");
-		static_assert(test2.value_or(2) == 2, "Error");
-		static_assert(test1.has_value() == true, "Error");
-		static_assert(test1.value() == 3.14, "Error");
+		static_assert(test2.has_value() == false, "Optional has to be empty after default construction.");
+		static_assert(test2.value_or(2) == 2, "Optional has to return the other value after default construction.");
+		static_assert(test1.has_value() == true, "Optional has to contain a value after calling the constructor with a value.");
+		static_assert(test1.value() == value, "Optional has to contain the supplied value after calling the constructor with the value.");
 	}
 }
 
@@ -1005,23 +1006,31 @@ TEST_CASE("Testing utility types")
 
 TEST_CASE("Testing variant")
 {
-	typedef tools::variant<double, int, char> var_t;
+	typedef tools::variant<double, int, char, double> var_t;
 
 	SECTION("Testing helper classes")
 	{
-		REQUIRE((tools::variant_size_v<var_t> == 3));
-		REQUIRE((tools::variant_size_v<const var_t> == 3));
-		REQUIRE((tools::variant_size_v<volatile var_t> == 3));
-		REQUIRE((tools::variant_size_v<const volatile var_t> == 3));
+		REQUIRE((tools::variant_size_v<var_t> == 4));
+		REQUIRE((tools::variant_size_v<const var_t> == 4));
+		REQUIRE((tools::variant_size_v<volatile var_t> == 4));
+		REQUIRE((tools::variant_size_v<const volatile var_t> == 4));
 
 		REQUIRE((std::is_same<tools::variant_alternative_t<0, var_t>, double>::value == true));
 		REQUIRE((std::is_same<tools::variant_alternative_t<1, var_t>, int>::value == true));
 		REQUIRE((std::is_same<tools::variant_alternative_t<2, var_t>, char>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<3, var_t>, double>::value == true));
 		REQUIRE((std::is_same<tools::variant_alternative_t<1, const var_t>, const int>::value == true));
 		REQUIRE((std::is_same<tools::variant_alternative_t<1, volatile var_t>, volatile int>::value == true));
 		REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile var_t>, const volatile int>::value == true));
 	}
 
+	SECTION("Testing constexpr calls")
+	{
+		static_assert(var_t().index() == 0, "Index has to be zero after default construction.");
+		static_assert(var_t(tools::in_place<2>, 'a').index() == 2, "Index has to be the specified value after in place construction.");
+	}
+
+	/*
 	SECTION("Testing constructors")
 	{
 		{
@@ -1073,4 +1082,5 @@ TEST_CASE("Testing variant")
 			REQUIRE((*tools::get_if<double>(cv) == 3.14));
 		}
 	}
+	*/
 }

@@ -26,10 +26,12 @@
 #include <stdexcept>
 
 #ifdef _MSC_VER
-#define NONAME_CONSTEXPR_
+#define _NONAME_CONSTEXPR
 #else
-#define NONAME_CONSTEXPR_ constexpr
+#define _NONAME_CONSTEXPR constexpr
 #endif
+
+#define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
 // TODO: Reimplement without placement new, so that constexpr actually works
 // TODO: Trivial destructor
@@ -112,82 +114,55 @@ namespace noname
 			template <std::size_t I, class... Types>
 			union _variant_storage;
 
-			template <class T>
-			union _variant_storage<0, T>
+			template <std::size_t I, class T>
+			union _variant_storage <I, T>
 			{
-				dummy_t _dummy;
+				template <class... Args>
+				constexpr _variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
+					: _value(std::forward<Args>(args)...)
+				{
+				}
+
 				T _value;
 			};
 
 			template <std::size_t I, class T, class... Types>
 			union _variant_storage<I, T, Types...>
 			{
-				dummy_t _dummy;
+				template <class... Args>
+				constexpr _variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
+					: _value(std::forward<Args>(args)...)
+				{
+				}
+
+				template <std::size_t V, class... Args>
+				constexpr _variant_storage(std::integral_constant<std::size_t, V>, Args&&... args)
+					: _subvalues(std::integral_constant<std::size_t, V>(), std::forward<Args>(args)...)
+				{
+				}
+
 				T _value;
-				_variant_storage<I-1, Types...> _subvalues;
+				_variant_storage<I+1, Types...> _subvalues;
 			};
 
 			template <class... Types>
-			class _variant_base_new
+			struct _variant_base
 			{
-				_variant_storage<sizeof...(Types)-1, Types...> _storage;
-			};
+				_variant_storage<0, Types...> _storage;
+				std::size_t _index;
 
-			//! Simple POD type with fields for two different types
-			template <class T, class U>
-			struct two_type_pod
-			{
-				T _; U __;
-			};
-
-			// Forward declaration of get_if
-			template <std::size_t I, class... Types>
-			NONAME_CONSTEXPR_ std::add_pointer_t<variant_alternative_t<I, variant<Types...>>> _get_if(variant<Types...>* pv);
-
-			// Base for variant required to allow recursive friending of functions
-			template <std::size_t I, class... Types>
-			class _variant_base;
-
-			template <class... Types>
-			class _variant_base<0, Types...>
-			{
-				friend NONAME_CONSTEXPR_ std::add_pointer_t<variant_alternative_t<0, variant<Types...>>> _get_if<0, Types...>(variant<Types...>* pv);
-
-			protected:
-				//! Memory used by the variant
-				std::aligned_union_t<0, _detail::two_type_pod<Types, std::size_t>...> _memory;
-
-				//! Returns reference to the index storage
-				NONAME_CONSTEXPR_ std::size_t& _indexRef()
+				constexpr _variant_base()
+					: _storage(std::integral_constant<std::size_t, 0>(), nth_element_t<0, Types...>())
+					, _index(0)
 				{
-					// Return reference of the index as last std::size_t in the aligned storage
-					return *(static_cast<std::size_t*>(static_cast<void*>(((&_memory) + 1))) - 1);
 				}
 
-				//! Returns const reference to the index storage
-				constexpr const std::size_t& _indexRefConst() const
+				template <std::size_t I, class... Args>
+				constexpr explicit _variant_base(in_place_index_t<I>, Args&&... args)
+					: _storage(std::integral_constant<std::size_t, I>(), std::forward<Args>(args)...)
+					, _index(I)
 				{
-					return *(static_cast<const std::size_t*>(static_cast<const void*>(((&_memory) + 1))) - 1);
 				}
-
-				//! Returns pointer to the address of the contained value
-				NONAME_CONSTEXPR_ void* _valueMemoryPtr()
-				{
-					// Return address of the value memory as the address of the aligned storage
-					return static_cast<void*>(&_memory);
-				}
-
-				//! Returns pointer to the address of the contained value
-				constexpr const void* _valueMemoryPtrConst() const
-				{
-					return static_cast<const void*>(&_memory);
-				}
-			};
-
-			template <std::size_t I, class... Types>
-			class _variant_base : public _variant_base<I - 1, Types...>
-			{
-				friend NONAME_CONSTEXPR_ std::add_pointer_t<variant_alternative_t<I, variant<Types...>>> _get_if<I, Types...>(variant<Types...>* pv);
 			};
 
 			//! Index value of the specified alternative type or variant_npos if there are several indices for the type.
@@ -200,45 +175,27 @@ namespace noname
 			template <typename T, class... Types>
 			constexpr std::size_t alternative_index_v = alternative_index<T, Types...>::value;
 
-			template <class... Types>
-			struct _variant_destructor;
-
-			template <>
-			struct _variant_destructor<>
-			{
-				static void destroy(size_t I, void* data)
-				{
-					throw std::runtime_error("Unable to call correct destructor.");
-				}
-			};
-
-			template <class T, class... Types>
-			struct _variant_destructor<T, Types...>
-			{
-				static void destroy(size_t I, void* data)
-				{
-					if (I == 0) {
-						static_cast<T*>(data)->~T();
-					} else {
-						_variant_destructor<Types...>::destroy(I - 1, data);
-					}
-				}
-			};
-
 		} // namespace _detail
 
 		//! Type-safe union. An instance of variant at any given time either holds a value of one of its alternative types, or it holds no value.
 		template <class... Types>
-		class variant : public _detail::_variant_base<(sizeof...(Types)-1), Types...>, public _detail::_variant_base_new<Types...>
+		class variant : public _detail::_variant_base<Types...>
 		{
 		public:
 			//! Default constructor. Constructs a variant holding the value-initialized value of the first alternative ('index()' is zero).
-			constexpr variant()
+			constexpr variant() 
+				: _detail::_variant_base<Types...>()
 			{
-				this->_indexRef() = 0;
-				new(this->_valueMemoryPtr()) nth_element_t<0, Types...>();
 			}
 
+			template <std::size_t I, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>
+																				,std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
+			constexpr explicit variant(in_place_index_t<I>, Args&&... args)
+				: _detail::_variant_base<Types...>(in_place<I>, std::forward<Args>(args)...)
+			{
+			}
+
+			/*
 			//! Converting constructor.
 			template <typename T, typename T_j = best_match<T&&, Types...>
 								, typename = typename std::enable_if<	std::is_constructible<T_j,T>::value 
@@ -248,13 +205,16 @@ namespace noname
 				this->_indexRef() = _detail::alternative_index_v<T_j, Types...>;
 				new(this->_valueMemoryPtr()) T_j(std::forward<T>(t));
 			}
+			*/
 
+			/*
 			~variant()
 			{
 				if (!valueless_by_exception()) {
 					_detail::_variant_destructor<Types...>::destroy(this->_indexRefConst(), this->_valueMemoryPtr());
 				}
 			}
+			*/
 
 			//! Returns false if and only if the variant holds a value.
 			constexpr bool valueless_by_exception() const
@@ -265,20 +225,23 @@ namespace noname
 			//! Returns the zero-based index of the alternative that is currently held by the variant.
 			constexpr std::size_t index() const
 			{
-				return (!valueless_by_exception()) ? this->_indexRefConst() : variant_npos;
+				return (!valueless_by_exception()) ? this->_index : variant_npos;
 			}
 		};
 
 		namespace _detail
 		{
+			/*
 			template <std::size_t I, class... Types>
-			NONAME_CONSTEXPR_ std::add_pointer_t<variant_alternative_t<I, variant<Types...>>> _get_if(variant<Types...>* var_ptr)
+			_NONAME_CONSTEXPR std::add_pointer_t<variant_alternative_t<I, variant<Types...>>> _get_if(variant<Types...>* var_ptr)
 			{
 				using value_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 				return (var_ptr != nullptr && var_ptr->index() == I) ? static_cast<value_ptr_t>(var_ptr->_valueMemoryPtr()) : nullptr;
 			}
+			*/
 		} // namespace _detail
 
+		/*
 		//! Index-based non-throwing accessor: If 'pv' is not a null pointer and 'pv->index() == I', returns a pointer to the value stored in the variant pointed to by 'pv'. Otherwise, returns a null pointer value.
 		template <std::size_t I, class... Types>
 		constexpr std::add_pointer_t<variant_alternative_t<I, variant<Types...>>> get_if(variant<Types...>* pv)
@@ -306,7 +269,9 @@ namespace noname
 		{
 			return _detail::_get_if<_detail::alternative_index_v<T, Types...>>(const_cast<variant<Types...>*>(pv));
 		}
+		*/
 	}
 }
 
-#undef NONAME_CONSTEXPR_
+#undef _NONAME_CONSTEXPR
+#undef _NONAME_REQUIRES
