@@ -33,8 +33,6 @@
 
 #define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
-// TODO: Reimplement without placement new, so that constexpr actually works
-// TODO: Trivial destructor
 // TODO: Empty base optimization
 // TODO: Add noexcept according to reference
 
@@ -112,23 +110,71 @@ namespace noname
 		namespace _detail
 		{
 			template <std::size_t I, class... Types>
+			union _constexpr_variant_storage;
+
+			template <std::size_t I, class T>
+			union _constexpr_variant_storage <I, T>
+			{
+				T _value;
+
+				template <class... Args>
+				constexpr _constexpr_variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
+					: _value(std::forward<Args>(args)...)
+				{
+				}
+			};
+
+			template <std::size_t I, class T, class... Types>
+			union _constexpr_variant_storage<I, T, Types...>
+			{
+				T _value;
+				_constexpr_variant_storage<I + 1, Types...> _subvalues;
+
+				template <class... Args>
+				constexpr _constexpr_variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
+					: _value(std::forward<Args>(args)...)
+				{
+				}
+
+				template <std::size_t V, class... Args>
+				constexpr _constexpr_variant_storage(std::integral_constant<std::size_t, V>, Args&&... args)
+					: _subvalues(std::integral_constant<std::size_t, V>(), std::forward<Args>(args)...)
+				{
+				}
+
+				~_constexpr_variant_storage() = default;
+			};
+
+			template <std::size_t I, class... Types>
 			union _variant_storage;
 
 			template <std::size_t I, class T>
 			union _variant_storage <I, T>
 			{
+				T _value;
+
 				template <class... Args>
 				constexpr _variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
 					: _value(std::forward<Args>(args)...)
 				{
 				}
 
-				T _value;
+				~_variant_storage()
+				{
+				}
+
+				void destroy(std::size_t index)
+				{
+					_value.T::~T();
+				}
 			};
 
 			template <std::size_t I, class T, class... Types>
 			union _variant_storage<I, T, Types...>
 			{
+				T _value;
+				_variant_storage<I + 1, Types...> _subvalues;
+
 				template <class... Args>
 				constexpr _variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
 					: _value(std::forward<Args>(args)...)
@@ -141,8 +187,37 @@ namespace noname
 				{
 				}
 
-				T _value;
-				_variant_storage<I+1, Types...> _subvalues;
+				~_variant_storage()
+				{
+				}
+
+				void destroy(std::size_t index)
+				{
+					if (index > I) return _subvalues.destroy(index);
+					_value.T::~T();
+				}
+			};
+
+			template <class... Types>
+			struct _constexpr_variant_base
+			{
+				_constexpr_variant_storage<0, Types...> _storage;
+				std::size_t _index;
+
+				constexpr _constexpr_variant_base()
+					: _storage(std::integral_constant<std::size_t, 0>(), nth_element_t<0, Types...>())
+					, _index(0)
+				{
+				}
+
+				template <std::size_t I, class... Args>
+				constexpr explicit _constexpr_variant_base(in_place_index_t<I>, Args&&... args)
+					: _storage(std::integral_constant<std::size_t, I>(), std::forward<Args>(args)...)
+					, _index(I)
+				{
+				}
+
+				~_constexpr_variant_base() = default;
 			};
 
 			template <class... Types>
@@ -151,19 +226,32 @@ namespace noname
 				_variant_storage<0, Types...> _storage;
 				std::size_t _index;
 
-				constexpr _variant_base()
+				_variant_base()
 					: _storage(std::integral_constant<std::size_t, 0>(), nth_element_t<0, Types...>())
 					, _index(0)
 				{
 				}
 
 				template <std::size_t I, class... Args>
-				constexpr explicit _variant_base(in_place_index_t<I>, Args&&... args)
+				explicit _variant_base(in_place_index_t<I>, Args&&... args)
 					: _storage(std::integral_constant<std::size_t, I>(), std::forward<Args>(args)...)
 					, _index(I)
 				{
 				}
+
+				~_variant_base()
+				{
+					_storage.destroy(_index);
+				}
 			};
+
+			// Only trivially destructible types can be used in constexpr objects
+			template <class... Types>
+			using _variant_base_t = typename std::conditional<
+				conjunction<std::is_trivially_destructible<Types>...>::value,
+				_constexpr_variant_base<Types...>,
+				_variant_base<Types...>
+			>::type;
 
 			//! Index value of the specified alternative type or variant_npos if there are several indices for the type.
 			template <typename T, class... Types>
@@ -179,19 +267,19 @@ namespace noname
 
 		//! Type-safe union. An instance of variant at any given time either holds a value of one of its alternative types, or it holds no value.
 		template <class... Types>
-		class variant : public _detail::_variant_base<Types...>
+		class variant : public _detail::_variant_base_t<Types...>
 		{
 		public:
 			//! Default constructor. Constructs a variant holding the value-initialized value of the first alternative ('index()' is zero).
 			constexpr variant() 
-				: _detail::_variant_base<Types...>()
+				: _detail::_variant_base_t<Types...>()
 			{
 			}
 
 			template <std::size_t I, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>
 																				,std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_index_t<I>, Args&&... args)
-				: _detail::_variant_base<Types...>(in_place<I>, std::forward<Args>(args)...)
+				: _detail::_variant_base_t<Types...>(in_place<I>, std::forward<Args>(args)...)
 			{
 			}
 
