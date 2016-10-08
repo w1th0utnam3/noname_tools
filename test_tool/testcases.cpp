@@ -1024,63 +1024,40 @@ TEST_CASE("Testing variant")
 		REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile var_t>, const volatile int>::value == true));
 	}
 
-	SECTION("Testing constexpr calls")
+	SECTION("Testing constexpr constructor")
 	{
 		static_assert(var_t().index() == 0, "Index has to be zero after default construction.");
-		static_assert(var_t(tools::in_place<2>, 'a').index() == 2, "Index has to be the specified value after in place construction.");
-	}
 
-	/*
-	SECTION("Testing constructors")
-	{
-		{
-			var_t v;
-			REQUIRE(v.index() == 0);
-		}
+		static_assert(var_t(tools::in_place<0>, 3.14).index()	== 0, "Index has to be the specified value after in place construction.");
+		static_assert(var_t(tools::in_place<1>, 27).index()		== 1, "Index has to be the specified value after in place construction.");
+		static_assert(var_t(tools::in_place<2>, 'a').index()	== 2, "Index has to be the specified value after in place construction.");
+		static_assert(var_t(tools::in_place<3>, 99.9).index()	== 3, "Index has to be the specified value after in place construction.");
 
-		{
-			var_t v(3.14);
-			REQUIRE(v.index() == 0);
-		}
+		constexpr const var_t v1(std::move(var_t(tools::in_place<2>, 'a')));
+		static_assert(v1.index() == 2, "Index has to be the specified value after move construction.");
 
-		{
-			var_t v(27);
-			REQUIRE(v.index() == 1);
-		}
-
-		{
-			var_t v('c');
-			REQUIRE(v.index() == 2);
-		}
+		constexpr const var_t v2(v1);
+		static_assert(v2.index() == 2, "Index has to be the specified value after copy construction.");
 	}
 
 	SECTION("Testing get_if")
 	{
-		{
-			var_t v('t');
+		constexpr const var_t* p = nullptr;
+		static_assert(tools::get_if<2>(p) == nullptr, "get_if has to return nullptr for nullptr parameter.");
 
-			REQUIRE((std::is_same<decltype(tools::get_if<2>(&v)), char*>::value == true));
-			REQUIRE((*tools::get_if<2>(&v) == 't'));
-		}
+		constexpr const var_t v0(tools::in_place<0>, 3.14);
+		constexpr const var_t v1(tools::in_place<1>, 27);
+		constexpr const var_t v2(tools::in_place<2>, 'a');
+		constexpr const var_t v3(tools::in_place<3>, 99.9);
 
-		{
-			var_t v(27);
-			const var_t* cv = &v;
+		static_assert(tools::get_if<0>(&v0) != nullptr, "get_if may not return nullptr on correct index accesss.");
+		static_assert(tools::get_if<1>(&v0) == nullptr, "get_if has to return nullptr on invalid index access.");
+		static_assert(tools::get_if<2>(&v0) == nullptr, "get_if has to return nullptr on invalid index access.");
+		static_assert(tools::get_if<3>(&v0) == nullptr, "get_if has to return nullptr on invalid index access.");
 
-			REQUIRE((std::is_same<decltype(tools::get_if<1>(cv)), const int*>::value == true));
-			REQUIRE((*tools::get_if<1>(cv) == 27));
-		}
-
-		{
-			var_t v(3.14);
-
-			REQUIRE((std::is_same<decltype(tools::get_if<double>(&v)), double*>::value == true));
-			REQUIRE((*tools::get_if<double>(&v) == 3.14));
-
-			const var_t* cv = &v;
-			REQUIRE((std::is_same<decltype(tools::get_if<double>(cv)), const double*>::value == true));
-			REQUIRE((*tools::get_if<double>(cv) == 3.14));
-		}
+		static_assert(*tools::get_if<0>(&v0) == 3.14, "get_if has to return the correct value.");
+		static_assert(*tools::get_if<1>(&v1) == 27	, "get_if has to return the correct value.");
+		static_assert(*tools::get_if<2>(&v2) == 'a'	, "get_if has to return the correct value.");
+		static_assert(*tools::get_if<3>(&v3) == 99.9, "get_if has to return the correct value.");
 	}
-	*/
 }
