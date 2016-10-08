@@ -1038,6 +1038,10 @@ TEST_CASE("Testing variant")
 
 		constexpr const var_t v2(v1);
 		static_assert(v2.index() == 2, "Index has to be the specified value after copy construction.");
+
+		static_assert(tools::variant<char, double, int>(3.14).index() == 1, "Blub");
+		static_assert(tools::variant<char, double, int>(27).index() == 2, "Blub");
+		REQUIRE((tools::variant<std::string, bool>("abc").index() == 1));
 	}
 
 	SECTION("Testing get_if")

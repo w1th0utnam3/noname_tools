@@ -317,6 +317,7 @@ namespace noname
 			{
 			}
 
+			//! Constructs a variant with the alternative 'T_i' specified by the index 'I' and initializes the contained value with the arguments 'std::forward<Args>(args)...'.
 			template <std::size_t I, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>
 																				,std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_index_t<I>, Args&&... args)
@@ -324,17 +325,14 @@ namespace noname
 			{
 			}
 
-			/*
 			//! Converting constructor.
 			template <typename T, typename T_j = best_match<T&&, Types...>
 								, typename = typename std::enable_if<	std::is_constructible<T_j,T>::value 
 																	&& !std::is_same<std::decay_t<T>, variant>::value>::type>
 			constexpr variant(T&& t)
+				: _detail::_variant_base_t<Types...>(in_place<_detail::alternative_index_v<T_j, Types...>>, std::forward<T>(t))
 			{
-				this->_indexRef() = _detail::alternative_index_v<T_j, Types...>;
-				new(this->_valueMemoryPtr()) T_j(std::forward<T>(t));
 			}
-			*/
 
 			//! Returns false if and only if the variant holds a value.
 			constexpr bool valueless_by_exception() const
