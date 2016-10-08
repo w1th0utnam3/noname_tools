@@ -1059,5 +1059,8 @@ TEST_CASE("Testing variant")
 		static_assert(*tools::get_if<1>(&v1) == 27	, "get_if has to return the correct value.");
 		static_assert(*tools::get_if<2>(&v2) == 'a'	, "get_if has to return the correct value.");
 		static_assert(*tools::get_if<3>(&v3) == 99.9, "get_if has to return the correct value.");
+
+		static_assert(*tools::get_if<int>(&v1) == 27, "get_if has to return the correct value.");
+		static_assert(*tools::get_if<char>(&v2) == 'a', "get_if has to return the correct value.");
 	}
 }
