@@ -59,7 +59,7 @@ namespace noname
 		}
 
 		//! Reads the specified number of lines from a file or reads the whole file if number of lines is zero
-		inline std::vector<std::string> read_lines(const std::string& file_path, size_t number_of_lines = 0)
+		inline std::vector<std::string> read_lines(const std::string& file_path, const size_t number_of_lines = 0)
 		{
 			if (number_of_lines == 0) return read_all_lines(file_path);
 
@@ -71,7 +71,7 @@ namespace noname
 			size_t counter = 0;
 			while (counter < number_of_lines && std::getline(file, currentLine)) {
 				lines.push_back(currentLine);
-				number_of_lines++;
+				counter++;
 			}
 			file.close();
 			return lines;
