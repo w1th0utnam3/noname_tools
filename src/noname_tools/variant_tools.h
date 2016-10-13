@@ -36,6 +36,9 @@
 // TODO: Empty base optimization
 // TODO: Add noexcept according to reference
 
+#pragma warning( push )
+#pragma warning( disable : 4396 )
+
 namespace noname
 {
 	namespace tools
@@ -109,6 +112,13 @@ namespace noname
 
 		namespace _detail
 		{
+			// Forward declaration of _get_if for friend declaration
+			template <std::size_t I, class... Types>
+			inline constexpr std::enable_if_t<conjunction<std::is_trivially_destructible<Types>...>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
+
+			template <std::size_t I, class... Types>
+			inline constexpr std::enable_if_t<negation<conjunction<std::is_trivially_destructible<Types>...>>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
+
 			template <std::size_t I, class... Types>
 			union _constexpr_variant_storage;
 
@@ -143,70 +153,13 @@ namespace noname
 				}
 			};
 
-			template <std::size_t I, class... Types>
-			union _variant_storage;
-
-			template <std::size_t I, class T>
-			union _variant_storage<I, T>
-			{
-				T _value;
-
-				template <class... Args>
-				constexpr _variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
-					: _value(std::forward<Args>(args)...)
-				{
-				}
-
-				~_variant_storage()
-				{
-				}
-
-				void destroy(std::size_t index)
-				{
-					_value.T::~T();
-				}
-			};
-
-			template <std::size_t I, class T, class... Types>
-			union _variant_storage<I, T, Types...>
-			{
-				T _value;
-				_variant_storage<I + 1, Types...> _subvalues;
-
-				template <class... Args>
-				constexpr _variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
-					: _value(std::forward<Args>(args)...)
-				{
-				}
-
-				template <std::size_t V, class... Args>
-				constexpr _variant_storage(std::integral_constant<std::size_t, V>, Args&&... args)
-					: _subvalues(std::integral_constant<std::size_t, V>(), std::forward<Args>(args)...)
-				{
-				}
-
-				~_variant_storage()
-				{
-				}
-
-				void destroy(std::size_t index)
-				{
-					if (index > I) return _subvalues.destroy(index);
-					_value.T::~T();
-				}
-			};
-
-			// Forward declaration of _get_if for friend declaration
-			template <std::size_t I, class... Types>
-			constexpr std::add_pointer_t<variant_alternative_t<I, variant<Types...>>> _get_if(variant<Types...>* var_ptr);
-
 			template <std::size_t N, class... Types>
 			struct _constexpr_variant_base;
 
 			template <class... Types>
 			struct _constexpr_variant_base<0, Types...>
 			{
-				friend constexpr std::add_pointer_t<variant_alternative_t<0, variant<Types...>>> _get_if<0, Types...>(variant<Types...>* pv);
+				friend constexpr std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<0, variant<Types...>>>> _get_if<0, Types...>(variant<Types...>* pv);
 
 				_constexpr_variant_storage<0, Types...> _storage;
 				std::size_t _index;
@@ -226,16 +179,39 @@ namespace noname
 			};
 
 			template <std::size_t N, class... Types>
-			struct _constexpr_variant_base : public _constexpr_variant_base<N-1, Types...>
+			struct _constexpr_variant_base : public _constexpr_variant_base<N - 1, Types...>
 			{
-				friend constexpr std::add_pointer_t<variant_alternative_t<N, variant<Types...>>> _get_if<N, Types...>(variant<Types...>* pv);
+				friend constexpr std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<N, variant<Types...>>>> _get_if<N, Types...>(variant<Types...>* pv);
 
 				constexpr _constexpr_variant_base() = default;
 
 				template <std::size_t I, class... Args>
 				constexpr explicit _constexpr_variant_base(in_place_index_t<I>, Args&&... args)
-					: _constexpr_variant_base<N-1, Types...>(in_place<I>, std::forward<Args>(args)...)
+					: _constexpr_variant_base<N - 1, Types...>(in_place<I>, std::forward<Args>(args)...)
 				{
+				}
+			};
+
+			template <class... Types>
+			struct _variant_storage
+			{
+				std::aligned_union_t<0, Types...> _memory;
+
+				void* memory_ptr()
+				{
+					return static_cast<void*>(&_memory);
+				}
+
+				template <std::size_t I, class... Args>
+				_variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
+				{
+					new(memory_ptr()) nth_element_t<I, Types...>(std::forward<Args>(args)...);
+				}
+
+				template <class T>
+				void destroy()
+				{
+					(*static_cast<T*>(memory_ptr())).T::~T();
 				}
 			};
 
@@ -245,9 +221,9 @@ namespace noname
 			template <class... Types>
 			struct _variant_base<0, Types...>
 			{
-				friend constexpr std::add_pointer_t<variant_alternative_t<0, variant<Types...>>> _get_if<0, Types...>(variant<Types...>* pv);
+				friend constexpr std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<0, variant<Types...>>>> _get_if<0, Types...>(variant<Types...>* pv);
 
-				_variant_storage<0, Types...> _storage;
+				_variant_storage<Types...> _storage;
 				std::size_t _index;
 
 				_variant_base()
@@ -265,14 +241,14 @@ namespace noname
 
 				~_variant_base()
 				{
-					_storage.destroy(_index);
+					if (this->_index == 0) this->_storage.template destroy<nth_element_t<0, Types...>>();
 				}
 			};
 
 			template <std::size_t N, class... Types>
 			struct _variant_base : public _variant_base<N-1, Types...>
 			{
-				friend constexpr std::add_pointer_t<variant_alternative_t<N, variant<Types...>>> _get_if<N, Types...>(variant<Types...>* pv);
+				friend constexpr std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<N, variant<Types...>>>> _get_if<N, Types...>(variant<Types...>* pv);
 
 				_variant_base() = default;
 
@@ -282,7 +258,10 @@ namespace noname
 				{
 				}
 
-				~_variant_base() = default;
+				~_variant_base()
+				{
+					if (this->_index == N) this->_storage.template destroy<nth_element_t<N, Types...>>();
+				}
 
 			};
 
@@ -319,7 +298,7 @@ namespace noname
 
 			//! Constructs a variant with the alternative 'T_i' specified by the index 'I' and initializes the contained value with the arguments 'std::forward<Args>(args)...'.
 			template <std::size_t I, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>
-																				,std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
+																				 , std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_index_t<I>, Args&&... args)
 				: _detail::_variant_base_t<Types...>(in_place<I>, std::forward<Args>(args)...)
 			{
@@ -350,35 +329,42 @@ namespace noname
 		namespace _detail
 		{
 			template <std::size_t I, class PtrT, class StorageT>
-			struct _get_if_walker;
+			struct _get_if_constexpr;
 
 			template <class PtrT, class StorageT>
-			struct _get_if_walker<0, PtrT, StorageT>
+			struct _get_if_constexpr<0, PtrT, StorageT>
 			{
 				PtrT ptr;
 
-				constexpr _get_if_walker(StorageT* str_ptr)
+				constexpr _get_if_constexpr(StorageT* str_ptr)
 					: ptr(static_cast<PtrT>(&str_ptr->_value))
 				{
 				}
 			};
 
 			template <std::size_t I, class PtrT, class StorageT>
-			struct _get_if_walker
+			struct _get_if_constexpr
 			{
 				PtrT ptr;
 
-				constexpr _get_if_walker(StorageT* str_ptr)
-					: ptr(_get_if_walker<I - 1, PtrT, decltype(str_ptr->_subvalues)>(&str_ptr->_subvalues).ptr)
+				constexpr _get_if_constexpr(StorageT* str_ptr)
+					: ptr(_get_if_constexpr<I - 1, PtrT, decltype(str_ptr->_subvalues)>(&str_ptr->_subvalues).ptr)
 				{
 				}
 			};
 
 			template <std::size_t I, class... Types>
-			inline constexpr std::add_pointer_t<variant_alternative_t<I, variant<Types...>>> _get_if(variant<Types...>* var_ptr)
+			inline constexpr std::enable_if_t<conjunction<std::is_trivially_destructible<Types>...>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr)
 			{
 				using value_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
-				return (var_ptr != nullptr && var_ptr->index() == I) ? _get_if_walker<I,value_ptr_t,decltype(var_ptr->_storage)>(&var_ptr->_storage).ptr : nullptr;
+				return (var_ptr != nullptr && var_ptr->index() == I) ? _get_if_constexpr<I,value_ptr_t,decltype(var_ptr->_storage)>(&var_ptr->_storage).ptr : nullptr;
+			}
+
+			template <std::size_t I, class... Types>
+			inline constexpr std::enable_if_t<negation<conjunction<std::is_trivially_destructible<Types>...>>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr)
+			{
+				using value_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
+				return (var_ptr != nullptr && var_ptr->index() == I) ? static_cast<value_ptr_t>(var_ptr->_storage.memory_ptr()) : nullptr;
 			}
 		} // namespace _detail
 
@@ -411,6 +397,8 @@ namespace noname
 		}
 	}
 }
+
+#pragma warning( pop )
 
 #undef _NONAME_CONSTEXPR
 #undef _NONAME_REQUIRES
