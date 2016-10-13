@@ -36,6 +36,7 @@ using namespace std::string_literals;
 // TODO: Tests for strict_unique_copy
 // TODO: Tests for truncate_string
 // TODO: Tests for split_string
+// TODO: Move tests for different headers to separate files
 
 TEST_CASE("Testing sorted_vector")
 {
@@ -1017,53 +1018,47 @@ TEST_CASE("Testing utility types")
 
 TEST_CASE("Testing variant")
 {
-	typedef tools::variant<double, int, char, double> var_t;
+	typedef tools::variant<double, int, char, double> constexpr_var_t;
+	typedef tools::variant<double, int, std::string, char, double> var_t;
 
-	SECTION("Testing helper classes")
+	SECTION("Testing variant helper classes")
 	{
-		REQUIRE((tools::variant_size_v<var_t> == 4));
-		REQUIRE((tools::variant_size_v<const var_t> == 4));
-		REQUIRE((tools::variant_size_v<volatile var_t> == 4));
-		REQUIRE((tools::variant_size_v<const volatile var_t> == 4));
+		REQUIRE((tools::variant_size_v<constexpr_var_t> == 4));
+		REQUIRE((tools::variant_size_v<const constexpr_var_t> == 4));
+		REQUIRE((tools::variant_size_v<volatile constexpr_var_t> == 4));
+		REQUIRE((tools::variant_size_v<const volatile constexpr_var_t> == 4));
 
-		REQUIRE((std::is_same<tools::variant_alternative_t<0, var_t>, double>::value == true));
-		REQUIRE((std::is_same<tools::variant_alternative_t<1, var_t>, int>::value == true));
-		REQUIRE((std::is_same<tools::variant_alternative_t<2, var_t>, char>::value == true));
-		REQUIRE((std::is_same<tools::variant_alternative_t<3, var_t>, double>::value == true));
-		REQUIRE((std::is_same<tools::variant_alternative_t<1, const var_t>, const int>::value == true));
-		REQUIRE((std::is_same<tools::variant_alternative_t<1, volatile var_t>, volatile int>::value == true));
-		REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile var_t>, const volatile int>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<0, constexpr_var_t>, double>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<1, constexpr_var_t>, int>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<2, constexpr_var_t>, char>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<3, constexpr_var_t>, double>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<1, const constexpr_var_t>, const int>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<1, volatile constexpr_var_t>, volatile int>::value == true));
+		REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile constexpr_var_t>, const volatile int>::value == true));
 	}
 
-	SECTION("Testing constexpr constructor")
+	SECTION("Testing constexpr constructor and index")
 	{
-		static_assert(var_t().index() == 0, "Index has to be zero after default construction.");
+		static_assert(constexpr_var_t().index() == 0, "Index has to be zero after default construction.");
 
-		static_assert(var_t(tools::in_place<0>, 3.14).index()	== 0, "Index has to be the specified value after in place construction.");
-		static_assert(var_t(tools::in_place<1>, 27).index()		== 1, "Index has to be the specified value after in place construction.");
-		static_assert(var_t(tools::in_place<2>, 'a').index()	== 2, "Index has to be the specified value after in place construction.");
-		static_assert(var_t(tools::in_place<3>, 99.9).index()	== 3, "Index has to be the specified value after in place construction.");
+		static_assert(constexpr_var_t(tools::in_place<0>, 3.14).index()	== 0, "Index has to be the specified value after in place construction.");
+		static_assert(constexpr_var_t(tools::in_place<1>, 27).index()	== 1, "Index has to be the specified value after in place construction.");
+		static_assert(constexpr_var_t(tools::in_place<2>, 'a').index()	== 2, "Index has to be the specified value after in place construction.");
+		static_assert(constexpr_var_t(tools::in_place<3>, 99.9).index()	== 3, "Index has to be the specified value after in place construction.");
 
-		constexpr const var_t v1(std::move(var_t(tools::in_place<2>, 'a')));
-		static_assert(v1.index() == 2, "Index has to be the specified value after move construction.");
-
-		constexpr const var_t v2(v1);
-		static_assert(v2.index() == 2, "Index has to be the specified value after copy construction.");
-
-		static_assert(tools::variant<char, double, int>(3.14).index() == 1, "Blub");
-		static_assert(tools::variant<char, double, int>(27).index() == 2, "Blub");
-		REQUIRE((tools::variant<std::string, bool>("abc").index() == 1));
+		static_assert(tools::variant<char, double, int>(3.14).index()	== 1, "Blub");
+		static_assert(tools::variant<char, double, int>(27).index()		== 2, "Blub");
 	}
 
-	SECTION("Testing get_if")
+	SECTION("Testing constexpr constructor and get_if")
 	{
-		constexpr const var_t* p = nullptr;
+		constexpr const constexpr_var_t* p = nullptr;
 		static_assert(tools::get_if<2>(p) == nullptr, "get_if has to return nullptr for nullptr parameter.");
 
-		constexpr const var_t v0(tools::in_place<0>, 3.14);
-		constexpr const var_t v1(tools::in_place<1>, 27);
-		constexpr const var_t v2(tools::in_place<2>, 'a');
-		constexpr const var_t v3(tools::in_place<3>, 99.9);
+		constexpr const constexpr_var_t v0(tools::in_place<0>, 3.14);
+		constexpr const constexpr_var_t v1(tools::in_place<1>, 27);
+		constexpr const constexpr_var_t v2(tools::in_place<2>, 'a');
+		constexpr const constexpr_var_t v3(tools::in_place<3>, 99.9);
 
 		static_assert(tools::get_if<0>(&v0) != nullptr, "get_if may not return nullptr on correct index accesss.");
 		static_assert(tools::get_if<1>(&v0) == nullptr, "get_if has to return nullptr on invalid index access.");
@@ -1077,5 +1072,62 @@ TEST_CASE("Testing variant")
 
 		static_assert(*tools::get_if<int>(&v1) == 27, "get_if has to return the correct value.");
 		static_assert(*tools::get_if<char>(&v2) == 'a', "get_if has to return the correct value.");
+	}
+
+	SECTION("Testing constructors and index")
+	{
+		REQUIRE(var_t(tools::in_place<0>, 3.14).index()				== 0);
+		REQUIRE(var_t(tools::in_place<1>, 27).index()				== 1);
+		REQUIRE(var_t(tools::in_place<2>, "Hello World!").index()	== 2);
+		REQUIRE(var_t(tools::in_place<3>, 'a').index()				== 3);
+		REQUIRE(var_t(tools::in_place<4>, 99.9).index()				== 4);
+
+		REQUIRE(var_t(27).index()				== 1);
+		REQUIRE(var_t("Hello World!").index()	== 2);
+		REQUIRE(var_t('a').index()				== 3);
+	}
+
+	SECTION("Testing constructors and get_if")
+	{
+		const var_t* p = nullptr;
+		REQUIRE(tools::get_if<2>(p) == nullptr);
+
+		const var_t v0(tools::in_place<0>, 3.14);
+		const var_t v1(tools::in_place<1>, 27);
+		const var_t v2(tools::in_place<2>, "Hello World!");
+		const var_t v3(tools::in_place<3>, 'a');
+		const var_t v4(tools::in_place<4>, 99.9);
+
+		const var_t v5(27);
+		const var_t v6("Hello World!");
+		const var_t v7('a');
+
+		REQUIRE(tools::get_if<0>(&v0) != nullptr);
+		REQUIRE(tools::get_if<1>(&v0) == nullptr);
+		REQUIRE(tools::get_if<2>(&v0) == nullptr);
+		REQUIRE(tools::get_if<3>(&v0) == nullptr);
+		REQUIRE(tools::get_if<4>(&v0) == nullptr);
+
+		REQUIRE(*tools::get_if<0>(&v0) == 3.14);
+		REQUIRE(*tools::get_if<1>(&v1) == 27);
+		REQUIRE(*tools::get_if<2>(&v2) == "Hello World!");
+		REQUIRE(*tools::get_if<3>(&v3) == 'a');
+		REQUIRE(*tools::get_if<4>(&v4) == 99.9);
+
+		REQUIRE(*tools::get_if<1>(&v5) == 27);
+		REQUIRE(*tools::get_if<2>(&v6) == "Hello World!");
+		REQUIRE(*tools::get_if<3>(&v7) == 'a');
+
+		REQUIRE(*tools::get_if<int>(&v1) == 27);
+		REQUIRE(tools::get_if<std::string>(&v1) == nullptr);
+		REQUIRE(tools::get_if<char>(&v1) == nullptr);
+
+		REQUIRE(tools::get_if<int>(&v2) == nullptr);
+		REQUIRE(*tools::get_if<std::string>(&v2) == "Hello World!");
+		REQUIRE(tools::get_if<char>(&v2) == nullptr);
+
+		REQUIRE(tools::get_if<int>(&v3) == nullptr);
+		REQUIRE(*tools::get_if<char>(&v3) == 'a');
+		REQUIRE(tools::get_if<std::string>(&v1) == nullptr);
 	}
 }
