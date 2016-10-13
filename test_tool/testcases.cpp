@@ -1018,6 +1018,9 @@ TEST_CASE("Testing utility types")
 
 TEST_CASE("Testing variant")
 {
+	// TODO: Test copy, move, destructor with proper test helper classes
+	// TODO: Test with pointers, references, empty types, etc.
+
 	typedef tools::variant<double, int, char, double> constexpr_var_t;
 	typedef tools::variant<double, int, std::string, char, double> var_t;
 
@@ -1094,12 +1097,12 @@ TEST_CASE("Testing variant")
 
 		const var_t v0(tools::in_place<0>, 3.14);
 		const var_t v1(tools::in_place<1>, 27);
-		const var_t v2(tools::in_place<2>, "Hello World!");
+		const var_t v2(tools::in_place<2>, "Hello World! Hello World! Hello World! Hello World!");
 		const var_t v3(tools::in_place<3>, 'a');
 		const var_t v4(tools::in_place<4>, 99.9);
 
 		const var_t v5(27);
-		const var_t v6("Hello World!");
+		const var_t v6("Hello World! Hello World! Hello World! Hello World!");
 		const var_t v7('a');
 
 		REQUIRE(tools::get_if<0>(&v0) != nullptr);
@@ -1110,12 +1113,12 @@ TEST_CASE("Testing variant")
 
 		REQUIRE(*tools::get_if<0>(&v0) == 3.14);
 		REQUIRE(*tools::get_if<1>(&v1) == 27);
-		REQUIRE(*tools::get_if<2>(&v2) == "Hello World!");
+		REQUIRE(*tools::get_if<2>(&v2) == "Hello World! Hello World! Hello World! Hello World!");
 		REQUIRE(*tools::get_if<3>(&v3) == 'a');
 		REQUIRE(*tools::get_if<4>(&v4) == 99.9);
 
 		REQUIRE(*tools::get_if<1>(&v5) == 27);
-		REQUIRE(*tools::get_if<2>(&v6) == "Hello World!");
+		REQUIRE(*tools::get_if<2>(&v6) == "Hello World! Hello World! Hello World! Hello World!");
 		REQUIRE(*tools::get_if<3>(&v7) == 'a');
 
 		REQUIRE(*tools::get_if<int>(&v1) == 27);
@@ -1123,11 +1126,51 @@ TEST_CASE("Testing variant")
 		REQUIRE(tools::get_if<char>(&v1) == nullptr);
 
 		REQUIRE(tools::get_if<int>(&v2) == nullptr);
-		REQUIRE(*tools::get_if<std::string>(&v2) == "Hello World!");
+		REQUIRE(*tools::get_if<std::string>(&v2) == "Hello World! Hello World! Hello World! Hello World!");
 		REQUIRE(tools::get_if<char>(&v2) == nullptr);
 
 		REQUIRE(tools::get_if<int>(&v3) == nullptr);
 		REQUIRE(*tools::get_if<char>(&v3) == 'a');
 		REQUIRE(tools::get_if<std::string>(&v1) == nullptr);
+	}
+
+	SECTION("Testing copy constructor")
+	{
+		var_t v0(tools::in_place<2>, "Hello World! Hello World! Hello World! Hello World!");
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == "Hello World! Hello World! Hello World! Hello World!");
+
+		{
+			var_t v1(v0);
+
+			REQUIRE(v0.index() == 2);
+			REQUIRE(*tools::get_if<2>(&v0) == "Hello World! Hello World! Hello World! Hello World!");
+			REQUIRE(v1.index() == 2);
+			REQUIRE(*tools::get_if<2>(&v1) == "Hello World! Hello World! Hello World! Hello World!");
+		}
+
+		{
+			const var_t& c_v0 = v0;
+			var_t v1(c_v0);
+
+			REQUIRE(v1.index() == 2);
+			REQUIRE(*tools::get_if<2>(&v1) == "Hello World! Hello World! Hello World! Hello World!");
+		}
+	}
+
+	SECTION("Testing move constructor")
+	{
+		var_t v0(tools::in_place<2>, "Hello World! Hello World! Hello World! Hello World!");
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == "Hello World! Hello World! Hello World! Hello World!");
+
+		{
+			var_t v1(std::move(v0));
+
+			REQUIRE(v1.index() == 2);
+			REQUIRE(*tools::get_if<2>(&v1) == "Hello World! Hello World! Hello World! Hello World!");
+		}
 	}
 }
