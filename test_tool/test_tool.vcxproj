@@ -139,7 +139,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src\;$(SolutionDir)submodules\Catch\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <SuppressStartupBanner>false</SuppressStartupBanner>
       <DisableLanguageExtensions>true</DisableLanguageExtensions>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp14</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,6 +150,13 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="testcases.cpp" />
+    <ClCompile Include="test_aglorithm.cpp" />
+    <ClCompile Include="test_optional.cpp" />
+    <ClCompile Include="test_range.cpp" />
+    <ClCompile Include="test_tuple.cpp" />
+    <ClCompile Include="test_typetraits.cpp" />
+    <ClCompile Include="test_variant.cpp" />
+    <ClCompile Include="test_vector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\noname_tools\algorithm_tools.h" />
