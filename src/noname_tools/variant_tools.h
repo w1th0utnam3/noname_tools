@@ -33,9 +33,12 @@
 
 #define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
-// TODO: Add noexcept according to reference
-// TODO: Missing constructors, etc.
+
+// TODO: SFINAE away copy and move constructor, etc.
+// TODO: Implement exception handling, valueless_by_exception
+// TODO: Missing constructors and other functions
 // TODO: Operators
+// TODO: noexcept according to reference
 
 #pragma warning( push )
 #pragma warning( disable : 4396 )
@@ -118,7 +121,7 @@ namespace noname
 			inline constexpr std::enable_if_t<conjunction<std::is_trivially_destructible<Types>...>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
 
 			template <std::size_t I, class... Types>
-			inline constexpr std::enable_if_t<negation<conjunction<std::is_trivially_destructible<Types>...>>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
+			inline std::enable_if_t<negation<conjunction<std::is_trivially_destructible<Types>...>>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
 
 			template <std::size_t I, class... Types>
 			union _constexpr_variant_storage;
@@ -236,7 +239,7 @@ namespace noname
 			template <class... Types>
 			struct _variant_base<0, Types...>
 			{
-				friend constexpr std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<0, variant<Types...>>>> _get_if<0, Types...>(variant<Types...>* pv);
+				friend std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<0, variant<Types...>>>> _get_if<0, Types...>(variant<Types...>* pv);
 
 				_variant_storage<Types...> _storage;
 				std::size_t _index;
@@ -275,7 +278,7 @@ namespace noname
 			template <std::size_t N, class... Types>
 			struct _variant_base : public _variant_base<N-1, Types...>
 			{
-				friend constexpr std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<N, variant<Types...>>>> _get_if<N, Types...>(variant<Types...>* pv);
+				friend std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<N, variant<Types...>>>> _get_if<N, Types...>(variant<Types...>* pv);
 
 				_variant_base() = default;
 
@@ -412,7 +415,7 @@ namespace noname
 			}
 
 			template <std::size_t I, class... Types>
-			inline constexpr std::enable_if_t<negation<conjunction<std::is_trivially_destructible<Types>...>>::value
+			inline std::enable_if_t<negation<conjunction<std::is_trivially_destructible<Types>...>>::value
 											  , std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>>
 				_get_if(variant<Types...>* var_ptr)
 			{
