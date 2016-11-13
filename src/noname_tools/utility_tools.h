@@ -32,20 +32,32 @@ namespace noname
 	{
 		// TODO: Rename nth_element because there is std::nth_element algorithm
 
+		//! Type used by nth_element to indicate that the type index is out of range of the parameter pack
+		struct out_of_range_t {};
+
 		namespace _detail
 		{
 			// Null type
 			struct dummy_t {};
 
+			template <bool, std::size_t, typename T, typename... Ts>
+			struct _nth_element;
+
+			template <std::size_t I, typename T, typename ...Ts>
+			struct _nth_element<false, I, T, Ts...>
+			{
+				using type = out_of_range_t;
+			};
+
 			// For efficiency see: http://ldionne.com/2015/11/29/efficient-parameter-pack-indexing/
 			template <std::size_t I, typename T, typename ...Ts>
-			struct _nth_element
+			struct _nth_element<true, I, T, Ts...>
 			{
-				using type = typename _nth_element<I - 1, Ts...>::type;
+				using type = typename _nth_element<true, I - 1, Ts...>::type;
 			};
 
 			template <typename T, typename ...Ts>
-			struct _nth_element<0, T, Ts...>
+			struct _nth_element<true, 0, T, Ts...>
 			{
 				using type = T;
 			};
@@ -53,7 +65,7 @@ namespace noname
 
 		//! Alias for the I-th element of Ts
 		template <std::size_t I, typename ...Ts>
-		struct nth_element : _detail::_nth_element<I, Ts...>
+		struct nth_element : _detail::_nth_element<I <= sizeof...(Ts), I, Ts...>
 		{
 		};
 
