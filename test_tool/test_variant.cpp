@@ -63,8 +63,14 @@ TEST_CASE("Testing variant")
 		static_assert(constexpr_var_t(tools::in_place<2>, 'a').index() == 2, "Index has to be the specified value after in place construction.");
 		static_assert(constexpr_var_t(tools::in_place<3>, 99.9).index() == 3, "Index has to be the specified value after in place construction.");
 
-		static_assert(tools::variant<char, double, int>(3.14).index() == 1, "Blub");
-		static_assert(tools::variant<char, double, int>(27).index() == 2, "Blub");
+		static_assert(constexpr_var_t(tools::in_place<int>, 27).index() == 1, "Index has to be the specified value after in place construction.");
+		static_assert(constexpr_var_t(tools::in_place<char>, 'a').index() == 2, "Index has to be the specified value after in place construction.");
+
+		static_assert(std::is_constructible<constexpr_var_t, tools::in_place_type_t<double>, double>::value == false, 
+			"Double occurs multiple times in type pack and therefore cannot be used for indexing");
+
+		static_assert(tools::variant<char, double, int>(3.14).index() == 1, "Index has to be the specified value.");
+		static_assert(tools::variant<char, double, int>(27).index() == 2, "Index has to be the specified value.");
 	}
 
 	SECTION("Testing constexpr constructor and get_if")
@@ -120,6 +126,8 @@ TEST_CASE("Testing variant")
 		const var_t v7('a');
 
 		const var_t v8(tools::in_place<2>, { 'H', 'e', 'l', 'l', 'o' });
+		const var_t v9(tools::in_place<std::string>, "Hello World! Hello World! Hello World! Hello World!");
+		const var_t v10(tools::in_place<std::string>, { 'H', 'e', 'l', 'l', 'o' });
 
 		REQUIRE(tools::get_if<0>(&v0) != nullptr);
 		REQUIRE(tools::get_if<1>(&v0) == nullptr);
@@ -138,6 +146,8 @@ TEST_CASE("Testing variant")
 		REQUIRE(*tools::get_if<3>(&v7) == 'a');
 
 		REQUIRE(*tools::get_if<2>(&v8) == "Hello");
+		REQUIRE(*tools::get_if<2>(&v9) == "Hello World! Hello World! Hello World! Hello World!");
+		REQUIRE(*tools::get_if<2>(&v10) == "Hello");
 
 		REQUIRE(*tools::get_if<int>(&v1) == 27);
 		REQUIRE(tools::get_if<std::string>(&v1) == nullptr);

@@ -35,9 +35,9 @@
 #define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
 
-// TODO: SFINAE away copy and move constructor, etc.
-// TODO: Implement exception handling, valueless_by_exception
 // TODO: Missing constructors and other functions
+// TODO: Implement exception handling, valueless_by_exception
+// TODO: SFINAE away copy and move constructor, etc.
 // TODO: Operators
 // TODO: noexcept according to reference
 
@@ -401,6 +401,22 @@ namespace noname
 																	&& !std::is_same<std::decay_t<T>, variant>::value>::type>
 			constexpr variant(T&& t)
 				: _detail::_variant_base_t<Types...>(in_place<_detail::alternative_index_v<T_j, Types...>>, std::forward<T>(t))
+			{
+			}
+
+			//! Constructs a variant with the specified alternative 'T' and initializes the contained value with the arguments 'std::forward<Args>(args)...'.
+			template <class T, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<_detail::alternative_index_v<T, Types...> != variant_npos>
+																		   , std::is_constructible<nth_element_t<_detail::alternative_index_v<T, Types...>, Types...>, Args...>>)>
+			constexpr explicit variant(in_place_type_t<T>, Args&&... args)
+				: _detail::_variant_base_t<Types...>(in_place<_detail::alternative_index_v<T, Types...>>, std::forward<Args>(args)...)
+			{
+			}
+
+			//! Constructs a variant with the specified alternative 'T' and initializes the contained value with the arguments 'il, std::forward<Args>(args)...'.
+			template <class T, class U, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<_detail::alternative_index_v<T, Types...> != variant_npos>
+																					, std::is_constructible<nth_element_t<_detail::alternative_index_v<T, Types...>, Types...>, Args...>>)>
+			constexpr explicit variant(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
+				: _detail::_variant_base_t<Types...>(in_place<_detail::alternative_index_v<T, Types...>>, il, std::forward<Args>(args)...)
 			{
 			}
 
