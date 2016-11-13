@@ -56,7 +56,7 @@ namespace noname
 		template<class B1, class... Bn>
 		struct conjunction<B1, Bn...> : std::conditional_t<B1::value != false, conjunction<Bn...>, B1> {};
 
-		//! Forms the logical disjunction of the type traits B..., effectively performing a logical or on the sequence of traits.
+		//! Forms the logical disjunction of the type traits B..., effectively performing a logical OR on the sequence of traits.
 		template<class...> struct disjunction : std::false_type {};
 		template<class B1> struct disjunction<B1> : B1 {};
 		template<class B1, class... Bn>
