@@ -119,6 +119,8 @@ TEST_CASE("Testing variant")
 		const var_t v6("Hello World! Hello World! Hello World! Hello World!");
 		const var_t v7('a');
 
+		const var_t v8(tools::in_place<2>, { 'H', 'e', 'l', 'l', 'o' });
+
 		REQUIRE(tools::get_if<0>(&v0) != nullptr);
 		REQUIRE(tools::get_if<1>(&v0) == nullptr);
 		REQUIRE(tools::get_if<2>(&v0) == nullptr);
@@ -134,6 +136,8 @@ TEST_CASE("Testing variant")
 		REQUIRE(*tools::get_if<1>(&v5) == 27);
 		REQUIRE(*tools::get_if<2>(&v6) == "Hello World! Hello World! Hello World! Hello World!");
 		REQUIRE(*tools::get_if<3>(&v7) == 'a');
+
+		REQUIRE(*tools::get_if<2>(&v8) == "Hello");
 
 		REQUIRE(*tools::get_if<int>(&v1) == 27);
 		REQUIRE(tools::get_if<std::string>(&v1) == nullptr);
