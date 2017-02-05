@@ -56,7 +56,7 @@ TEST_CASE("Testing variant")
 		REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile constexpr_var_t>, const volatile int>::value == true));
 	}
 
-#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
+
 	SECTION("Testing constexpr constructor and index")
 	{
 		static_assert(constexpr_var_t().index() == 0, "Index has to be zero after default construction.");
@@ -99,7 +99,6 @@ TEST_CASE("Testing variant")
 		static_assert(*tools::get_if<int>(&v1) == 27, "get_if has to return the correct value.");
 		static_assert(*tools::get_if<char>(&v2) == 'a', "get_if has to return the correct value.");
 	}
-#endif
 
 	SECTION("Testing constructors and index")
 	{
@@ -206,30 +205,32 @@ TEST_CASE("Testing variant")
 		}
 	}
 
-#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
 	SECTION("Testing constexpr get")
 	{
 		constexpr const constexpr_var_t v0(tools::in_place<0>, 3.14);
 		constexpr const constexpr_var_t v1(tools::in_place<1>, 27);
 		constexpr const constexpr_var_t v2(tools::in_place<2>, 'a');
 		constexpr const constexpr_var_t v3(tools::in_place<3>, 99.9);
+		constexpr constexpr_var_t v4(tools::in_place<0>, 3.14);
 
 		static_assert(tools::get<0>(v0) == 3.14, "get has to return the correct value.");
 		static_assert(tools::get<1>(v1) == 27, "get has to return the correct value.");
 		static_assert(tools::get<2>(v2) == 'a', "get has to return the correct value.");
 		static_assert(tools::get<3>(v3) == 99.9, "get has to return the correct value.");
+		static_assert(tools::get<0>(v4) == 3.14, "get has to return the correct value.");
 
+#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
 		static_assert(tools::get<0>(constexpr_var_t(tools::in_place<0>, 3.14)) == 3.14, "get has to return the correct value.");
 		static_assert(tools::get<1>(constexpr_var_t(tools::in_place<1>, 27)) == 27, "get has to return the correct value.");
 		static_assert(tools::get<2>(constexpr_var_t(tools::in_place<2>, 'a')) == 'a', "get has to return the correct value.");
 		static_assert(tools::get<3>(constexpr_var_t(tools::in_place<3>, 99.9)) == 99.9, "get has to return the correct value.");
 
-		constexpr constexpr_var_t v4(tools::in_place<0>, 3.14);
-		constexpr auto val0 = tools::get<0>(std::move(v4));
+		constexpr constexpr_var_t v5(tools::in_place<0>, 3.14);
+		constexpr auto val0 = tools::get<0>(std::move(v5));
 
 		static_assert(val0 == 3.14, "get has to return the correct value.");
-	}
 #endif
+	}
 
 	SECTION("Testing get")
 	{
