@@ -1,6 +1,6 @@
 //	MIT License
 //
-//	Copyright (c) 2016 Fabian Löschner
+//	Copyright (c) 2016 Fabian LÃ¶schner
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -54,6 +54,7 @@ TEST_CASE("Testing variant")
 		REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile constexpr_var_t>, const volatile int>::value == true));
 	}
 
+#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
 	SECTION("Testing constexpr constructor and index")
 	{
 		static_assert(constexpr_var_t().index() == 0, "Index has to be zero after default construction.");
@@ -96,6 +97,7 @@ TEST_CASE("Testing variant")
 		static_assert(*tools::get_if<int>(&v1) == 27, "get_if has to return the correct value.");
 		static_assert(*tools::get_if<char>(&v2) == 'a', "get_if has to return the correct value.");
 	}
+#endif
 
 	SECTION("Testing constructors and index")
 	{
@@ -202,6 +204,7 @@ TEST_CASE("Testing variant")
 		}
 	}
 
+#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
 	SECTION("Testing constexpr get")
 	{
 		constexpr const constexpr_var_t v0(tools::in_place<0>, 3.14);
@@ -219,6 +222,7 @@ TEST_CASE("Testing variant")
 		static_assert(*tools::get_if<char>(&v2) == 'a', "get_if has to return the correct value.");
 		*/
 	}
+#endif
 
 	SECTION("Testing get")
 	{

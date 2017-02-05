@@ -1,6 +1,6 @@
 //	MIT License
 //
-//	Copyright (c) 2016 Fabian Löschner
+//	Copyright (c) 2016 Fabian LÃ¶schner
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,8 @@
 #define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
 
+// TODO: r-value get_if() method
+// TODO: Proper support for MSVC 2015, i.e. find out what works/doesn't work with constexpr
 // TODO: Missing constructors and other functions
 // TODO: Implement exception handling, valueless_by_exception
 // TODO: SFINAE away copy and move constructor, etc.
