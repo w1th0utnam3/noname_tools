@@ -37,7 +37,6 @@
 #define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
 
-// TODO: r-value get_if() method
 // TODO: Proper support for MSVC 2015, i.e. find out what works/doesn't work with constexpr
 // TODO: Missing constructors and other functions
 // TODO: Implement exception handling, valueless_by_exception
@@ -547,12 +546,12 @@ namespace noname
 		{
 			using result_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 
-#ifdef _MSC_VER
-			result_ptr_t ptr = get_if<I, Types...>(std::addressof(v));
-#else
+#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
 			result_ptr_t ptr = get_if<I, Types...>(&v);
+#else
+			result_ptr_t ptr = get_if<I, Types...>(std::addressof(v));
 #endif
-			return (ptr != nullptr) ? *ptr : (throw bad_variant_access("bad_variant_access"), *ptr);
+			return *((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr));
 		}
 
 		template<std::size_t I, class... Types, _NONAME_REQUIRES(negation<_detail::_is_constexpr_pack<Types...>>)>
@@ -560,7 +559,7 @@ namespace noname
 		{
 			using result_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 			result_ptr_t ptr = get_if<I, Types...>(&v);
-			return (ptr != nullptr) ? *ptr : (throw bad_variant_access("bad_variant_access"), *ptr);
+			return *((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr));
 		}
 
 		template<std::size_t I, class... Types, _NONAME_REQUIRES(_detail::_is_constexpr_pack<Types...>)>
@@ -568,12 +567,12 @@ namespace noname
 		{
 			using result_ptr_t = std::add_pointer_t<const variant_alternative_t<I, variant<Types...>>>;
 
-#ifdef _MSC_VER
-			result_ptr_t ptr = get_if<I, Types...>(std::addressof(v));
-#else
+#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
 			result_ptr_t ptr = get_if<I, Types...>(&v);
+#else
+			result_ptr_t ptr = get_if<I, Types...>(std::addressof(v));
 #endif
-			return (ptr != nullptr) ? *ptr : (throw bad_variant_access("bad_variant_access"), *ptr);
+			return *((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr));
 		}
 
 		template<std::size_t I, class... Types, _NONAME_REQUIRES(negation<_detail::_is_constexpr_pack<Types...>>)>
@@ -581,7 +580,28 @@ namespace noname
 		{
 			using result_ptr_t = std::add_pointer_t<const variant_alternative_t<I, variant<Types...>>>;
 			result_ptr_t ptr = get_if<I, Types...>(&v);
-			return (ptr != nullptr) ? *ptr : (throw bad_variant_access("bad_variant_access"), *ptr);
+			return *((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr));
+		}
+
+		template<std::size_t I, class... Types, _NONAME_REQUIRES(_detail::_is_constexpr_pack<Types...>)>
+		constexpr variant_alternative_t<I, variant<Types...>>&& get(variant<Types...>&& v)
+		{
+			using result_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
+
+#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
+			result_ptr_t ptr = get_if<I, Types...>(&v);
+#else
+			result_ptr_t ptr = get_if<I, Types...>(std::addressof(v));
+#endif
+			return std::move(*((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr)));
+		}
+
+		template<std::size_t I, class... Types, _NONAME_REQUIRES(negation<_detail::_is_constexpr_pack<Types...>>)>
+		variant_alternative_t<I, variant<Types...>>&& get(variant<Types...>&& v)
+		{
+			using result_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
+			result_ptr_t ptr = get_if<I, Types...>(&v);
+			return std::move(*((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr)));
 		}
 	}
 }

@@ -38,6 +38,8 @@ TEST_CASE("Testing variant")
 	typedef tools::variant<double, int, char, double> constexpr_var_t;
 	typedef tools::variant<double, int, std::string, char, double> var_t;
 
+	const std::string long_string = "Hello World! Hello World! Hello World! Hello World!";
+
 	SECTION("Testing variant helper classes")
 	{
 		REQUIRE((tools::variant_size_v<constexpr_var_t> == 4));
@@ -119,16 +121,16 @@ TEST_CASE("Testing variant")
 
 		const var_t v0(tools::in_place<0>, 3.14);
 		const var_t v1(tools::in_place<1>, 27);
-		const var_t v2(tools::in_place<2>, "Hello World! Hello World! Hello World! Hello World!");
+		const var_t v2(tools::in_place<2>, long_string);
 		const var_t v3(tools::in_place<3>, 'a');
 		const var_t v4(tools::in_place<4>, 99.9);
 
 		const var_t v5(27);
-		const var_t v6("Hello World! Hello World! Hello World! Hello World!");
+		const var_t v6(long_string);
 		const var_t v7('a');
 
 		const var_t v8(tools::in_place<2>, { 'H', 'e', 'l', 'l', 'o' });
-		const var_t v9(tools::in_place<std::string>, "Hello World! Hello World! Hello World! Hello World!");
+		const var_t v9(tools::in_place<std::string>, long_string);
 		const var_t v10(tools::in_place<std::string>, { 'H', 'e', 'l', 'l', 'o' });
 
 		REQUIRE(tools::get_if<0>(&v0) != nullptr);
@@ -139,16 +141,16 @@ TEST_CASE("Testing variant")
 
 		REQUIRE(*tools::get_if<0>(&v0) == 3.14);
 		REQUIRE(*tools::get_if<1>(&v1) == 27);
-		REQUIRE(*tools::get_if<2>(&v2) == "Hello World! Hello World! Hello World! Hello World!");
+		REQUIRE(*tools::get_if<2>(&v2) == long_string);
 		REQUIRE(*tools::get_if<3>(&v3) == 'a');
 		REQUIRE(*tools::get_if<4>(&v4) == 99.9);
 
 		REQUIRE(*tools::get_if<1>(&v5) == 27);
-		REQUIRE(*tools::get_if<2>(&v6) == "Hello World! Hello World! Hello World! Hello World!");
+		REQUIRE(*tools::get_if<2>(&v6) == long_string);
 		REQUIRE(*tools::get_if<3>(&v7) == 'a');
 
 		REQUIRE(*tools::get_if<2>(&v8) == "Hello");
-		REQUIRE(*tools::get_if<2>(&v9) == "Hello World! Hello World! Hello World! Hello World!");
+		REQUIRE(*tools::get_if<2>(&v9) == long_string);
 		REQUIRE(*tools::get_if<2>(&v10) == "Hello");
 
 		REQUIRE(*tools::get_if<int>(&v1) == 27);
@@ -156,7 +158,7 @@ TEST_CASE("Testing variant")
 		REQUIRE(tools::get_if<char>(&v1) == nullptr);
 
 		REQUIRE(tools::get_if<int>(&v2) == nullptr);
-		REQUIRE(*tools::get_if<std::string>(&v2) == "Hello World! Hello World! Hello World! Hello World!");
+		REQUIRE(*tools::get_if<std::string>(&v2) == long_string);
 		REQUIRE(tools::get_if<char>(&v2) == nullptr);
 
 		REQUIRE(tools::get_if<int>(&v3) == nullptr);
@@ -166,18 +168,18 @@ TEST_CASE("Testing variant")
 
 	SECTION("Testing copy constructor")
 	{
-		var_t v0(tools::in_place<2>, "Hello World! Hello World! Hello World! Hello World!");
+		var_t v0(tools::in_place<2>, long_string);
 
 		REQUIRE(v0.index() == 2);
-		REQUIRE(*tools::get_if<2>(&v0) == "Hello World! Hello World! Hello World! Hello World!");
+		REQUIRE(*tools::get_if<2>(&v0) == long_string);
 
 		{
 			var_t v1(v0);
 
 			REQUIRE(v0.index() == 2);
-			REQUIRE(*tools::get_if<2>(&v0) == "Hello World! Hello World! Hello World! Hello World!");
+			REQUIRE(*tools::get_if<2>(&v0) == long_string);
 			REQUIRE(v1.index() == 2);
-			REQUIRE(*tools::get_if<2>(&v1) == "Hello World! Hello World! Hello World! Hello World!");
+			REQUIRE(*tools::get_if<2>(&v1) == long_string);
 		}
 
 		{
@@ -185,22 +187,22 @@ TEST_CASE("Testing variant")
 			var_t v1(c_v0);
 
 			REQUIRE(v1.index() == 2);
-			REQUIRE(*tools::get_if<2>(&v1) == "Hello World! Hello World! Hello World! Hello World!");
+			REQUIRE(*tools::get_if<2>(&v1) == long_string);
 		}
 	}
 
 	SECTION("Testing move constructor")
 	{
-		var_t v0(tools::in_place<2>, "Hello World! Hello World! Hello World! Hello World!");
+		var_t v0(tools::in_place<2>, long_string);
 
 		REQUIRE(v0.index() == 2);
-		REQUIRE(*tools::get_if<2>(&v0) == "Hello World! Hello World! Hello World! Hello World!");
+		REQUIRE(*tools::get_if<2>(&v0) == long_string);
 
 		{
 			var_t v1(std::move(v0));
 
 			REQUIRE(v1.index() == 2);
-			REQUIRE(*tools::get_if<2>(&v1) == "Hello World! Hello World! Hello World! Hello World!");
+			REQUIRE(*tools::get_if<2>(&v1) == long_string);
 		}
 	}
 
@@ -217,15 +219,21 @@ TEST_CASE("Testing variant")
 		static_assert(tools::get<2>(v2) == 'a', "get has to return the correct value.");
 		static_assert(tools::get<3>(v3) == 99.9, "get has to return the correct value.");
 
-		/*
-		static_assert(*tools::get_if<int>(&v1) == 27, "get_if has to return the correct value.");
-		static_assert(*tools::get_if<char>(&v2) == 'a', "get_if has to return the correct value.");
-		*/
+		static_assert(tools::get<0>(constexpr_var_t(tools::in_place<0>, 3.14)) == 3.14, "get has to return the correct value.");
+		static_assert(tools::get<1>(constexpr_var_t(tools::in_place<1>, 27)) == 27, "get has to return the correct value.");
+		static_assert(tools::get<2>(constexpr_var_t(tools::in_place<2>, 'a')) == 'a', "get has to return the correct value.");
+		static_assert(tools::get<3>(constexpr_var_t(tools::in_place<3>, 99.9)) == 99.9, "get has to return the correct value.");
+
+		constexpr constexpr_var_t v4(tools::in_place<0>, 3.14);
+		constexpr auto val0 = tools::get<0>(std::move(v4));
+
+		static_assert(val0 == 3.14, "get has to return the correct value.");
 	}
 #endif
 
 	SECTION("Testing get")
 	{
+		// l-value ref
 		{
 			var_t v0(tools::in_place<0>, 3.14);
 			var_t v1(tools::in_place<1>, 27);
@@ -239,11 +247,11 @@ TEST_CASE("Testing variant")
 			auto& ref3 = tools::get<3>(v3);
 			auto& ref4 = tools::get<4>(v4);
 
-			static_assert(std::is_same<decltype(ref0), double&>::value == true, "Has to return reference type.");
-			static_assert(std::is_same<decltype(ref1), int&>::value == true, "Has to return reference type.");
-			static_assert(std::is_same<decltype(ref2), std::string&>::value == true, "Has to return reference type.");
-			static_assert(std::is_same<decltype(ref3), char&>::value == true, "Has to return reference type.");
-			static_assert(std::is_same<decltype(ref4), double&>::value == true, "Has to return reference type.");
+			static_assert(std::is_same<decltype(ref0), double&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref1), int&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref2), std::string&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref3), char&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref4), double&>::value == true, "get has to return reference type.");
 
 			REQUIRE(ref0 == 3.14);
 			REQUIRE(ref1 == 27);
@@ -252,6 +260,35 @@ TEST_CASE("Testing variant")
 			REQUIRE(ref4 == 99.9);
 		}
 
+		// r-value ref
+		{
+			auto v0 = var_t(tools::in_place<2>, long_string);
+
+			auto val0 = tools::get<0>(var_t(tools::in_place<0>, 3.14));
+			auto val1 = tools::get<1>(var_t(tools::in_place<1>, 27));
+			auto val2 = tools::get<2>(var_t(tools::in_place<2>, long_string));
+			auto val3 = tools::get<3>(var_t(tools::in_place<3>, 'a'));
+			auto val4 = tools::get<4>(var_t(tools::in_place<4>, 99.9));
+			auto val5 = tools::get<2>(std::move(v0));
+			auto val6 = tools::get<2>(v0);
+
+			static_assert(std::is_same<decltype(val0), double>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val1), int>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val2), std::string>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val3), char>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val4), double>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val5), std::string>::value == true, "get has to return value type.");
+
+			REQUIRE(val0 == 3.14);
+			REQUIRE(val1 == 27);
+			REQUIRE(val2 == long_string);
+			REQUIRE(val3 == 'a');
+			REQUIRE(val4 == 99.9);
+			REQUIRE(val5 == long_string);
+			REQUIRE(val6 == "");
+		}
+
+		// Const l-value ref
 		{
 			const var_t v0(tools::in_place<0>, 3.14);
 			const var_t v1(tools::in_place<1>, 27);
@@ -265,11 +302,11 @@ TEST_CASE("Testing variant")
 			const auto& ref3 = tools::get<3>(v3);
 			const auto& ref4 = tools::get<4>(v4);
 
-			static_assert(std::is_same<decltype(ref0), const double&>::value == true, "Has to return reference type.");
-			static_assert(std::is_same<decltype(ref1), const int&>::value == true, "Has to return reference type.");
-			static_assert(std::is_same<decltype(ref2), const std::string&>::value == true, "Has to return reference type.");
-			static_assert(std::is_same<decltype(ref3), const char&>::value == true, "Has to return reference type.");
-			static_assert(std::is_same<decltype(ref4), const double&>::value == true, "Has to return reference type.");
+			static_assert(std::is_same<decltype(ref0), const double&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref1), const int&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref2), const std::string&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref3), const char&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref4), const double&>::value == true, "get has to return reference type.");
 
 			REQUIRE(ref0 == 3.14);
 			REQUIRE(ref1 == 27);
