@@ -5,9 +5,13 @@ the [Catch](https://github.com/philsquared/Catch) header-only unit-test framewor
 
 ## Todos
 
+- Finish variant implementation
 - Try to compile with C++11 and clang
 - Add missing unit-tests
-- Make more awesome and useful tools
+- Make more awesome and useful tools and port some C++17 features, i.e.
+  - C++14 std::string_view, std::any
+  - string split iterator
+  - replace explicit container usages with iterators
 
 ## Included tools
 
