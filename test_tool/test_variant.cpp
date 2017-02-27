@@ -29,6 +29,7 @@
 
 using namespace noname;
 
+// TODO: Tests for bad_variant_access
 // TODO: Test copy, move, destructor with proper test helper classes
 // TODO: Check is_copy_constructible, is_move_* and other type traits
 // TODO: Test with pointers, references, empty types, no types, etc.
@@ -219,6 +220,9 @@ TEST_CASE("Testing variant")
 		static_assert(tools::get<3>(v3) == 99.9, "get has to return the correct value.");
 		static_assert(tools::get<0>(v4) == 3.14, "get has to return the correct value.");
 
+		static_assert(tools::get<int>(v1) == 27, "get has to return the correct value.");
+		static_assert(tools::get<char>(v2) == 'a', "get has to return the correct value.");
+
 #if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
 		static_assert(tools::get<0>(constexpr_var_t(tools::in_place<0>, 3.14)) == 3.14, "get has to return the correct value.");
 		static_assert(tools::get<1>(constexpr_var_t(tools::in_place<1>, 27)) == 27, "get has to return the correct value.");
@@ -229,6 +233,9 @@ TEST_CASE("Testing variant")
 		constexpr auto val0 = tools::get<0>(std::move(v5));
 
 		static_assert(val0 == 3.14, "get has to return the correct value.");
+
+		static_assert(tools::get<int>(constexpr_var_t(tools::in_place<1>, 27)) == 27, "get has to return the correct value.");
+		static_assert(tools::get<char>(constexpr_var_t(tools::in_place<2>, 'a')) == 'a', "get has to return the correct value.");
 #endif
 	}
 
@@ -259,6 +266,18 @@ TEST_CASE("Testing variant")
 			REQUIRE(ref2 == "Hello");
 			REQUIRE(ref3 == 'a');
 			REQUIRE(ref4 == 99.9);
+
+			auto& ref5 = tools::get<int>(v1);
+			auto& ref6 = tools::get<std::string>(v2);
+			auto& ref7 = tools::get<char>(v3);
+
+			static_assert(std::is_same<decltype(ref5), int&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref6), std::string&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref7), char&>::value == true, "get has to return reference type.");
+
+			REQUIRE(ref5 == 27);
+			REQUIRE(ref6 == "Hello");
+			REQUIRE(ref7 == 'a');
 		}
 
 		// r-value ref
@@ -279,6 +298,7 @@ TEST_CASE("Testing variant")
 			static_assert(std::is_same<decltype(val3), char>::value == true, "get has to return value type.");
 			static_assert(std::is_same<decltype(val4), double>::value == true, "get has to return value type.");
 			static_assert(std::is_same<decltype(val5), std::string>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val6), std::string>::value == true, "get has to return value type.");
 
 			REQUIRE(val0 == 3.14);
 			REQUIRE(val1 == 27);
@@ -287,6 +307,26 @@ TEST_CASE("Testing variant")
 			REQUIRE(val4 == 99.9);
 			REQUIRE(val5 == long_string);
 			REQUIRE(val6 == "");
+
+			auto v1 = var_t(tools::in_place<2>, long_string);
+
+			auto val7 = tools::get<int>(var_t(tools::in_place<1>, 27));
+			auto val8 = tools::get<std::string>(var_t(tools::in_place<2>, long_string));
+			auto val9 = tools::get<char>(var_t(tools::in_place<3>, 'a'));
+			auto val10 = tools::get<std::string>(std::move(v1));
+			auto val11 = tools::get<std::string>(v1);
+
+			static_assert(std::is_same<decltype(val7), int>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val8), std::string>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val9), char>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val10), std::string>::value == true, "get has to return value type.");
+			static_assert(std::is_same<decltype(val11), std::string>::value == true, "get has to return value type.");
+
+			REQUIRE(val7 == 27);
+			REQUIRE(val8 == long_string);
+			REQUIRE(val9 == 'a');
+			REQUIRE(val10 == long_string);
+			REQUIRE(val11 == "");
 		}
 
 		// Const l-value ref
@@ -314,6 +354,18 @@ TEST_CASE("Testing variant")
 			REQUIRE(ref2 == "Hello");
 			REQUIRE(ref3 == 'a');
 			REQUIRE(ref4 == 99.9);
+
+			const auto& ref5 = tools::get<int>(v1);
+			const auto& ref6 = tools::get<std::string>(v2);
+			const auto& ref7 = tools::get<char>(v3);
+
+			static_assert(std::is_same<decltype(ref5), const int&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref6), const std::string&>::value == true, "get has to return reference type.");
+			static_assert(std::is_same<decltype(ref7), const char&>::value == true, "get has to return reference type.");
+
+			REQUIRE(ref5 == 27);
+			REQUIRE(ref6 == "Hello");
+			REQUIRE(ref7 == 'a');
 		}
 	}
 }

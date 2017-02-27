@@ -28,14 +28,13 @@
 #include <string>
 #include <memory>
 
-#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
-#define _NONAME_CONSTEXPR constexpr
-#else
+#if defined(_MSC_VER) && _MSC_VER < 1910
 #define _NONAME_CONSTEXPR
+#else
+#define _NONAME_CONSTEXPR constexpr
 #endif
 
 #define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
-
 
 // TODO: Proper support for MSVC 2015, i.e. find out what works/doesn't work with constexpr
 // TODO: Missing constructors and other functions
@@ -541,16 +540,18 @@ namespace noname
 			return _detail::_get_if<_detail::_alternative_index_v<T, Types...>>(const_cast<variant<Types...>*>(pv));
 		}
 
+		//! Index-based value accessor: If 'v.index() == I', returns a reference to the value stored in 'v'. Otherwise, throws 'bad_variant_access'.
 		template<std::size_t I, class... Types>
-		_NONAME_CONSTEXPR variant_alternative_t<I, variant<Types...>>& get(variant<Types...>& v)
+		inline _NONAME_CONSTEXPR variant_alternative_t<I, variant<Types...>>& get(variant<Types...>& v)
 		{
 			using result_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 			result_ptr_t ptr = get_if<I, Types...>(&v);
 			return *((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr));
 		}
 
+		//! Index-based value accessor: If 'v.index() == I', returns a reference to the value stored in 'v'. Otherwise, throws 'bad_variant_access'.
 		template<std::size_t I, class... Types, _NONAME_REQUIRES(_detail::_is_constexpr_pack<Types...>)>
-		constexpr variant_alternative_t<I, variant<Types...>> const& get(const variant<Types...>& v)
+		inline constexpr variant_alternative_t<I, variant<Types...>> const& get(const variant<Types...>& v)
 		{
 			using result_ptr_t = std::add_pointer_t<const variant_alternative_t<I, variant<Types...>>>;
 
@@ -562,20 +563,50 @@ namespace noname
 #endif
 		}
 
+		//! Index-based value accessor: If 'v.index() == I', returns a reference to the value stored in 'v'. Otherwise, throws 'bad_variant_access'.
 		template<std::size_t I, class... Types, _NONAME_REQUIRES(negation<_detail::_is_constexpr_pack<Types...>>)>
-		variant_alternative_t<I, variant<Types...>> const& get(const variant<Types...>& v)
+		inline variant_alternative_t<I, variant<Types...>> const& get(const variant<Types...>& v)
 		{
 			using result_ptr_t = std::add_pointer_t<const variant_alternative_t<I, variant<Types...>>>;
 			result_ptr_t ptr = get_if<I, Types...>(&v);
 			return *((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr));
 		}
 
+		//! Index-based value accessor: If 'v.index() == I', returns a reference to the value stored in 'v'. Otherwise, throws 'bad_variant_access'.
 		template<std::size_t I, class... Types>
-		_NONAME_CONSTEXPR variant_alternative_t<I, variant<Types...>>&& get(variant<Types...>&& v)
+		inline _NONAME_CONSTEXPR variant_alternative_t<I, variant<Types...>>&& get(variant<Types...>&& v)
 		{
 			using result_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
 			result_ptr_t ptr = get_if<I, Types...>(&v);
 			return std::move(*((ptr != nullptr) ? ptr : (throw bad_variant_access("bad_variant_access"), ptr)));
+		}
+
+		//! Type-based value accessor: If v holds the alternative T, returns a reference to the value stored in v. 
+		template <class T, class... Types>
+		inline _NONAME_CONSTEXPR T& get(variant<Types...>& v)
+		{
+			return get<_detail::_alternative_index_v<T, Types...>>(v);
+		}
+
+		//! Type-based value accessor: If v holds the alternative T, returns a reference to the value stored in v. 
+		template <class T, class... Types, _NONAME_REQUIRES(_detail::_is_constexpr_pack<Types...>)>
+		inline constexpr const T& get(const variant<Types...>& v)
+		{
+			return get<_detail::_alternative_index_v<T, Types...>>(v);
+		}
+
+		//! Type-based value accessor: If v holds the alternative T, returns a reference to the value stored in v. 
+		template <class T, class... Types, _NONAME_REQUIRES(negation<_detail::_is_constexpr_pack<Types...>>)>
+		inline const T& get(const variant<Types...>& v)
+		{
+			return get<_detail::_alternative_index_v<T, Types...>>(v);
+		}
+
+		//! Type-based value accessor: If v holds the alternative T, returns a reference to the value stored in v. 
+		template <class T, class... Types>
+		inline _NONAME_CONSTEXPR T&& get(variant<Types...>&& v)
+		{
+			return get<_detail::_alternative_index_v<T, Types...>>(std::forward<variant<Types...>>(v));
 		}
 	}
 }
