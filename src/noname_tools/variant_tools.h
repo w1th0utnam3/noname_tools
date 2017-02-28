@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <string>
 #include <memory>
+#include <array>
 
 #if defined(_MSC_VER) && _MSC_VER < 1910
 #define _NONAME_CONSTEXPR
@@ -36,6 +37,8 @@
 
 #define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
+// TODO: visit with multiple variants
+// TODO: Own implementation of array to support constexpr in MSVC 2015
 // TODO: Proper support for MSVC 2015, i.e. find out what works/doesn't work with constexpr
 // TODO: Missing constructors and other functions
 // TODO: Implement exception handling, valueless_by_exception
@@ -124,12 +127,21 @@ namespace noname
 
 		namespace _detail
 		{
+			//! Specifies whether all types from the pack are constexpr compatible
+			template <class... Types>
+			struct _is_constexpr_pack : conjunction<std::is_trivially_destructible<Types>...>
+			{
+			};
+
+			template <class... Types>
+			constexpr bool _is_constexpr_pack_v = _is_constexpr_pack<Types...>::value;
+
 			// Forward declaration of _get_if for friend declaration
 			template <std::size_t I, class... Types>
-			inline constexpr std::enable_if_t<conjunction<std::is_trivially_destructible<Types>...>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
+			inline constexpr std::enable_if_t<_is_constexpr_pack<Types...>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
 
 			template <std::size_t I, class... Types>
-			inline std::enable_if_t<negation<conjunction<std::is_trivially_destructible<Types>...>>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
+			inline std::enable_if_t<negation<_is_constexpr_pack<Types...>>::value, std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> _get_if(variant<Types...>* var_ptr);
 
 			template <std::size_t I, class... Types>
 			union _constexpr_variant_storage;
@@ -359,16 +371,6 @@ namespace noname
 
 			};
 
-			
-			//! Specifies whether all types from the pack are constexpr compatible
-			template <class... Types>
-			struct _is_constexpr_pack : conjunction<std::is_trivially_destructible<Types>...>
-			{
-			};
-
-			template <class... Types>
-			constexpr bool _is_constexpr_pack_v = _is_constexpr_pack<Types...>::value;
-
 			// Only trivially destructible types can be used in constexpr objects
 			template <class... Types>
 			using _variant_base_t = typename std::conditional<
@@ -494,16 +496,16 @@ namespace noname
 			};
 
 			template <std::size_t I, class... Types>
-			inline constexpr std::enable_if_t<conjunction<std::is_trivially_destructible<Types>...>::value
+			inline constexpr std::enable_if_t<_is_constexpr_pack<Types...>::value
 											  , std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> 
 				_get_if(variant<Types...>* var_ptr)
 			{
 				using value_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
-				return (var_ptr != nullptr && var_ptr->index() == I) ? _get_if_constexpr<I,value_ptr_t,decltype(var_ptr->_storage)>(&var_ptr->_storage).ptr : nullptr;
+				return (var_ptr != nullptr && var_ptr->index() == I) ? _get_if_constexpr<I, value_ptr_t, decltype(var_ptr->_storage)>(&var_ptr->_storage).ptr : nullptr;
 			}
 
 			template <std::size_t I, class... Types>
-			inline std::enable_if_t<negation<conjunction<std::is_trivially_destructible<Types>...>>::value
+			inline std::enable_if_t<negation<_is_constexpr_pack<Types...>>::value
 											  , std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>>
 				_get_if(variant<Types...>* var_ptr)
 			{
@@ -607,6 +609,56 @@ namespace noname
 		inline _NONAME_CONSTEXPR T&& get(variant<Types...>&& v)
 		{
 			return get<_detail::_alternative_index_v<T, Types...>>(std::forward<variant<Types...>>(v));
+		}
+
+		namespace _detail
+		{
+			template <std::size_t I>
+			struct _dispatcher_t
+			{
+				template <class Visitor, class Variant>
+				static inline constexpr decltype(auto) _dispatch(Visitor visitor, Variant variant)
+				{
+					return visitor(get<I>(variant));
+				}
+			};
+
+			template <class Visitor, class Variant, std::size_t I>
+			static inline constexpr auto _make_dispatcher()
+			{
+				return _dispatcher_t<I>::template _dispatch<Visitor, Variant>;
+			}
+
+			template <class... Fs>
+			static inline constexpr auto _make_array(Fs&&... fs)
+			{
+				using array_t = std::array<typename std::common_type<typename std::decay<Fs>::type...>::type, sizeof...(fs)>;
+				return array_t{ std::forward<Fs>(fs)... };
+			}
+
+			template <class Visitor, class Variant, std::size_t... Is>
+			static inline constexpr auto _make_callarray_impl(std::index_sequence<Is...>)
+			{
+				return _make_array(_make_dispatcher<Visitor, Variant, Is>()...);
+			}
+
+			template <class Visitor, class Variant>
+			static inline constexpr auto _make_callarray()
+			{
+				using Indices = std::make_index_sequence<variant_size_v<std::decay<Variant>::type>>;
+
+				return _make_callarray_impl<Visitor, Variant>(Indices());
+			}
+		} // namespace _detail
+
+		template <class Visitor, class Variant>
+		static inline constexpr decltype(auto) visit(Visitor&& visitor, Variant&& var)
+		{
+			if (var.valueless_by_exception()) throw bad_variant_access("bad_variant_access");
+			const std::size_t currentIndex = var.index();
+
+			constexpr auto call_array = _detail::_make_callarray<Visitor&&, Variant>();
+			return call_array[currentIndex](std::forward<Visitor>(visitor), std::forward<Variant>(var));
 		}
 	}
 }

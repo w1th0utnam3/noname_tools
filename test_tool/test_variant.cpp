@@ -26,9 +26,12 @@
 
 #include <string>
 #include <type_traits>
+#include <iostream>
+#include <ostream>
 
 using namespace noname;
 
+// TODO: Tests for r-value visit
 // TODO: Tests for bad_variant_access
 // TODO: Test copy, move, destructor with proper test helper classes
 // TODO: Check is_copy_constructible, is_move_* and other type traits
@@ -367,5 +370,81 @@ TEST_CASE("Testing variant")
 			REQUIRE(ref6 == "Hello");
 			REQUIRE(ref7 == 'a');
 		}
+	}
+
+	struct visitor_constexpr_t
+	{
+		constexpr std::size_t operator()(double d) const { return static_cast<std::size_t>(d); }
+		constexpr std::size_t operator()(int i) const { return static_cast<std::size_t>(i); }
+		constexpr std::size_t operator()(const char& c) const { return static_cast<std::size_t>(c); }
+	};
+
+#if defined(_MSC_VER) && _MSC_VER >= 1910 || !defined(_MSC_VER)
+	SECTION("Testing constexpr visit")
+	{
+		constexpr visitor_constexpr_t visitor{};
+
+		constexpr constexpr_var_t v1(tools::in_place<0>, 3.14);
+		constexpr constexpr_var_t v2(tools::in_place<1>, 1);
+		constexpr constexpr_var_t v3(tools::in_place<2>, 'x');
+		constexpr constexpr_var_t v4(tools::in_place<0>, 6.28);
+
+		constexpr auto res1 = tools::visit(visitor, v1);
+		constexpr auto res2 = tools::visit(visitor, v2);
+		constexpr auto res3 = tools::visit(visitor, v3);
+		constexpr auto res4 = tools::visit(visitor, v4);
+
+		static_assert(std::is_same<decltype(res1), const std::size_t>::value == true, "visit has to return the return type of the visitor.");
+		static_assert(std::is_same<decltype(res2), const std::size_t>::value == true, "visit has to return the return type of the visitor.");
+		static_assert(std::is_same<decltype(res3), const std::size_t>::value == true, "visit has to return the return type of the visitor.");
+		static_assert(std::is_same<decltype(res4), const std::size_t>::value == true, "visit has to return the return type of the visitor.");
+
+		static_assert(res1 == static_cast<std::size_t>(3.14), "visit has to return the return value of the visitor.");
+		static_assert(res2 == static_cast<std::size_t>(1), "visit has to return the return value of the visitor.");
+		static_assert(res3 == static_cast<std::size_t>('x'), "visit has to return the return value of the visitor.");
+		static_assert(res4 == static_cast<std::size_t>(6.28), "visit has to return the return value of the visitor.");
+	}
+#endif
+
+	SECTION("Testing l-value visit")
+	{
+		auto addTwoVisitor = [](auto& value) {
+			value += 2;
+		};
+
+		var_t v1(tools::in_place<0>, 3.14);
+		var_t v2(tools::in_place<1>, 27);
+		var_t v3(tools::in_place<2>, long_string);
+		var_t v4(tools::in_place<3>, 'x');
+
+		tools::visit(addTwoVisitor, v1);
+		tools::visit(addTwoVisitor, v2);
+		tools::visit(addTwoVisitor, v3);
+		tools::visit(addTwoVisitor, v4);
+
+		std::string long_string_2 = long_string;
+		long_string_2 += 2;
+
+		REQUIRE(tools::get<0>(v1) == 3.14 + 2);
+		REQUIRE(tools::get<1>(v2) == 29);
+		REQUIRE(tools::get<2>(v3) == long_string_2);
+		REQUIRE(tools::get<3>(v4) == 'x' + 2);
+	}
+
+	SECTION("Testing const l-value visit")
+	{
+		auto toStringVisitor = [](auto value) {
+			std::ostringstream strs;
+			strs << value;
+			return strs.str();
+		};
+
+		const var_t v1(tools::in_place<1>, 27);
+		const var_t v2(tools::in_place<2>, long_string);
+		const var_t v3(tools::in_place<3>, 'x');
+
+		REQUIRE(tools::visit(toStringVisitor, v1) == "27");
+		REQUIRE(tools::visit(toStringVisitor, v2) == long_string);
+		REQUIRE(tools::visit(toStringVisitor, v3) == "x");
 	}
 }
