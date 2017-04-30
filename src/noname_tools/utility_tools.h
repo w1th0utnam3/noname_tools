@@ -31,7 +31,8 @@ namespace noname
 {
 	namespace tools
 	{
-		// TODO: Rename nth_element because there is std::nth_element algorithm
+		// TODO: Rename nth_element because of std::nth_element algorithm
+		// TODO: Implement lambda overload
 
 		//! Type used by nth_element to indicate that the type index is out of range of the parameter pack
 		struct out_of_range_t {};
@@ -64,7 +65,7 @@ namespace noname
 			};
 		} // namespace _detail
 
-		//! Alias for the I-th element of Ts
+		//! Alias for the 'I'-th element of 'Ts'.
 		template <std::size_t I, typename ...Ts>
 		struct nth_element : _detail::_nth_element<I <= sizeof...(Ts), I, Ts...>
 		{
@@ -150,14 +151,14 @@ namespace noname
 			};
 		}
 
-		//! Checks whether every type occurrs only once in the parameter pack
+		//! Checks whether every element occurs only once in 'Ts'.
 		template <typename... Ts>
-		struct unique_types : _detail::_unique<Ts...>
+		struct unique_elements : _detail::_unique<Ts...>
 		{
 		};
 
 		template <typename... Ts>
-		constexpr bool unique_types_v = unique_types<Ts...>::value;
+		constexpr bool unique_elements_v = unique_elements<Ts...>::value;
 
 		namespace _detail
 		{
