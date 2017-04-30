@@ -168,6 +168,22 @@ template<class T>
 using is_swappable = ...;
 ```
 
+### utility_tools.h
+```c++
+//! Alias for the I-th element of Ts.
+template <std::size_t I, typename ...Ts>
+struct nth_element : ...;
+//! Returns the index of the first occurrence of 'T' in 'Ts...' or element_not_found.
+template <typename T, typename... Ts>
+struct element_index : ...;
+//! Counts the number of occurrences of 'T' in 'Ts...'.
+template<typename T, typename... Ts>
+struct count_element : ...;
+//! Checks whether every type occurs only once in the parameter pack.
+template <typename... Ts>
+struct unique_types
+```
+
 ### vector_tools.h
 
 ```c++
