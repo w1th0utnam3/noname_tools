@@ -145,7 +145,7 @@ namespace noname
 			};
 
 			template <typename T, typename... Ts>
-			struct _unique<T, Ts...> : std::integral_constant<bool, conjunction<std::integral_constant<bool, count_element_v<T, Ts...> == 0>, _unique<Ts...>>::value>
+			struct _unique<T, Ts...> : std::integral_constant<bool, (count_element_v<T, Ts...> == 0) && _unique<Ts...>::value>
 			{
 			};
 		}
@@ -185,7 +185,7 @@ namespace noname
 
 		// Applies overloading rules to find the unique best conversion from 'T' to any type of 'Ts...'. Based on http://stackoverflow.com/a/39548402/929037.
 		template <typename T, typename... Ts>
-		using best_match = _detail::best_match_impl<std::result_of_t<overload<Ts...>(T)>, Ts...>;
+		using best_match = _detail::best_match_impl<std::result_of_t<_detail::overload<Ts...>(T)>, Ts...>;
 
 		namespace _detail
 		{
