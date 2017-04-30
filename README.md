@@ -181,7 +181,7 @@ template<typename T, typename... Ts>
 struct count_element : ...;
 //! Checks whether every element occurs only once in 'Ts'.
 template <typename... Ts>
-struct unique_types
+struct unique_elements
 ```
 
 ### vector_tools.h
