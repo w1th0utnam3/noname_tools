@@ -23,6 +23,7 @@
 #pragma once
 
 #include <cstdio>
+#include <type_traits>
 
 #define _NONAME_ASSERT(x, m) ((x) ? (void)0 : (std::fprintf(stderr, "%s\n", m), std::abort()))
 
@@ -92,7 +93,7 @@ namespace noname
 			};
 		} // namespace _detail
 
-		//! Returns the index of the first occurence of 'T' in 'Ts...' or element_not_found.
+		//! Returns the index of the first occurrence of 'T' in 'Ts...' or element_not_found.
 		template <typename T, typename... Ts>
 		struct element_index : _detail::_element_index<std::size_t(0), T, Ts...>
 		{
@@ -127,6 +128,36 @@ namespace noname
 
 		template <typename T, typename... Ts>
 		constexpr std::size_t count_element_v = count_element<T, Ts...>::value;
+
+		namespace _detail
+		{
+			template <typename... Ts>
+			struct _unique;
+
+			template <>
+			struct _unique<> : std::false_type
+			{
+			};
+
+			template <typename T>
+			struct _unique<T> : std::true_type
+			{
+			};
+
+			template <typename T, typename... Ts>
+			struct _unique<T, Ts...> : std::integral_constant<bool, conjunction<std::integral_constant<bool, count_element_v<T, Ts...> == 0>, _unique<Ts...>>::value>
+			{
+			};
+		}
+
+		//! Checks whether every type occurrs only once in the parameter pack
+		template <typename... Ts>
+		struct unique_types : _detail::_unique<Ts...>
+		{
+		};
+
+		template <typename... Ts>
+		constexpr bool unique_types_v = unique_types<Ts...>::value;
 
 		namespace _detail
 		{
