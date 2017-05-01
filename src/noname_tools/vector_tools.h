@@ -26,6 +26,9 @@
 #include <initializer_list>
 #include <algorithm>
 
+#include "typetraits_tools.h"
+#include "utility_tools.h"
+
 namespace noname
 {
 	namespace tools
@@ -44,6 +47,48 @@ namespace noname
 		std::vector<T> sorted_vector(std::vector<T>&& vector)
 		{
 			std::sort(vector.begin(), vector.end());
+			return vector;
+		}
+
+		namespace _detail
+		{
+			template <typename VecT, typename T, typename... Ts>
+			struct move_construct_helper;
+
+			template <typename VecT, typename T>
+			struct move_construct_helper<VecT, T>
+			{
+				move_construct_helper(VecT& vector, T&& element)
+				{
+					vector.emplace_back(std::move(element));
+				}
+			};
+
+			template <typename VecT, typename T, typename... Ts>
+			struct move_construct_helper<VecT, T, Ts...>
+			{
+				move_construct_helper(VecT& vector, T&& element, Ts&&... remaining)
+				{
+					vector.emplace_back(std::move(element));
+					move_construct_helper<VecT, Ts...> temp(vector, std::forward<Ts>(remaining)...);
+				}
+			};
+
+			template <typename VecT, typename... Ts>
+			void move_construct_helper_fun(VecT& vector, Ts&&... elements)
+			{
+				move_construct_helper<VecT, Ts...> temp(vector, std::forward<Ts>(elements)...);
+			}
+		}
+
+		//! Initializes a vector by moving all supplied elements into it
+		template <typename... Ts>
+		std::vector<nth_element_t<0, Ts...>> move_construct_vector(Ts&&... elements)
+		{
+			static_assert(conjunction<std::is_same<Ts, nth_element_t<0, Ts...>>...>::value, "All supplied elements have to be of the same type.");
+			std::vector<nth_element_t<0, Ts...>> vector;
+			vector.reserve(sizeof...(elements));
+			move_construct_helper_fun(vector, std::forward<Ts>(elements)...);
 			return vector;
 		}
 	}

@@ -191,4 +191,6 @@ struct unique_elements
 std::vector<T> sorted_vector(std::initializer_list<T> in);
 //! Sorts the supplied r-value vector and returns it
 std::vector<T> sorted_vector(std::vector<T>&& vector);
+//! Initializes a vector by moving all supplied elements into it
+std::vector<...> move_construct_vector(Ts&&... elements);
 ```

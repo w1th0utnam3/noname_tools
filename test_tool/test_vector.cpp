@@ -27,6 +27,7 @@
 #include <string>
 #include <type_traits>
 #include <vector>
+#include <memory>
 
 using namespace noname;
 
@@ -60,5 +61,20 @@ TEST_CASE("Testing sorted_vector")
 
 		REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
 		REQUIRE(sortedVector.size() == 0);
+	}
+}
+
+TEST_CASE("Testing move_construct_vector")
+{
+	SECTION("")
+	{
+		const auto vector = tools::move_construct_vector(
+			std::make_unique<int>(1), 
+			std::make_unique<int>(2), 
+			std::make_unique<int>(3)
+		);
+
+		REQUIRE((std::is_same<decltype(vector), const std::vector<std::unique_ptr<int>>>::value) == true);
+		REQUIRE(vector.size() == 3);
 	}
 }
