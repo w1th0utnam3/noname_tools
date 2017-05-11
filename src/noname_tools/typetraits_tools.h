@@ -24,6 +24,7 @@
 
 #include <utility>
 #include <algorithm>
+#include <type_traits>
 
 namespace noname
 {
