@@ -105,9 +105,9 @@ TEST_CASE("Testing utility types")
 	REQUIRE((tools::count_element_v<int, void, double, int, int, char, int> == 3));
 	REQUIRE((tools::count_element_v<int> == 0));
 
-	REQUIRE((tools::unique_types_v<int, double, char> == true));
-	REQUIRE((tools::unique_types_v<int, double, int, char> == false));
-	REQUIRE((tools::unique_types_v<int> == true));
-	REQUIRE((tools::unique_types_v<> == false));
-	REQUIRE((tools::unique_types_v<void, double> == true));
+	REQUIRE((tools::unique_elements_v<int, double, char> == true));
+	REQUIRE((tools::unique_elements_v<int, double, int, char> == false));
+	REQUIRE((tools::unique_elements_v<int> == true));
+	REQUIRE((tools::unique_elements_v<> == false));
+	REQUIRE((tools::unique_elements_v<void, double> == true));
 }
