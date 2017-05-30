@@ -14,6 +14,7 @@ addons:
     packages:
       - gcc-6
       - g++-6
+      - cmake
 
 # Build steps
 script:
@@ -21,6 +22,12 @@ script:
   - export CC=/usr/bin/gcc-6
   - export CXX=/usr/bin/g++-6
   # Check versions of gcc, g++ and cmake
-  - gcc -v && g++ -v
+  - /usr/bin/gcc-6 -v
+  - /usr/bin/g++-6 -v
+  - cmake --version
+  # Run tests
+  - mkdir build
+  - cd build
+  - cmake .. -G"Unix Makefiles"
   - make
   - make test

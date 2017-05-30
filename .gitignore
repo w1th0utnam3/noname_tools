@@ -15,6 +15,7 @@
 .vscode/
 
 # Build results
+build/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
