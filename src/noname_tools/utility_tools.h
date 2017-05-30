@@ -25,7 +25,7 @@
 #include <cstdio>
 #include <type_traits>
 
-#define _NONAME_ASSERT(x, m) ((x) ? (void)0 : (std::fprintf(stderr, "%s\n", m), std::abort()))
+#define NONAME_ASSERT(x, m) ((x) ? (void)0 : (std::fprintf(stderr, "%s\n", m), std::abort()))
 
 namespace noname
 {
@@ -222,23 +222,23 @@ namespace noname
 		
 		inline in_place_tag in_place(_detail::__in_place_tag __t)
 		{
-			_NONAME_ASSERT(false, "The in_place function cannot be invoked");
+			NONAME_ASSERT(false, "The in_place function cannot be invoked");
 		}
 		
 		template <class _Tp>
 		inline in_place_tag in_place(_detail::__in_place_type_tag<_Tp>)
 		{
-			_NONAME_ASSERT(false, "The in_place function cannot be invoked");
+			NONAME_ASSERT(false, "The in_place function cannot be invoked");
 			return in_place_tag(_detail::__in_place_tag{});
 		}
 
 		template <std::size_t _Nx>
 		inline in_place_tag in_place(_detail::__in_place_index_tag<_Nx>)
 		{
-			_NONAME_ASSERT(false, "The in_place function cannot be invoked");
+			NONAME_ASSERT(false, "The in_place function cannot be invoked");
 			return in_place_tag(_detail::__in_place_tag{});
 		}
 	}
 }
 
-#undef _NONAME_ASSERT
+#undef NONAME_ASSERT

@@ -35,12 +35,12 @@
 // TODO: Comparison operators? :/
 
 #ifdef _MSC_VER
-#define _NONAME_CONSTEXPR
+#define NONAME_CONSTEXPR
 #else
-#define _NONAME_CONSTEXPR constexpr
+#define NONAME_CONSTEXPR constexpr
 #endif
 
-#define _NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
+#define NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
 namespace noname
 {
@@ -78,13 +78,13 @@ namespace noname
 				constexpr static bool value = has_overload<T>(true);
 			};
 
-			template <typename T, _NONAME_REQUIRES(!has_overloaded_addressof<T>)>
+			template <typename T, NONAME_REQUIRES(!has_overloaded_addressof<T>)>
 			constexpr T* static_addressof(T& ref)
 			{
 				return &ref;
 			}
 
-			template <typename T, _NONAME_REQUIRES(has_overloaded_addressof<T>)>
+			template <typename T, NONAME_REQUIRES(has_overloaded_addressof<T>)>
 			T* static_addressof(T& ref)
 			{
 				return std::addressof(ref);
@@ -175,7 +175,7 @@ namespace noname
 				{
 				}
 
-				template <class U, class... Args, _NONAME_REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
+				template <class U, class... Args, NONAME_REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
 				explicit _optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
 					: _init(true)
 					, _storage(il, std::forward<Args>(args)...)
@@ -218,8 +218,8 @@ namespace noname
 				{
 				}
 
-				template <class U, class... Args, _NONAME_REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
-				_NONAME_CONSTEXPR explicit _constexpr_optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
+				template <class U, class... Args, NONAME_REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
+				NONAME_CONSTEXPR explicit _constexpr_optional_base(in_place_t, std::initializer_list<U> il, Args&&... args)
 					: _init(true), _storage(il, std::forward<Args>(args)...)
 				{
 				}
@@ -249,8 +249,8 @@ namespace noname
 
 			constexpr const T& contained_val() const& { return _optional_base_t<T>::_storage._value; }
 
-			_NONAME_CONSTEXPR T&& contained_val() && { return std::move(_optional_base_t<T>::_storage._value); }
-			_NONAME_CONSTEXPR T& contained_val() & { return _optional_base_t<T>::_storage._value; }
+			NONAME_CONSTEXPR T&& contained_val() && { return std::move(_optional_base_t<T>::_storage._value); }
+			NONAME_CONSTEXPR T& contained_val() & { return _optional_base_t<T>::_storage._value; }
 
 			template <class... Args>
 			void initialize(Args&&... args) noexcept(noexcept(T(std::forward<Args>(args)...)))
@@ -315,7 +315,7 @@ namespace noname
 			}
 
 			//! Constructs an optional object that contains a value, initialized as if direct-initializing (but not direct-list-initializing) an object of type 'T' from the arguments 'ilist, std::forward<Args>(args)...'.
-			template <class U, class... Args, _NONAME_REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
+			template <class U, class... Args, NONAME_REQUIRES(std::is_constructible<T, std::initializer_list<U>>)>
 			explicit optional(in_place_t, std::initializer_list<U> il, Args&&... args)
 				: _optional_base_t<T>(in_place, il, std::forward<Args>(args)...) 
 			{
@@ -415,7 +415,7 @@ namespace noname
 			}
 
 			//! Accesses the contained value. Returns pointer.
-			_NONAME_CONSTEXPR T* operator->()
+			NONAME_CONSTEXPR T* operator->()
 			{
 				assert(initialized());
 				return dataptr();
@@ -429,14 +429,14 @@ namespace noname
 			}
 
 			//! Accesses the contained value. Returns ref.
-			_NONAME_CONSTEXPR T& operator*() &
+			NONAME_CONSTEXPR T& operator*() &
 			{
 				assert(initialized());
 				return contained_val();
 			}
 
 			//! Accesses the contained value.
-			_NONAME_CONSTEXPR T&& operator*() &&
+			NONAME_CONSTEXPR T&& operator*() &&
 			{
 				assert(initialized());
 				return std::move(contained_val());
@@ -448,12 +448,12 @@ namespace noname
 			}
 
 			//! If '*this' contains a value, returns a reference to the contained value.
-			_NONAME_CONSTEXPR T& value() & {
+			NONAME_CONSTEXPR T& value() & {
 				return initialized() ? contained_val() : (throw bad_optional_access("bad optional access"), contained_val());
 			}
 
 			//! If '*this' contains a value, returns a reference to the contained value.
-			_NONAME_CONSTEXPR T&& value() && {
+			NONAME_CONSTEXPR T&& value() && {
 				if (!initialized()) throw bad_optional_access("bad optional access");
 				return std::move(contained_val());
 			}
@@ -467,7 +467,7 @@ namespace noname
 
 			//! Returns the contained value if '*this' has a value, otherwise returns 'default_value'.
 			template <class V>
-			_NONAME_CONSTEXPR T value_or(V&& v) &&
+			NONAME_CONSTEXPR T value_or(V&& v) &&
 			{
 				return *this ? std::move(const_cast<optional<T>&>(*this).contained_val()) : _detail::convert<T>(std::forward<V>(v));
 			}
@@ -503,5 +503,5 @@ namespace noname
 	}
 }
 
-#undef _NONAME_CONSTEXPR
-#undef _NONAME_REQUIRES
+#undef NONAME_CONSTEXPR
+#undef NONAME_REQUIRES
