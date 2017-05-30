@@ -22,7 +22,7 @@
 
 #include "catch.hpp"
 
-#include <noname_tools\tools>
+#include <noname_tools/tools>
 
 using namespace noname;
 
