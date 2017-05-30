@@ -235,6 +235,62 @@ TEST_CASE("Testing variant")
 		REQUIRE(c == 'q');
 	}
 
+	SECTION("Testing copy assignment")
+	{
+		var_t v0(27);
+		var_t v1(long_string);
+		var_t v2(long_string + long_string);
+
+		REQUIRE(v0.index() == 1);
+		REQUIRE(v1.index() == 2);
+		REQUIRE(v2.index() == 2);
+
+		REQUIRE(*tools::get_if<1>(&v0) == 27);
+		REQUIRE(*tools::get_if<2>(&v1) == long_string);
+		REQUIRE(*tools::get_if<2>(&v2) == long_string + long_string);
+
+		v0 = v1;
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(v1.index() == 2);
+
+		REQUIRE(*tools::get_if<2>(&v0) == long_string);
+		REQUIRE(*tools::get_if<2>(&v1) == long_string);
+
+		v0 = v2;
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(v2.index() == 2);
+
+		REQUIRE(*tools::get_if<2>(&v0) == long_string + long_string);
+		REQUIRE(*tools::get_if<2>(&v2) == long_string + long_string);
+	}
+
+	SECTION("Testing move assignment")
+	{
+		var_t v0(27);
+
+		REQUIRE(v0.index() == 1);
+		REQUIRE(*tools::get_if<1>(&v0) == 27);
+
+		v0 = var_t(long_string);
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == long_string);
+
+		v0 = var_t(long_string + long_string);
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == long_string + long_string);
+
+		var_t v1('c');
+
+		v0 = std::move(v1);
+
+		REQUIRE(v0.index() == 3);
+		REQUIRE(*tools::get_if<3>(&v0) == 'c');
+	}
+
 	SECTION("Testing converting assignment")
 	{
 		var_t v0(27);

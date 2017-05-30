@@ -199,10 +199,12 @@ namespace noname
 
 				_constexpr_variant_storage<0, Types...> _storage;
 				std::size_t _index;
+				bool _valueless;
 
 				constexpr _constexpr_variant_base()
 					: _storage(std::integral_constant<std::size_t, 0>(), nth_element_t<0, Types...>())
 					, _index(0)
+					, _valueless(false)
 				{
 				}
 
@@ -210,6 +212,7 @@ namespace noname
 				constexpr explicit _constexpr_variant_base(in_place_index_t<I>, Args&&... args)
 					: _storage(std::integral_constant<std::size_t, I>(), std::forward<Args>(args)...)
 					, _index(I)
+					, _valueless(false)
 				{
 				}
 
@@ -217,6 +220,7 @@ namespace noname
 				constexpr explicit _constexpr_variant_base(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
 					: _storage(std::integral_constant<std::size_t, I>(), il, std::forward<Args>(args)...)
 					, _index(I)
+					, _valueless(false)
 				{
 				}
 			};
@@ -297,10 +301,29 @@ namespace noname
 					return (*static_cast<T*>(memory_ptr()));
 				}
 
+				template <class T>
+				T& emplace_value(const _variant_storage& other)
+				{
+					new(memory_ptr()) T(*static_cast<T*>(other.memory_ptr()));
+					return (*static_cast<T*>(memory_ptr()));
+				}
+
 				template <class T_j, class T>
-				void assign_value(T&& t)
+				void assign_value_conversion(T&& t)
 				{
 					(*static_cast<T_j*>(memory_ptr())) = std::forward<T>(t);
+				}
+
+				template <class T>
+				void assign_value(const _variant_storage& other)
+				{
+					(*static_cast<T*>(memory_ptr())) = (*static_cast<T*>(other.memory_ptr()));
+				}
+
+				template <class T>
+				void assign_value(_variant_storage&& other)
+				{
+					(*static_cast<T*>(memory_ptr())) = std::move(*static_cast<T*>(other.memory_ptr()));
 				}
 			};
 
@@ -314,29 +337,34 @@ namespace noname
 
 				_variant_storage<Types...> _storage;
 				std::size_t _index;
+				bool _valueless;
 
 				_variant_base()
 					: _storage(std::integral_constant<std::size_t, 0>(), nth_element_t<0, Types...>())
 					, _index(0)
+					, _valueless(false)
 				{
 				}
 
 				_variant_base(const _variant_base& other)
 					: _index(other._index)
+					, _valueless(other._valueless)
 				{
-					if (other._index == 0) this->_storage.template copy_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+					if (!_valueless) this->_storage.template copy_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
 				}
 
 				_variant_base(_variant_base&& other)
 					: _index(other._index)
+					, _valueless(other._valueless)
 				{
-					if (other._index == 0) this->_storage.template move_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+					if (!_valueless) this->_storage.template move_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
 				}
 
 				template <std::size_t I, class... Args>
 				explicit _variant_base(in_place_index_t<I>, Args&&... args)
 					: _storage(std::integral_constant<std::size_t, I>(), std::forward<Args>(args)...)
 					, _index(I)
+					, _valueless(false)
 				{
 				}
 
@@ -344,35 +372,67 @@ namespace noname
 				explicit _variant_base(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
 					: _storage(std::integral_constant<std::size_t, I>(), il, std::forward<Args>(args)...)
 					, _index(I)
+					, _valueless(false)
 				{
 				}
 
 				~_variant_base()
 				{
-					if (this->_index == 0) this->_storage.template destroy_value<nth_element_t<0, Types...>>();
+					this->_storage.template destroy_value<nth_element_t<0, Types...>>();
 				}
 
 			protected:
+				void destroy()
+				{
+					this->_storage.template destroy_value<nth_element_t<0, Types...>>();
+				}
+
 				template <std::size_t I, class... Args>
 				nth_element_t<I, Types...>& emplace(Args&&... args)
 				{
-					if (this->_index == 0) this->_storage.template destroy_value<nth_element_t<0, Types...>>();
-					this->_index = I;
+					this->_storage.template destroy_value<nth_element_t<0, Types...>>();
 					return this->_storage.template emplace_value<nth_element_t<I, Types...>>(std::forward<Args>(args)...);
 				}
 
 				template <std::size_t I, class U, class... Args>
 				nth_element_t<I, Types...>& emplace(std::initializer_list<U> il, Args&&... args)
 				{
-					if (this->_index == 0) this->_storage.template destroy_value<nth_element_t<0, Types...>>();
-					this->_index = I;
+					this->_storage.template destroy_value<nth_element_t<0, Types...>>();
 					return this->_storage.template emplace_value<nth_element_t<I, Types...>>(il, std::forward<Args>(args)...);
 				}
 
 				template <class T_j, class T>
-				void assign(T&& t)
+				void assign_conversion(T&& t)
 				{
-					this->_storage.template assign_value<T_j>(std::forward<T>(t));
+					this->_storage.template assign_value_conversion<T_j>(std::forward<T>(t));
+				}
+
+				void assign_same_index(const _variant_base& other)
+				{
+					this->_storage.template assign_value<nth_element_t<0, Types...>>(other._storage);
+				}
+
+				void assign_same_index(_variant_base&& other)
+				{
+					this->_storage.template assign_value<nth_element_t<0, Types...>>(std::forward<_variant_storage<Types...>>(other._storage));
+				}
+
+				void assign_change_index(const _variant_base& other)
+				{
+					if (std::is_nothrow_copy_constructible<nth_element_t<0, Types...>>::value || !std::is_nothrow_move_constructible<nth_element_t<0, Types...>>::value) {
+						this->_storage.template emplace_value<nth_element_t<0, Types...>>(other._storage);
+					} else {
+						_variant_base<0, Types...>::assign_change_index(_variant_base<0, Types...>(other));
+					}
+				}
+
+				void assign_change_index(_variant_base&& other)
+				{
+					try {
+						this->_storage.template move_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+					} catch (...) {
+						this->_valueless = true;
+					}
 				}
 			};
 
@@ -386,13 +446,13 @@ namespace noname
 				_variant_base(const _variant_base& other)
 					: _variant_base<N-1, Types...>(other)
 				{
-					if (other._index == N) this->_storage.template copy_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+					if (other._index == N && !this->_valueless) this->_storage.template copy_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
 				}
 
 				_variant_base(_variant_base&& other)
 					: _variant_base<N-1, Types...>(std::forward<_variant_base>(other))
 				{
-					if (other._index == N) this->_storage.template move_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+					if (other._index == N && !this->_valueless) this->_storage.template move_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
 				}
 
 				template <std::size_t I, class... Args>
@@ -426,8 +486,11 @@ namespace noname
 				{
 					if (this->_index == N) {
 						this->_storage.template destroy_value<nth_element_t<N, Types...>>();
-						this->_index = I;
-						return this->_storage.template emplace_value<nth_element_t<I, Types...>>(std::forward<Args>(args)...);
+						try {
+							return this->_storage.template emplace_value<nth_element_t<I, Types...>>(std::forward<Args>(args)...);
+						} catch (...) {
+							this->_valueless = true;
+						}
 					}
 					return _variant_base<N - 1, Types...>::template emplace<I>(std::forward<Args>(args)...);
 				}
@@ -437,10 +500,51 @@ namespace noname
 				{
 					if (this->_index == N) {
 						this->_storage.template destroy_value<nth_element_t<N, Types...>>();
-						this->_index = I;
-						return this->_storage.template emplace_value<nth_element_t<I, Types...>>(il, std::forward<Args>(args)...);
+						try {
+							return this->_storage.template emplace_value<nth_element_t<I, Types...>>(il, std::forward<Args>(args)...);
+						} catch (...) {
+							this->_valueless = true;
+						}
 					}
 					return _variant_base<N - 1, Types...>::template emplace<I>(il, std::forward<Args>(args)...);
+				}
+
+				void assign_same_index(const _variant_base& other)
+				{
+					if (other._index == N) this->_storage.template assign_value<nth_element_t<N, Types...>>(other._storage);
+					else  _variant_base<N - 1, Types...>::assign_same_index(other);
+				}
+
+				void assign_same_index(_variant_base&& other)
+				{
+					if (other._index == N) this->_storage.template assign_value<nth_element_t<N, Types...>>(std::forward<_variant_storage<Types...>>(other._storage));
+					else  _variant_base<N - 1, Types...>::assign_same_index(std::forward<_variant_base>(other));
+				}
+
+				void assign_change_index(const _variant_base& other)
+				{
+					if (other._index == N) {
+						if (std::is_nothrow_copy_constructible<nth_element_t<N, Types...>>::value || !std::is_nothrow_move_constructible<nth_element_t<N, Types...>>::value) {
+							this->_storage.template emplace_value<nth_element_t<N, Types...>>(other._storage);
+						} else {
+							_variant_base<N, Types...>::assign_change_index(_variant_base<N, Types...>(other));
+						}
+					} else {
+						_variant_base<N - 1, Types...>::assign_change_index(other);
+					}
+				}
+
+				void assign_change_index(_variant_base&& other)
+				{
+					if (other._index == N) {
+						try {
+							this->_storage.template move_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+						} catch (...) {
+							this->_valueless = true;
+						}
+					} else {
+						_variant_base<N - 1, Types...>::assign_change_index(std::forward<_variant_base>(other));
+					}
 				}
 			};
 
@@ -530,7 +634,7 @@ namespace noname
 			//! Returns false if and only if the variant holds a value.
 			constexpr bool valueless_by_exception() const
 			{
-				return false;
+				return this->_valueless;
 			}
 
 			//! Returns the zero-based index of the alternative that is currently held by the variant.
@@ -540,18 +644,20 @@ namespace noname
 			}
 
 			//! Creates a new value in-place, in an existing variant object using the supplied arguments 'args'.
-			template <class T, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>
-				, std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
+			template <class T, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>,
+																		   std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
 			T& emplace(Args&&... args)
 			{
+				this->_index = _detail::_alternative_index_v<T, Types...>;
 				return _detail::_variant_base_t<Types...>::template emplace<_detail::_alternative_index_v<T, Types...>>(std::forward<Args>(args)...);
 			}
 
 			//! Creates a new value in-place, in an existing variant object using the supplied initializer list 'il' and arguments 'args'.
-			template <class T, class U, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>
-				, std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, std::initializer_list<U>, Args...>>)>
+			template <class T, class U, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>, 
+																					std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, std::initializer_list<U>, Args...>>)>
 			T& emplace(std::initializer_list<U> il, Args&&... args)
 			{
+				this->_index = _detail::_alternative_index_v<T, Types...>;
 				return _detail::_variant_base_t<Types...>::template emplace<_detail::_alternative_index_v<T, Types...>>(il, std::forward<Args>(args)...);
 			}
 
@@ -559,6 +665,7 @@ namespace noname
 			template <std::size_t I, class... Args, _NONAME_REQUIRES(std::is_constructible<nth_element_t<I, Types...>, Args...>)>
 			variant_alternative_t<I, variant<Types...>>& emplace(Args&&... args)
 			{
+				this->_index = I;
 				return _detail::_variant_base_t<Types...>::template emplace<I>(std::forward<Args>(args)...);
 			}
 
@@ -566,7 +673,58 @@ namespace noname
 			template <std::size_t I, class U, class... Args, _NONAME_REQUIRES(std::is_constructible<nth_element_t<I, Types...>, std::initializer_list<U>, Args...>)>
 			variant_alternative_t<I, variant<Types...>>& emplace(std::initializer_list<U> il, Args&&... args)
 			{
+				this->_index = I;
 				return _detail::_variant_base_t<Types...>::template emplace<I>(il, std::forward<Args>(args)...);
+			}
+
+			//! Copy-assignment.
+			typename std::enable_if<conjunction<std::is_copy_constructible<Types>...,
+												std::is_copy_assignable<Types>...>::value, variant&>::type
+			operator=(const variant& rhs)
+			{
+				static_assert(conjunction<std::is_copy_constructible<Types>...,
+							  std::is_copy_assignable<Types>...>::value, "Test");
+				if (this->_valueless && rhs._valueless) return *this;
+				if (rhs._valueless) {
+					_detail::_variant_base_t<Types...>::destroy();
+					this->_valueless = true;
+					return *this;
+				}
+
+				this->_valueless = false;
+				if (this->_index == rhs._index) {
+					_detail::_variant_base_t<Types...>::assign_same_index(rhs);
+				} else {
+					_detail::_variant_base_t<Types...>::destroy();
+
+					this->_index = rhs._index;
+					_detail::_variant_base_t<Types...>::assign_change_index(rhs);
+				}
+				return *this;
+			}
+			
+			typename std::enable_if<conjunction<std::is_move_constructible<Types>...,
+												std::is_move_assignable<Types>...>::value, variant&>::type
+			operator=(variant&& rhs) noexcept(conjunction<std::is_nothrow_move_constructible<Types>..., 
+														  std::is_nothrow_move_assignable<Types>...>::value)
+			{
+				if (this->_valueless && rhs._valueless) return *this;
+				if (rhs._valueless) {
+					_detail::_variant_base_t<Types...>::destroy();
+					this->_valueless = true;
+					return *this;
+				}
+
+				this->_valueless = false;
+				if (this->_index == rhs._index) {
+					_detail::_variant_base_t<Types...>::assign_same_index(std::forward<variant>(rhs));
+				} else {
+					_detail::_variant_base_t<Types...>::destroy();
+
+					this->_index = rhs._index;
+					_detail::_variant_base_t<Types...>::assign_change_index(std::forward<variant>(rhs));
+				}
+				return *this;
 			}
 
 			//! Converting assignment.
@@ -575,11 +733,16 @@ namespace noname
 															std::is_constructible<best_match<T&&, Types...>, T>>)>
 			variant& operator=(T&& t) noexcept(std::is_nothrow_assignable<best_match<T&&, Types...>&, T>::value && std::is_nothrow_constructible<best_match<T&&, Types...>, T>::value)
 			{
+				this->_valueless = false;
+
 				using T_j = best_match<T&&, Types...>;
 				if(this->_index == _detail::_alternative_index_v<T_j, Types...>) {
-					this->template assign<T_j>(std::forward<T>(t));
+					_detail::_variant_base_t<Types...>::template assign_conversion<T_j>(std::forward<T>(t));
 				} else {
-					this->template emplace<_detail::_alternative_index_v<T_j, Types...>>(std::forward<T>(t));
+					_detail::_variant_base_t<Types...>::destroy();
+
+					this->_index = _detail::_alternative_index_v<T_j, Types...>;
+					_detail::_variant_base_t<Types...>::template emplace<_detail::_alternative_index_v<T_j, Types...>>(std::forward<T>(t));
 				}
 				return *this;
 			}
