@@ -529,6 +529,20 @@ namespace noname
 			}
 
 			//! Creates a new value in-place, in an existing variant object using the supplied arguments 'args'.
+			template <class T, class... Args>
+			T& emplace(Args&&... args)
+			{
+				return _detail::_variant_base_t<Types...>::template emplace<_detail::_alternative_index_v<T, Types...>>(std::forward<Args>(args)...);
+			}
+
+			//! Creates a new value in-place, in an existing variant object using the supplied initializer list 'il' and arguments 'args'.
+			template <class T, class U, class... Args>
+			T& emplace(std::initializer_list<U> il, Args&&... args)
+			{
+				return _detail::_variant_base_t<Types...>::template emplace<_detail::_alternative_index_v<T, Types...>>(il, std::forward<Args>(args)...);
+			}
+
+			//! Creates a new value in-place, in an existing variant object using the supplied arguments 'args'.
 			template <std::size_t I, class... Args>
 			variant_alternative_t<I, variant<Types...>>& emplace(Args&&... args)
 			{
