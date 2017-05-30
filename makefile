@@ -11,4 +11,4 @@ clean:
 	rm ./test_tool/$(TARGET)
 
 test:
-	./test_tool/$(TARGET)
+	./$(TARGET)
