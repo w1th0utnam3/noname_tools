@@ -235,6 +235,21 @@ TEST_CASE("Testing variant")
 		REQUIRE(c == 'q');
 	}
 
+	SECTION("Testing converting assignment")
+	{
+		var_t v0(27);
+
+		REQUIRE(v0.index() == 1);
+
+		v0 = long_string;
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == long_string);
+
+		v0 = 'q';
+		REQUIRE(v0.index() == 3);
+		REQUIRE(*tools::get_if<3>(&v0) == 'q');
+	}
+
 	SECTION("Testing constexpr get")
 	{
 		constexpr const constexpr_var_t v0(tools::in_place<0>, 3.14);

@@ -296,6 +296,12 @@ namespace noname
 					new(memory_ptr()) T(il, std::forward<Args>(args)...);
 					return (*static_cast<T*>(memory_ptr()));
 				}
+
+				template <class T_j, class T>
+				void assign_value(T&& t)
+				{
+					(*static_cast<T_j*>(memory_ptr())) = std::forward<T>(t);
+				}
 			};
 
 			template <std::size_t N, class... Types>
@@ -361,6 +367,12 @@ namespace noname
 					if (this->_index == 0) this->_storage.template destroy_value<nth_element_t<0, Types...>>();
 					this->_index = I;
 					return this->_storage.template emplace_value<nth_element_t<I, Types...>>(il, std::forward<Args>(args)...);
+				}
+
+				template <class T_j, class T>
+				void assign(T&& t)
+				{
+					this->_storage.template assign_value<T_j>(std::forward<T>(t));
 				}
 			};
 
@@ -476,11 +488,10 @@ namespace noname
 			}
 
 			//! Converting constructor.
-			template <typename T, typename T_j = best_match<T&&, Types...>
-								, typename = typename std::enable_if<	std::is_constructible<T_j,T>::value 
-																	&& !std::is_same<std::decay_t<T>, variant>::value>::type>
+			template <typename T, _NONAME_REQUIRES(conjunction<std::is_constructible<best_match<T&&, Types...>, T>, 
+												   negation<std::is_same<std::decay_t<T>, variant>>>)>
 			constexpr variant(T&& t)
-				: _detail::_variant_base_t<Types...>(in_place<_detail::_alternative_index_v<T_j, Types...>>, std::forward<T>(t))
+				: _detail::_variant_base_t<Types...>(in_place<_detail::_alternative_index_v<best_match<T&&, Types...>, Types...>>, std::forward<T>(t))
 			{
 			}
 
@@ -529,31 +540,48 @@ namespace noname
 			}
 
 			//! Creates a new value in-place, in an existing variant object using the supplied arguments 'args'.
-			template <class T, class... Args>
+			template <class T, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>
+				, std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
 			T& emplace(Args&&... args)
 			{
 				return _detail::_variant_base_t<Types...>::template emplace<_detail::_alternative_index_v<T, Types...>>(std::forward<Args>(args)...);
 			}
 
 			//! Creates a new value in-place, in an existing variant object using the supplied initializer list 'il' and arguments 'args'.
-			template <class T, class U, class... Args>
+			template <class T, class U, class... Args, _NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>
+				, std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, std::initializer_list<U>, Args...>>)>
 			T& emplace(std::initializer_list<U> il, Args&&... args)
 			{
 				return _detail::_variant_base_t<Types...>::template emplace<_detail::_alternative_index_v<T, Types...>>(il, std::forward<Args>(args)...);
 			}
 
 			//! Creates a new value in-place, in an existing variant object using the supplied arguments 'args'.
-			template <std::size_t I, class... Args>
+			template <std::size_t I, class... Args, _NONAME_REQUIRES(std::is_constructible<nth_element_t<I, Types...>, Args...>)>
 			variant_alternative_t<I, variant<Types...>>& emplace(Args&&... args)
 			{
 				return _detail::_variant_base_t<Types...>::template emplace<I>(std::forward<Args>(args)...);
 			}
 
 			//! Creates a new value in-place, in an existing variant object using the supplied initializer list 'il' and arguments 'args'.
-			template <std::size_t I, class U, class... Args>
+			template <std::size_t I, class U, class... Args, _NONAME_REQUIRES(std::is_constructible<nth_element_t<I, Types...>, std::initializer_list<U>, Args...>)>
 			variant_alternative_t<I, variant<Types...>>& emplace(std::initializer_list<U> il, Args&&... args)
 			{
 				return _detail::_variant_base_t<Types...>::template emplace<I>(il, std::forward<Args>(args)...);
+			}
+
+			//! Converting assignment.
+			template <class T, _NONAME_REQUIRES(conjunction<negation<std::is_same<typename std::decay<T>::type, variant>>, 
+															std::is_assignable<best_match<T&&, Types...>&, T>,
+															std::is_constructible<best_match<T&&, Types...>, T>>)>
+			variant& operator=(T&& t) noexcept(std::is_nothrow_assignable<best_match<T&&, Types...>&, T>::value && std::is_nothrow_constructible<best_match<T&&, Types...>, T>::value)
+			{
+				using T_j = best_match<T&&, Types...>;
+				if(this->_index == _detail::_alternative_index_v<T_j, Types...>) {
+					this->template assign<T_j>(std::forward<T>(t));
+				} else {
+					this->template emplace<_detail::_alternative_index_v<T_j, Types...>>(std::forward<T>(t));
+				}
+				return *this;
 			}
 		};
 
