@@ -282,6 +282,20 @@ namespace noname
 				{
 					(*static_cast<T*>(memory_ptr())).T::~T();
 				}
+
+				template <class T, class... Args>
+				T& emplace_value(Args&&... args)
+				{
+					new(memory_ptr()) T(std::forward<Args>(args)...);
+					return (*static_cast<T*>(memory_ptr()));
+				}
+
+				template <class T, class U, class... Args>
+				T& emplace_value(std::initializer_list<U> il, Args&&... args)
+				{
+					new(memory_ptr()) T(il, std::forward<Args>(args)...);
+					return (*static_cast<T*>(memory_ptr()));
+				}
 			};
 
 			template <std::size_t N, class... Types>
@@ -331,6 +345,23 @@ namespace noname
 				{
 					if (this->_index == 0) this->_storage.template destroy_value<nth_element_t<0, Types...>>();
 				}
+
+			protected:
+				template <std::size_t I, class... Args>
+				nth_element_t<I, Types...>& emplace(Args&&... args)
+				{
+					if (this->_index == 0) this->_storage.template destroy_value<nth_element_t<0, Types...>>();
+					this->_index = I;
+					return this->_storage.template emplace_value<nth_element_t<I, Types...>>(std::forward<Args>(args)...);
+				}
+
+				template <std::size_t I, class U, class... Args>
+				nth_element_t<I, Types...>& emplace(std::initializer_list<U> il, Args&&... args)
+				{
+					if (this->_index == 0) this->_storage.template destroy_value<nth_element_t<0, Types...>>();
+					this->_index = I;
+					return this->_storage.template emplace_value<nth_element_t<I, Types...>>(il, std::forward<Args>(args)...);
+				}
 			};
 
 			template <std::size_t N, class... Types>
@@ -369,6 +400,36 @@ namespace noname
 					if (this->_index == N) this->_storage.template destroy_value<nth_element_t<N, Types...>>();
 				}
 
+			protected:
+				void destroy()
+				{
+					if (this->_index == N)
+						this->_storage.template destroy_value<nth_element_t<N, Types...>>();
+					else
+						_variant_base<N - 1, Types...>::destroy();
+				}
+
+				template <std::size_t I, class... Args>
+				nth_element_t<I, Types...>& emplace(Args&&... args)
+				{
+					if (this->_index == N) {
+						this->_storage.template destroy_value<nth_element_t<N, Types...>>();
+						this->_index = I;
+						return this->_storage.template emplace_value<nth_element_t<I, Types...>>(std::forward<Args>(args)...);
+					}
+					return _variant_base<N - 1, Types...>::template emplace<I>(std::forward<Args>(args)...);
+				}
+
+				template <std::size_t I, class U, class... Args>
+				nth_element_t<I, Types...>& emplace(std::initializer_list<U> il, Args&&... args)
+				{
+					if (this->_index == N) {
+						this->_storage.template destroy_value<nth_element_t<N, Types...>>();
+						this->_index = I;
+						return this->_storage.template emplace_value<nth_element_t<I, Types...>>(il, std::forward<Args>(args)...);
+					}
+					return _variant_base<N - 1, Types...>::template emplace<I>(il, std::forward<Args>(args)...);
+				}
 			};
 
 			// Only trivially destructible types can be used in constexpr objects
@@ -465,6 +526,20 @@ namespace noname
 			constexpr std::size_t index() const
 			{
 				return (!valueless_by_exception()) ? this->_index : variant_npos;
+			}
+
+			//! Creates a new value in-place, in an existing variant object using the supplied arguments 'args'.
+			template <std::size_t I, class... Args>
+			variant_alternative_t<I, variant<Types...>>& emplace(Args&&... args)
+			{
+				return _detail::_variant_base_t<Types...>::template emplace<I>(std::forward<Args>(args)...);
+			}
+
+			//! Creates a new value in-place, in an existing variant object using the supplied initializer list 'il' and arguments 'args'.
+			template <std::size_t I, class U, class... Args>
+			variant_alternative_t<I, variant<Types...>>& emplace(std::initializer_list<U> il, Args&&... args)
+			{
+				return _detail::_variant_base_t<Types...>::template emplace<I>(il, std::forward<Args>(args)...);
 			}
 		};
 

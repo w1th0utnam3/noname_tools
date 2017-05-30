@@ -209,6 +209,28 @@ TEST_CASE("Testing variant")
 		}
 	}
 
+	SECTION("Testing emplace")
+	{
+		var_t v0(27);
+
+		REQUIRE(v0.index() == 1);
+
+		v0.emplace<0>(22.2);
+
+		REQUIRE(v0.index() == 0);
+		REQUIRE(*tools::get_if<0>(&v0) == 22.2);
+
+		v0.emplace<2>(long_string);
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == long_string);
+
+		v0.emplace<2>({ 'a', 'b', 'c' });
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == "abc");
+	}
+
 	SECTION("Testing constexpr get")
 	{
 		constexpr const constexpr_var_t v0(tools::in_place<0>, 3.14);
