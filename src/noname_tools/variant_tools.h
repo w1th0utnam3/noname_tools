@@ -37,14 +37,12 @@
 
 #define NONAME_REQUIRES(...) typename std::enable_if<__VA_ARGS__::value, bool>::type = false
 
-// TODO: visit with multiple variants
-// TODO: Own implementation of array to support constexpr in MSVC 2015
-// TODO: Proper support for MSVC 2015, i.e. find out what works/doesn't work with constexpr
-// TODO: Missing constructors and other functions
-// TODO: Implement exception handling, valueless_by_exception
+// TODO: swap()
+// TODO: comparison operators
+// TODO: type based in-place constructor
 // TODO: SFINAE away copy and move constructor, etc.
-// TODO: Operators
 // TODO: noexcept according to reference
+// TODO: visit() with multiple variants
 
 #pragma warning( push )
 #pragma warning( disable : 4396 )
