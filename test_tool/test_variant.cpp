@@ -225,10 +225,12 @@ TEST_CASE("Testing variant")
 		REQUIRE(v0.index() == 2);
 		REQUIRE(*tools::get_if<2>(&v0) == long_string);
 
-		v0.emplace<2>({ 'a', 'b', 'c' });
+		auto& s = v0.emplace<2>({ 'a', 'b', 'c' });
+		static_assert(std::is_same<decltype(s), std::string&>::value, "emplace has to return a reference");
 
 		REQUIRE(v0.index() == 2);
 		REQUIRE(*tools::get_if<2>(&v0) == "abc");
+		REQUIRE(s == "abc");
 	}
 
 	SECTION("Testing constexpr get")
