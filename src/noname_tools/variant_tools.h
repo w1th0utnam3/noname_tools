@@ -645,7 +645,7 @@ namespace noname
 			template <class Visitor, class Variant>
 			static inline constexpr auto _make_callarray()
 			{
-				using Indices = std::make_index_sequence<variant_size_v<std::decay<Variant>::type>>;
+				using Indices = std::make_index_sequence<variant_size_v<typename std::decay<Variant>::type>>;
 
 				return _make_callarray_impl<Visitor, Variant>(Indices());
 			}

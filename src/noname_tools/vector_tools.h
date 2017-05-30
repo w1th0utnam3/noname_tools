@@ -65,7 +65,7 @@ namespace noname
 			};
 
 			template <typename VecT, typename T, typename... Ts>
-			struct move_construct_helper<VecT, T, Ts...>
+			struct move_construct_helper
 			{
 				move_construct_helper(VecT& vector, T&& element, Ts&&... remaining)
 				{
