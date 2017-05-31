@@ -348,14 +348,14 @@ namespace noname
 					: _index(other._index)
 					, _valueless(other._valueless)
 				{
-					if (!_valueless) this->_storage.template copy_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+					if (!other._valueless) this->_storage.template copy_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
 				}
 
 				_variant_impl(_variant_impl&& other)
 					: _index(other._index)
 					, _valueless(other._valueless)
 				{
-					if (!_valueless) this->_storage.template move_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+					if (!other._valueless) this->_storage.template move_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
 				}
 
 				template <std::size_t I, class... Args>
@@ -473,13 +473,13 @@ namespace noname
 				_variant_impl(const _variant_impl& other)
 					: _variant_impl<N-1, Types...>(other)
 				{
-					if (other._index == N && !this->_valueless) this->_storage.template copy_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+					if (other._index == N && !other._valueless) this->_storage.template copy_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
 				}
 
 				_variant_impl(_variant_impl&& other)
 					: _variant_impl<N-1, Types...>(std::forward<_variant_impl>(other))
 				{
-					if (other._index == N && !this->_valueless) this->_storage.template move_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+					if (other._index == N && !other._valueless) this->_storage.template move_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
 				}
 
 				template <std::size_t I, class... Args>
