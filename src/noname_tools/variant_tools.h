@@ -540,6 +540,11 @@ namespace noname
 		template <class... Types>
 		class variant : public _detail::_variant_base_t<Types...>
 		{
+			static_assert(sizeof...(Types) > 0, "Instantiation of variant<> is not allowed");
+			static_assert(conjunction<negation<std::is_array<Types>>...>::value, "Arrays are not allowed in variant");
+			static_assert(conjunction<negation<std::is_reference<Types>>...>::value, "References are not allowed in variant");
+			static_assert(conjunction<negation<std::is_void<Types>>...>::value, "Void is not allowed in variant");
+
 		public:
 			//! Default constructor. Constructs a variant holding the value-initialized value of the first alternative ('index()' is zero).
 			constexpr variant() 
