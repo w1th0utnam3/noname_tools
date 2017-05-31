@@ -28,6 +28,8 @@
 #include <type_traits>
 #include <iostream>
 #include <ostream>
+#include <memory>
+#include <functional>
 
 using namespace noname;
 
@@ -41,6 +43,7 @@ TEST_CASE("Testing variant")
 {
 	typedef tools::variant<double, int, char, double> constexpr_var_t;
 	typedef tools::variant<double, int, std::string, char, double> var_t;
+	typedef tools::variant<std::reference_wrapper<double>, std::unique_ptr<std::string>, std::shared_ptr<double>, int*> pointer_var_t;
 
 	const std::string long_string = "Hello World! Hello World! Hello World! Hello World!";
 
@@ -60,6 +63,58 @@ TEST_CASE("Testing variant")
 		REQUIRE((std::is_same<tools::variant_alternative_t<1, const volatile constexpr_var_t>, const volatile int>::value == true));
 	}
 
+	SECTION("Testing type_traits, trivial types")
+	{
+		static_assert((std::is_default_constructible<constexpr_var_t>::value == true), "variant should be default constructible");
+		static_assert((std::is_copy_constructible<constexpr_var_t>::value == true), "variant should be copy constructible");
+		static_assert((std::is_move_constructible<constexpr_var_t>::value == true), "variant should be move constructible");
+		static_assert((std::is_copy_assignable<constexpr_var_t>::value == true), "variant should be copy assignable");
+		static_assert((std::is_move_assignable<constexpr_var_t>::value == true), "variant should be move assignable");
+		static_assert((std::is_destructible<constexpr_var_t>::value == true), "variant should be destructible");
+
+		static_assert((std::is_trivially_default_constructible<constexpr_var_t>::value == false), "variant should not be trivially default constructible (because of value initialization and index=0)");
+		static_assert((std::is_trivially_copy_constructible<constexpr_var_t>::value == true), "variant should be trivially copy constructible");
+		static_assert((std::is_trivially_move_constructible<constexpr_var_t>::value == true), "variant should be trivially move constructible");
+		static_assert((std::is_trivially_copy_assignable<constexpr_var_t>::value == true), "variant should be trivially copy assignable");
+		static_assert((std::is_trivially_move_assignable<constexpr_var_t>::value == true), "variant should be trivially move assignable");
+		static_assert((std::is_trivially_destructible<constexpr_var_t>::value == true), "variant should be trivially destructible");
+
+		static_assert((std::is_assignable<var_t, double>::value == false), "variant should not be assignable from this type (ambigious)");
+		static_assert((std::is_assignable<var_t, int>::value == true), "variant should be assignable from this type");
+		static_assert((std::is_assignable<var_t, char>::value == true), "variant should be assignable from this type");
+	}
+
+	SECTION("Testing type_traits, non trivial types")
+	{
+		static_assert((std::is_default_constructible<var_t>::value == true), "variant should be default constructible");
+		static_assert((std::is_copy_constructible<var_t>::value == true), "variant should be copy constructible");
+		static_assert((std::is_move_constructible<var_t>::value == true), "variant should be move constructible");
+		static_assert((std::is_copy_assignable<var_t>::value == true), "variant should be copy assignable");
+		static_assert((std::is_move_assignable<var_t>::value == true), "variant should be move assignable");
+		static_assert((std::is_destructible<var_t>::value == true), "variant should be destructible");
+
+		static_assert((std::is_trivially_default_constructible<var_t>::value == false), "variant should not be trivially default constructible (because of value initialization and index=0)");
+		static_assert((std::is_trivially_copy_constructible<var_t>::value == false), "variant should not be trivially copy constructible");
+		static_assert((std::is_trivially_move_constructible<var_t>::value == false), "variant should not be trivially move constructible");
+		static_assert((std::is_trivially_copy_assignable<var_t>::value == false), "variant should not be trivially copy assignable");
+		static_assert((std::is_trivially_move_assignable<var_t>::value == false), "variant should not be trivially move assignable");
+		static_assert((std::is_trivially_destructible<var_t>::value == false), "variant should not be trivially destructible");
+
+		static_assert((std::is_assignable<var_t, double>::value == false), "variant should not be assignable from this type (ambigious)");
+		static_assert((std::is_assignable<var_t, int>::value == true), "variant should be assignable from this type");
+		static_assert((std::is_assignable<var_t, char>::value == true), "variant should be assignable from this type");
+		static_assert((std::is_assignable<var_t, std::string>::value == true), "variant should be assignable from this type");
+	}
+
+	SECTION("Testing type_traits, special types (no default construction, no copy, etc.)")
+	{
+		static_assert((std::is_default_constructible<pointer_var_t>::value == false), "variant should not be default constructible (because of std::reference_wrapper)");
+		//static_assert((std::is_copy_constructible<pointer_var_t>::value == false), "variant should not be copy constructible (because of std::unique_ptr)");
+		static_assert((std::is_move_constructible<pointer_var_t>::value == true), "variant should be move constructible");
+		//static_assert((std::is_copy_assignable<pointer_var_t>::value == false), "variant should not be copy assignable (because of std::unique_ptr)");
+		static_assert((std::is_move_assignable<pointer_var_t>::value == true), "variant should be move assignable");
+		static_assert((std::is_destructible<pointer_var_t>::value == true), "variant should be destructible");
+	}
 
 	SECTION("Testing constexpr constructor and index")
 	{
@@ -169,7 +224,7 @@ TEST_CASE("Testing variant")
 		REQUIRE(tools::get_if<std::string>(&v1) == nullptr);
 	}
 
-	SECTION("Testing copy constructor")
+	SECTION("Testing copy constructor, non trivial types")
 	{
 		var_t v0(tools::in_place<2>, long_string);
 
@@ -194,7 +249,32 @@ TEST_CASE("Testing variant")
 		}
 	}
 
-	SECTION("Testing move constructor")
+	SECTION("Testing copy constructor, trivial types")
+	{
+		constexpr_var_t v0(tools::in_place<3>, 27.0);
+
+		REQUIRE(v0.index() == 3);
+		REQUIRE(*tools::get_if<3>(&v0) == 27.0);
+
+		{
+			constexpr_var_t v1(v0);
+
+			REQUIRE(v0.index() == 3);
+			REQUIRE(*tools::get_if<3>(&v0) == 27.0);
+			REQUIRE(v1.index() == 3);
+			REQUIRE(*tools::get_if<3>(&v1) == 27.0);
+		}
+
+		{
+			const constexpr_var_t& c_v0 = v0;
+			constexpr_var_t v1(c_v0);
+
+			REQUIRE(v1.index() == 3);
+			REQUIRE(*tools::get_if<3>(&v1) == 27.0);
+		}
+	}
+
+	SECTION("Testing move constructor, non trivial types")
 	{
 		var_t v0(tools::in_place<2>, long_string);
 
@@ -209,7 +289,22 @@ TEST_CASE("Testing variant")
 		}
 	}
 
-	SECTION("Testing emplace")
+	SECTION("Testing move constructor, trivial types")
+	{
+		constexpr_var_t v0(tools::in_place<2>, 'c');
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == 'c');
+
+		{
+			constexpr_var_t v1(std::move(v0));
+
+			REQUIRE(v1.index() == 2);
+			REQUIRE(*tools::get_if<2>(&v1) == 'c');
+		}
+	}
+
+	SECTION("Testing emplace, non trivial types")
 	{
 		var_t v0(27);
 
@@ -235,7 +330,26 @@ TEST_CASE("Testing variant")
 		REQUIRE(c == 'q');
 	}
 
-	SECTION("Testing copy assignment")
+	SECTION("Testing emplace, trivial types")
+	{
+		constexpr_var_t v0(27);
+
+		REQUIRE(v0.index() == 1);
+
+		v0.emplace<0>(22.2);
+		REQUIRE(v0.index() == 0);
+		REQUIRE(*tools::get_if<0>(&v0) == 22.2);
+
+		char& c = v0.emplace<char>('q');
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == 'q');
+		REQUIRE(c == 'q');
+
+		c = 'x';
+		REQUIRE(*tools::get_if<2>(&v0) == 'x');
+	}
+
+	SECTION("Testing copy assignment, non trivial types")
 	{
 		var_t v0(27);
 		var_t v1(long_string);
@@ -266,7 +380,35 @@ TEST_CASE("Testing variant")
 		REQUIRE(*tools::get_if<2>(&v2) == long_string + long_string);
 	}
 
-	SECTION("Testing move assignment")
+	SECTION("Testing copy assignment, trivial types")
+	{
+		constexpr_var_t v0(2);
+		constexpr_var_t v1(27);
+		const constexpr_var_t v2('c');
+
+		REQUIRE(v0.index() == 1);
+		REQUIRE(v1.index() == 1);
+		REQUIRE(v2.index() == 2);
+
+		REQUIRE(*tools::get_if<1>(&v0) == 2);
+		REQUIRE(*tools::get_if<1>(&v1) == 27);
+		REQUIRE(*tools::get_if<2>(&v2) == 'c');
+
+		v0 = v1;
+
+		REQUIRE(v0.index() == 1);
+		REQUIRE(v1.index() == 1);
+
+		REQUIRE(*tools::get_if<1>(&v0) == 27);
+		REQUIRE(*tools::get_if<1>(&v1) == 27);
+
+		v0 = v2;
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == 'c');
+	}
+
+	SECTION("Testing move assignment, non trivial types")
 	{
 		var_t v0(27);
 
@@ -291,7 +433,31 @@ TEST_CASE("Testing variant")
 		REQUIRE(*tools::get_if<3>(&v0) == 'c');
 	}
 
-	SECTION("Testing converting assignment")
+	SECTION("Testing move assignment, trivial types")
+	{
+		constexpr_var_t v0(27);
+
+		REQUIRE(v0.index() == 1);
+		REQUIRE(*tools::get_if<1>(&v0) == 27);
+
+		v0 = constexpr_var_t(72);
+
+		REQUIRE(v0.index() == 1);
+		REQUIRE(*tools::get_if<1>(&v0) == 72);
+
+		v0 = constexpr_var_t(tools::in_place<3>, 12.3);
+
+		REQUIRE(v0.index() == 3);
+		REQUIRE(*tools::get_if<3>(&v0) == 12.3);
+
+		constexpr_var_t v1('c');
+		v0 = std::move(v1);
+
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == 'c');
+	}
+
+	SECTION("Testing converting assignment, non trivial types")
 	{
 		var_t v0(27);
 
@@ -304,6 +470,23 @@ TEST_CASE("Testing variant")
 		v0 = 'q';
 		REQUIRE(v0.index() == 3);
 		REQUIRE(*tools::get_if<3>(&v0) == 'q');
+	}
+
+	SECTION("Testing converting assignment, trivial types")
+	{
+		//typedef tools::variant<double, int, char, double> constexpr_var_t;
+
+		constexpr_var_t v0(27);
+
+		REQUIRE(v0.index() == 1);
+
+		v0 = 45;
+		REQUIRE(v0.index() == 1);
+		REQUIRE(*tools::get_if<1>(&v0) == 45);
+
+		v0 = 'q';
+		REQUIRE(v0.index() == 2);
+		REQUIRE(*tools::get_if<2>(&v0) == 'q');
 	}
 
 	SECTION("Testing constexpr get")
