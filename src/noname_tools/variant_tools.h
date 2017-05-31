@@ -566,39 +566,39 @@ namespace noname
 
 			//! Converting constructor.
 			template <typename T, NONAME_REQUIRES(conjunction<std::is_constructible<best_match<T&&, Types...>, T>, 
-												   negation<std::is_same<std::decay_t<T>, variant>>>)>
+															  negation<std::is_same<std::decay_t<T>, variant>>>)>
 			constexpr variant(T&& t)
 				: _detail::_variant_base_t<Types...>(in_place<_detail::_alternative_index_v<best_match<T&&, Types...>, Types...>>, std::forward<T>(t))
 			{
 			}
 
 			//! Constructs a variant with the specified alternative 'T' and initializes the contained value with the arguments 'std::forward<Args>(args)...'.
-			template <class T, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>
-																		   , std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
+			template <class T, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>,
+																		  std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_type_t<T>, Args&&... args)
 				: _detail::_variant_base_t<Types...>(in_place<_detail::_alternative_index_v<T, Types...>>, std::forward<Args>(args)...)
 			{
 			}
 
 			//! Constructs a variant with the specified alternative 'T' and initializes the contained value with the arguments 'il, std::forward<Args>(args)...'.
-			template <class T, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>
-																					, std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
+			template <class T, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>,
+																				   std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
 				: _detail::_variant_base_t<Types...>(in_place<_detail::_alternative_index_v<T, Types...>>, il, std::forward<Args>(args)...)
 			{
 			}
 
 			//! Constructs a variant with the alternative 'T_i' specified by the index 'I' and initializes the contained value with the arguments 'std::forward<Args>(args)...'.
-			template <std::size_t I, class... Args, NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>
-																				 , std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
+			template <std::size_t I, class... Args, NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>,
+																			    std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_index_t<I>, Args&&... args)
 				: _detail::_variant_base_t<Types...>(in_place<I>, std::forward<Args>(args)...)
 			{
 			}
 
 			//! Constructs a variant with the alternative 'T_i' specified by the index 'I' and initializes the contained value with the arguments 'il, std::forward<Args>(args)...'.
-			template <std::size_t I, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>
-																						  , std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
+			template <std::size_t I, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>,
+																						 std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
 				: _detail::_variant_base_t<Types...>(in_place<I>, il, std::forward<Args>(args)...)
 			{
@@ -617,8 +617,8 @@ namespace noname
 			}
 
 			//! Creates a new value in-place, in an existing variant object using the supplied arguments 'args'.
-			template <class T, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>,
-																		   std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
+			template <class T, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>, 
+																		  std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
 			T& emplace(Args&&... args)
 			{
 				this->_destroy();
@@ -628,7 +628,7 @@ namespace noname
 
 			//! Creates a new value in-place, in an existing variant object using the supplied initializer list 'il' and arguments 'args'.
 			template <class T, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>, 
-																					std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, std::initializer_list<U>, Args...>>)>
+																				   std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, std::initializer_list<U>, Args...>>)>
 			T& emplace(std::initializer_list<U> il, Args&&... args)
 			{
 				this->_destroy();
@@ -704,8 +704,8 @@ namespace noname
 
 			//! Converting assignment.
 			template <class T, NONAME_REQUIRES(conjunction<negation<std::is_same<typename std::decay<T>::type, variant>>, 
-															std::is_assignable<best_match<T&&, Types...>&, T>,
-															std::is_constructible<best_match<T&&, Types...>, T>>)>
+														   std::is_assignable<best_match<T&&, Types...>&, T>,
+														   std::is_constructible<best_match<T&&, Types...>, T>>)>
 			variant& operator=(T&& t) noexcept(std::is_nothrow_assignable<best_match<T&&, Types...>&, T>::value && std::is_nothrow_constructible<best_match<T&&, Types...>, T>::value)
 			{
 				this->_valueless = false;
@@ -750,8 +750,8 @@ namespace noname
 			};
 
 			template <std::size_t I, class... Types>
-			inline constexpr std::enable_if_t<_is_constexpr_pack<Types...>::value
-											  , std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> 
+			inline constexpr std::enable_if_t<_is_constexpr_pack<Types...>::value,
+											  std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>> 
 				_get_if(variant<Types...>* var_ptr)
 			{
 				using value_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
@@ -759,8 +759,8 @@ namespace noname
 			}
 
 			template <std::size_t I, class... Types>
-			inline std::enable_if_t<negation<_is_constexpr_pack<Types...>>::value
-											  , std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>>
+			inline std::enable_if_t<negation<_is_constexpr_pack<Types...>>::value,
+									std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>>
 				_get_if(variant<Types...>* var_ptr)
 			{
 				using value_ptr_t = std::add_pointer_t<variant_alternative_t<I, variant<Types...>>>;
