@@ -224,7 +224,7 @@ namespace noname
 			};
 
 			template <std::size_t N, class... Types>
-			struct _constexpr_variant_base : public _constexpr_variant_base<N - 1, Types...>
+			struct _constexpr_variant_base : _constexpr_variant_base<N - 1, Types...>
 			{
 				friend constexpr std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<N, variant<Types...>>>> _get_if<N, Types...>(variant<Types...>* pv);
 
@@ -376,7 +376,7 @@ namespace noname
 
 				~_variant_base()
 				{
-					this->_storage.template _destroy_value<nth_element_t<0, Types...>>();
+					if (this->_index == 0 && !this->_valueless) this->_storage.template _destroy_value<nth_element_t<0, Types...>>();
 				}
 
 			protected:
@@ -433,7 +433,7 @@ namespace noname
 			};
 
 			template <std::size_t N, class... Types>
-			struct _variant_base : public _variant_base<N-1, Types...>
+			struct _variant_base : _variant_base<N-1, Types...>
 			{
 				friend std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<N, variant<Types...>>>> _get_if<N, Types...>(variant<Types...>* pv);
 
@@ -471,7 +471,7 @@ namespace noname
 			protected:
 				void destroy()
 				{
-					if (this->_index == N)
+					if (this->_index == N && !this->_valueless)
 						this->_storage.template _destroy_value<nth_element_t<N, Types...>>();
 					else
 						_variant_base<N - 1, Types...>::_destroy();
@@ -621,7 +621,7 @@ namespace noname
 																		  std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
 			T& emplace(Args&&... args)
 			{
-				this->_destroy();
+				if (!this->_valueless) this->_destroy();
 				this->_index = _detail::_alternative_index_v<T, Types...>;
 				return this->template _emplace<_detail::_alternative_index_v<T, Types...>>(std::forward<Args>(args)...);
 			}
@@ -631,7 +631,7 @@ namespace noname
 																				   std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, std::initializer_list<U>, Args...>>)>
 			T& emplace(std::initializer_list<U> il, Args&&... args)
 			{
-				this->_destroy();
+				if (!this->_valueless) this->_destroy();
 				this->_index = _detail::_alternative_index_v<T, Types...>;
 				return this->template _emplace<_detail::_alternative_index_v<T, Types...>>(il, std::forward<Args>(args)...);
 			}
@@ -640,7 +640,7 @@ namespace noname
 			template <std::size_t I, class... Args, NONAME_REQUIRES(std::is_constructible<nth_element_t<I, Types...>, Args...>)>
 			variant_alternative_t<I, variant<Types...>>& emplace(Args&&... args)
 			{
-				this->_destroy();
+				if (!this->_valueless) this->_destroy();
 				this->_index = I;
 				return this->template _emplace<I>(std::forward<Args>(args)...);
 			}
@@ -649,7 +649,7 @@ namespace noname
 			template <std::size_t I, class U, class... Args, NONAME_REQUIRES(std::is_constructible<nth_element_t<I, Types...>, std::initializer_list<U>, Args...>)>
 			variant_alternative_t<I, variant<Types...>>& emplace(std::initializer_list<U> il, Args&&... args)
 			{
-				this->_destroy();
+				if (!this->_valueless) this->_destroy();
 				this->_index = I;
 				return this->template _emplace<I>(il, std::forward<Args>(args)...);
 			}
@@ -672,7 +672,7 @@ namespace noname
 				if (this->_index == rhs._index) {
 					this->_assign_same_index(rhs);
 				} else {
-					this->destroy();
+					if (!this->_valueless) this->destroy();
 					this->_index = rhs._index;
 					this->_assign_change_index(rhs);
 				}
@@ -686,7 +686,7 @@ namespace noname
 			{
 				if (this->_valueless && rhs._valueless) return *this;
 				if (rhs._valueless) {
-					this->_destroy();
+					if (!this->_valueless) this->_destroy();
 					this->_valueless = true;
 					return *this;
 				}
@@ -695,7 +695,7 @@ namespace noname
 				if (this->_index == rhs._index) {
 					this->_assign_same_index(std::forward<variant>(rhs));
 				} else {
-					this->_destroy();
+					if (!this->_valueless) this->_destroy();
 					this->_index = rhs._index;
 					this->_assign_change_index(std::forward<variant>(rhs));
 				}
@@ -714,7 +714,7 @@ namespace noname
 				if(this->_index == _detail::_alternative_index_v<T_j, Types...>) {
 					this->template _assign_conversion<T_j>(std::forward<T>(t));
 				} else {
-					this->_destroy();
+					if (!this->_valueless) this->_destroy();
 					this->_index = _detail::_alternative_index_v<T_j, Types...>;
 					this->template _emplace<_detail::_alternative_index_v<T_j, Types...>>(std::forward<T>(t));
 				}
