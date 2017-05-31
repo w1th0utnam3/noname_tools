@@ -379,10 +379,9 @@ namespace noname
 					if (this->_index == 0 && !this->_valueless) this->_storage.template _destroy_value<nth_element_t<0, Types...>>();
 				}
 
-			protected:
 				void _destroy()
 				{
-					this->_storage.template _destroy_value<nth_element_t<0, Types...>>();
+					if (this->_index == 0) this->_storage.template _destroy_value<nth_element_t<0, Types...>>();
 				}
 
 				template <std::size_t I, class... Args>
@@ -468,8 +467,7 @@ namespace noname
 					if (this->_index == N) this->_storage.template _destroy_value<nth_element_t<N, Types...>>();
 				}
 
-			protected:
-				void destroy()
+				void _destroy()
 				{
 					if (this->_index == N && !this->_valueless)
 						this->_storage.template _destroy_value<nth_element_t<N, Types...>>();
