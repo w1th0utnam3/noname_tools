@@ -115,12 +115,11 @@ TEST_CASE("Testing variant")
 		static_assert((std::is_move_assignable<pointer_var_t>::value == true), "variant should be move assignable");
 		static_assert((std::is_destructible<pointer_var_t>::value == true), "variant should be destructible");
 
-		/*
-		static_assert((std::is_assignable<var_t, std::reference_wrapper<double>>::value == true), "variant should be assignable from this type");
-		static_assert((std::is_assignable<var_t, std::unique_ptr<std::string>>::value == true), "variant should be assignable from this type");
-		static_assert((std::is_assignable<var_t, std::shared_ptr<double>>::value == true), "variant should be assignable from this type");
-		static_assert((std::is_assignable<var_t, int*>::value == true), "variant should be assignable from this type");
-		*/
+		static_assert((std::is_assignable<pointer_var_t, std::reference_wrapper<double>>::value == true), "variant should be assignable from this type");
+		static_assert((std::is_assignable<pointer_var_t, std::unique_ptr<std::string>&&>::value == true), "variant should be assignable from this type");
+		//static_assert((std::is_assignable<pointer_var_t, std::unique_ptr<std::string>>::value == false), "variant should be not assignable from this type");
+		static_assert((std::is_assignable<pointer_var_t, std::shared_ptr<double>>::value == true), "variant should be assignable from this type");
+		static_assert((std::is_assignable<pointer_var_t, int*>::value == true), "variant should be assignable from this type");
 	}
 
 	SECTION("Testing constexpr constructor and index")
