@@ -114,6 +114,13 @@ TEST_CASE("Testing variant")
 		//static_assert((std::is_copy_assignable<pointer_var_t>::value == false), "variant should not be copy assignable (because of std::unique_ptr)");
 		static_assert((std::is_move_assignable<pointer_var_t>::value == true), "variant should be move assignable");
 		static_assert((std::is_destructible<pointer_var_t>::value == true), "variant should be destructible");
+
+		/*
+		static_assert((std::is_assignable<var_t, std::reference_wrapper<double>>::value == true), "variant should be assignable from this type");
+		static_assert((std::is_assignable<var_t, std::unique_ptr<std::string>>::value == true), "variant should be assignable from this type");
+		static_assert((std::is_assignable<var_t, std::shared_ptr<double>>::value == true), "variant should be assignable from this type");
+		static_assert((std::is_assignable<var_t, int*>::value == true), "variant should be assignable from this type");
+		*/
 	}
 
 	SECTION("Testing constexpr constructor and index")
@@ -170,6 +177,14 @@ TEST_CASE("Testing variant")
 		REQUIRE(var_t(27).index() == 1);
 		REQUIRE(var_t("Hello World!").index() == 2);
 		REQUIRE(var_t('a').index() == 3);
+
+		var_t v0{ 27 };
+		var_t v1{ "Hello World!" };
+		var_t v2{ 'a' };
+
+		REQUIRE(v0.index() == 1);
+		REQUIRE(v1.index() == 2);
+		REQUIRE(v2.index() == 3);
 	}
 
 	SECTION("Testing constructors and get_if")
@@ -222,6 +237,28 @@ TEST_CASE("Testing variant")
 		REQUIRE(tools::get_if<int>(&v3) == nullptr);
 		REQUIRE(*tools::get_if<char>(&v3) == 'a');
 		REQUIRE(tools::get_if<std::string>(&v1) == nullptr);
+	}
+
+	SECTION("Testing constructors, index and get_if for special types (reference_wrapper, unique_ptr...)")
+	{
+		double val0 = 12.3;
+		auto val2 = std::make_shared<double>(45.2);
+		int val3 = 27;
+
+		pointer_var_t v0{ std::reference_wrapper<double>(val0) };
+		pointer_var_t v1{ std::make_unique<std::string>(long_string) };
+		pointer_var_t v2(val2);
+		pointer_var_t v3(&val3);
+
+		REQUIRE(v0.index() == 0);
+		REQUIRE(v1.index() == 1);
+		REQUIRE(v2.index() == 2);
+		REQUIRE(v3.index() == 3);
+
+		REQUIRE(*tools::get_if<0>(&v0) == 12.3);
+		REQUIRE(**tools::get_if<1>(&v1) == long_string);
+		REQUIRE(**tools::get_if<2>(&v2) == 45.2);
+		REQUIRE(**tools::get_if<3>(&v3) == 27);
 	}
 
 	SECTION("Testing copy constructor, non trivial types")
@@ -287,7 +324,7 @@ TEST_CASE("Testing variant")
 			REQUIRE(v1.index() == 2);
 			REQUIRE(*tools::get_if<2>(&v1) == long_string);
 		}
-	}
+	}	
 
 	SECTION("Testing move constructor, trivial types")
 	{
@@ -302,6 +339,26 @@ TEST_CASE("Testing variant")
 			REQUIRE(v1.index() == 2);
 			REQUIRE(*tools::get_if<2>(&v1) == 'c');
 		}
+	}
+
+	SECTION("Testing move constructor, special types (reference_wrapper, unique_ptr...)")
+	{
+		double val0 = 12.3;
+
+		pointer_var_t v0{ std::reference_wrapper<double>(val0) };
+		pointer_var_t v1{ std::make_unique<std::string>(long_string) };
+
+		REQUIRE(v0.index() == 0);
+		REQUIRE(v1.index() == 1);
+
+		auto v0_m(std::move(v0));
+		auto v1_m(std::move(v1));
+
+		REQUIRE(v0_m.index() == 0);
+		REQUIRE(v1_m.index() == 1);
+
+		REQUIRE(*tools::get_if<0>(&v0_m) == 12.3);
+		REQUIRE(**tools::get_if<1>(&v1_m) == long_string);
 	}
 
 	SECTION("Testing emplace, non trivial types")
@@ -349,19 +406,35 @@ TEST_CASE("Testing variant")
 		REQUIRE(*tools::get_if<2>(&v0) == 'x');
 	}
 
+	SECTION("Testing emplace, special types (reference_wrapper, unique_ptr...)")
+	{
+		double val0 = 12.3;
+		double val1 = 27.3;
+
+		pointer_var_t v0{ std::make_unique<std::string>(long_string) };
+
+		v0.emplace<std::reference_wrapper<double>>(val0);
+
+		REQUIRE(v0.index() == 0);
+		REQUIRE(*tools::get_if<0>(&v0) == 12.3);
+		
+		v0.emplace<0>(val1);
+
+		REQUIRE(v0.index() == 0);
+		REQUIRE(*tools::get_if<0>(&v0) == 27.3);
+		
+		std::string* s0 = new std::string(long_string);
+		v0.emplace<std::unique_ptr<std::string>>(s0);
+
+		REQUIRE(v0.index() == 1);
+		REQUIRE(**tools::get_if<1>(&v0) == long_string);
+	}
+
 	SECTION("Testing copy assignment, non trivial types")
 	{
 		var_t v0(27);
 		var_t v1(long_string);
 		var_t v2(long_string + long_string);
-
-		REQUIRE(v0.index() == 1);
-		REQUIRE(v1.index() == 2);
-		REQUIRE(v2.index() == 2);
-
-		REQUIRE(*tools::get_if<1>(&v0) == 27);
-		REQUIRE(*tools::get_if<2>(&v1) == long_string);
-		REQUIRE(*tools::get_if<2>(&v2) == long_string + long_string);
 
 		v0 = v1;
 
@@ -385,14 +458,6 @@ TEST_CASE("Testing variant")
 		constexpr_var_t v0(2);
 		constexpr_var_t v1(27);
 		const constexpr_var_t v2('c');
-
-		REQUIRE(v0.index() == 1);
-		REQUIRE(v1.index() == 1);
-		REQUIRE(v2.index() == 2);
-
-		REQUIRE(*tools::get_if<1>(&v0) == 2);
-		REQUIRE(*tools::get_if<1>(&v1) == 27);
-		REQUIRE(*tools::get_if<2>(&v2) == 'c');
 
 		v0 = v1;
 
@@ -457,11 +522,43 @@ TEST_CASE("Testing variant")
 		REQUIRE(*tools::get_if<2>(&v0) == 'c');
 	}
 
+	SECTION("Testing move assignment, special types (reference_wrapper, unique_ptr...)")
+	{
+		double val0 = 12.3;
+
+		pointer_var_t v0{ std::reference_wrapper<double> (val0) };
+		pointer_var_t v1{ std::make_unique<std::string>(long_string) };
+
+		pointer_var_t v3{ std::make_unique<std::string>(long_string) };
+		pointer_var_t v4{ std::make_unique<std::string>(long_string) };
+
+		std::string s0("Hello");
+
+		pointer_var_t v0_m = std::move(v0);
+		pointer_var_t v1_m = std::move(v1);
+		pointer_var_t v2_m = pointer_var_t{ std::make_unique<std::string>(long_string) };
+		pointer_var_t v3_m{ std::reference_wrapper<double>(val0) };
+		pointer_var_t v4_m{ std::make_unique<std::string>(s0) };
+
+		v3_m = std::move(v3);
+		v4_m = std::move(v4);
+
+		REQUIRE(v0_m.index() == 0);
+		REQUIRE(v1_m.index() == 1);
+		REQUIRE(v2_m.index() == 1);
+		REQUIRE(v3_m.index() == 1);
+		REQUIRE(v4_m.index() == 1);
+
+		REQUIRE(*tools::get_if<0>(&v0_m) == 12.3);
+		REQUIRE(**tools::get_if<1>(&v1_m) == long_string);
+		REQUIRE(**tools::get_if<1>(&v2_m) == long_string);
+		REQUIRE(**tools::get_if<1>(&v3_m) == long_string);
+		REQUIRE(**tools::get_if<1>(&v4_m) == long_string);
+	}
+
 	SECTION("Testing converting assignment, non trivial types")
 	{
 		var_t v0(27);
-
-		REQUIRE(v0.index() == 1);
 
 		v0 = long_string;
 		REQUIRE(v0.index() == 2);
@@ -474,11 +571,7 @@ TEST_CASE("Testing variant")
 
 	SECTION("Testing converting assignment, trivial types")
 	{
-		//typedef tools::variant<double, int, char, double> constexpr_var_t;
-
 		constexpr_var_t v0(27);
-
-		REQUIRE(v0.index() == 1);
 
 		v0 = 45;
 		REQUIRE(v0.index() == 1);
@@ -487,6 +580,29 @@ TEST_CASE("Testing variant")
 		v0 = 'q';
 		REQUIRE(v0.index() == 2);
 		REQUIRE(*tools::get_if<2>(&v0) == 'q');
+	}
+
+	SECTION("Testing converting assignment, special types (reference_wrapper, unique_ptr...)")
+	{
+		double val0 = 12.3;
+		double val1 = 27.3;
+		int val2 = 27;
+
+		pointer_var_t v0{ std::reference_wrapper<double>(val0) };
+		pointer_var_t v1{ std::reference_wrapper<double>(val0) };
+		pointer_var_t v2{ std::reference_wrapper<double>(val0) };
+
+		v0 = std::reference_wrapper<double>(val1);
+		v1 = std::move(std::make_unique<std::string>(long_string));
+		v2 = &val2;
+
+		REQUIRE(v0.index() == 0);
+		REQUIRE(v1.index() == 1);
+		REQUIRE(v2.index() == 3);
+
+		REQUIRE(*tools::get_if<0>(&v0) == val1);
+		REQUIRE(**tools::get_if<1>(&v1) == long_string);
+		REQUIRE(**tools::get_if<3>(&v2) == val2);
 	}
 
 	SECTION("Testing constexpr get")
@@ -727,4 +843,68 @@ TEST_CASE("Testing variant")
 		REQUIRE(tools::visit(toStringVisitor, v2) == long_string);
 		REQUIRE(tools::visit(toStringVisitor, v3) == "x");
 	}
+
+	SECTION("Testing, special types (reference_wrapper, unique_ptr...)")
+	{
+		auto address_to_str_visitor = [](auto& value) {
+			std::ostringstream strs;
+			strs << std::addressof(value);
+			return strs.str();
+		};
+
+		auto ptr_to_str = [](void* ptr)
+		{
+			std::ostringstream strs;
+			strs << ptr;
+			return strs.str();
+		};
+
+		double val1 = 12.3;
+		int val4 = 27;
+
+		pointer_var_t v1{ std::reference_wrapper<double>(val1) };
+		pointer_var_t v2{ std::make_unique<std::string>(long_string) };
+		pointer_var_t v3{ std::make_shared<double>(45.2) };
+		pointer_var_t v4(&val4);
+
+		REQUIRE(tools::visit(address_to_str_visitor, v1) == ptr_to_str(static_cast<void*>(tools::get_if<0>(&v1))));
+		REQUIRE(tools::visit(address_to_str_visitor, v2) == ptr_to_str(static_cast<void*>(tools::get_if<1>(&v2))));
+		REQUIRE(tools::visit(address_to_str_visitor, v3) == ptr_to_str(static_cast<void*>(tools::get_if<2>(&v3))));
+		REQUIRE(tools::visit(address_to_str_visitor, v4) == ptr_to_str(static_cast<void*>(tools::get_if<3>(&v4))));
+
+		struct
+		{
+			std::string s;
+
+			void operator()(double& val)
+			{
+				val = 23.3;
+			}
+
+			void operator()(std::unique_ptr<std::string>& val)
+			{
+				*val = s + s;
+			}
+
+			void operator()(std::shared_ptr<double>& val)
+			{
+				*val = 45.1;
+			}
+
+			void operator()(int*& val)
+			{
+				*val = 27;
+			}
+		} visitor{long_string};
+
+		tools::visit(visitor, v1);
+		tools::visit(visitor, v2);
+		tools::visit(visitor, v3);
+		tools::visit(visitor, v4);
+
+		REQUIRE(*tools::get_if<0>(&v1) == 23.3);
+		REQUIRE(**tools::get_if<1>(&v2) == long_string + long_string);
+		REQUIRE(**tools::get_if<2>(&v3) == 45.1);
+		REQUIRE(**tools::get_if<3>(&v4) == 27);
+	 }
 }
