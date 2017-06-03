@@ -39,9 +39,8 @@
 
 // TODO: swap()
 // TODO: comparison operators
-// TODO: type based in-place constructor
-// TODO: noexcept according to reference
 // TODO: visit() with multiple variants
+// TODO: conditional noexcept of constructors, throwing otherwise
 
 #pragma warning( push )
 #pragma warning( disable : 4396 )
@@ -159,7 +158,7 @@ namespace noname
 			{
 				T _value;
 
-				_constexpr_variant_storage() = default;
+				_constexpr_variant_storage() noexcept(std::is_nothrow_default_constructible<T>::value) = default;
 
 				template <class... Args>
 				constexpr _constexpr_variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
@@ -200,7 +199,7 @@ namespace noname
 				T _value;
 				_constexpr_variant_storage<I + 1, Types...> _subvalues;
 
-				_constexpr_variant_storage() = default;
+				_constexpr_variant_storage() noexcept(conjunction<std::is_nothrow_default_constructible<T>, std::is_nothrow_default_constructible<Types>...>::value) = default;
 
 				template <class... Args>
 				constexpr _constexpr_variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
@@ -271,7 +270,7 @@ namespace noname
 				std::size_t _index;
 				bool _valueless;
 
-				constexpr _constexpr_variant_impl()
+				constexpr _constexpr_variant_impl() noexcept(conjunction<std::is_nothrow_default_constructible<Types>...>::value)
 					: _storage(std::integral_constant<std::size_t, 0>(), nth_element_t<0, Types...>())
 					, _index(0)
 					, _valueless(false)
@@ -322,7 +321,7 @@ namespace noname
 			{
 				friend constexpr std::enable_if_t<true, std::add_pointer_t<variant_alternative_t<N, variant<Types...>>>> _get_if<N, Types...>(variant<Types...>* pv);
 
-				constexpr _constexpr_variant_impl() = default;
+				constexpr _constexpr_variant_impl() noexcept(conjunction<std::is_nothrow_default_constructible<Types>...>::value) = default;
 
 				template <std::size_t I, class... Args>
 				constexpr explicit _constexpr_variant_impl(in_place_index_t<I>, Args&&... args)
@@ -350,13 +349,13 @@ namespace noname
 				_variant_storage() = default;
 
 				template <std::size_t I, class... Args>
-				_variant_storage(std::integral_constant<std::size_t, I>, Args&&... args)
+				void construct(std::integral_constant<std::size_t, I>, Args&&... args)
 				{
 					new(memory_ptr()) nth_element_t<I, Types...>(std::forward<Args>(args)...);
 				}
 
 				template <std::size_t I, class U, class... Args>
-				_variant_storage(std::integral_constant<std::size_t, I>, std::initializer_list<U> il, Args&&... args)
+				void construct(std::integral_constant<std::size_t, I>, std::initializer_list<U> il, Args&&... args)
 				{
 					new(memory_ptr()) nth_element_t<I, Types...>(il, std::forward<Args>(args)...);
 				}
@@ -432,40 +431,69 @@ namespace noname
 				bool _valueless;
 
 				_variant_impl_base()
-					: _storage(std::integral_constant<std::size_t, 0>(), nth_element_t<0, Types...>())
-					, _index(0)
+					: _index(0)
 					, _valueless(false)
 				{
+					try {
+						this->_storage.construct(std::integral_constant<std::size_t, 0>(), nth_element_t<0, Types...>());
+					} catch (...) {
+						this->_valueless = true;
+						throw;
+					}
 				}
 
 				_variant_impl_base(const _variant_impl_base& other)
 					: _index(other._index)
 					, _valueless(other._valueless)
 				{
-					if (!other._valueless) this->_storage.template copy_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+					if (!other._valueless) {
+						try {
+							this->_storage.template copy_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+						} catch (...) {
+							this->_valueless = true;
+							throw;
+						}
+					}
 				}
 
 				_variant_impl_base(_variant_impl_base&& other)
 					: _index(other._index)
 					, _valueless(other._valueless)
 				{
-					if (!other._valueless) this->_storage.template move_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+					if (!other._valueless) {
+						try{
+							this->_storage.template move_value<nth_element_t<0, Types...>>(other._storage.memory_ptr());
+						} catch (...) {
+							this->_valueless = true;
+							throw;
+						}
+					}
 				}
 
 				template <std::size_t I, class... Args>
 				explicit _variant_impl_base(in_place_index_t<I>, Args&&... args)
-					: _storage(std::integral_constant<std::size_t, I>(), std::forward<Args>(args)...)
-					, _index(I)
+					: _index(I)
 					, _valueless(false)
 				{
+					try {
+						this->_storage.construct(std::integral_constant<std::size_t, I>(), std::forward<Args>(args)...);
+					} catch(...) {
+						this->_valueless = true;
+						throw;
+					}
 				}
 
 				template <std::size_t I, class U, class... Args>
 				explicit _variant_impl_base(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
-					: _storage(std::integral_constant<std::size_t, I>(), il, std::forward<Args>(args)...)
-					, _index(I)
+					: _index(I)
 					, _valueless(false)
 				{
+					try {
+						this->_storage.construct(std::integral_constant<std::size_t, I>(), il, std::forward<Args>(args)...);
+					} catch (...) {
+						this->_valueless = true;
+						throw;
+					}
 				}
 
 				~_variant_impl_base()
@@ -567,13 +595,27 @@ namespace noname
 				_variant_impl_base(const _variant_impl_base& other)
 					: _variant_impl_base<N-1, Types...>(other)
 				{
-					if (other._index == N && !other._valueless) this->_storage.template copy_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+					if (other._index == N && !other._valueless) {
+						try {
+							this->_storage.template copy_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+						} catch (...) {
+							this->_valueless = true;
+							throw;
+						}
+					}
 				}
 
 				_variant_impl_base(_variant_impl_base&& other)
 					: _variant_impl_base<N-1, Types...>(std::forward<_variant_impl_base>(other))
 				{
-					if (other._index == N && !other._valueless) this->_storage.template move_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+					if (other._index == N && !other._valueless) {
+						try {
+							this->_storage.template move_value<nth_element_t<N, Types...>>(other._storage.memory_ptr());
+						} catch (...) {
+							this->_valueless = true;
+							throw;
+						}
+					} 
 				}
 
 				template <std::size_t I, class... Args>
@@ -710,8 +752,10 @@ namespace noname
 				_variant_impl_base<sizeof...(Types)-1, Types...>
 			>::type;
 
+			//! Tag type used by the alternative constructor of the 'conditional_default_constructor' struct
 			struct constructor_tag {};
 
+			//! Struct to conditionally remove the default constructor
 			template <bool has_default_constructor>
 			struct conditional_default_constructor;
 
@@ -729,6 +773,7 @@ namespace noname
 				constexpr conditional_default_constructor(constructor_tag) {};
 			};
 
+			//! Struct to conditionally remove the copy constructor
 			template <bool has_copy_constructor>
 			struct conditional_copy_constructor;
 
@@ -745,6 +790,7 @@ namespace noname
 				constexpr conditional_copy_constructor& operator=(conditional_copy_constructor&&) = default;
 			};
 
+			//! Struct to conditionally remove the move constructor
 			template <bool has_move_constructor>
 			struct conditional_move_constructor;
 
@@ -761,6 +807,7 @@ namespace noname
 				constexpr conditional_move_constructor& operator=(conditional_move_constructor&&) = default;
 			};
 
+			//! Struct to conditionally remove the copy assignment operator
 			template <bool has_copy_assignment>
 			struct conditional_copy_assignment;
 
@@ -777,6 +824,7 @@ namespace noname
 				constexpr conditional_copy_assignment& operator=(conditional_copy_assignment&&) = default;
 			};
 
+			//! Struct to conditionally remove the move assignment operator
 			template <bool has_move_assignment>
 			struct conditional_move_assignment;
 
@@ -838,7 +886,7 @@ namespace noname
 			//! Constructs a variant with the specified alternative 'T' and initializes the contained value with the arguments 'std::forward<Args>(args)...'.
 			template <class T, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>,
 																		  std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
-			constexpr explicit variant(in_place_type_t<T>, Args&&... args)
+			constexpr explicit variant(in_place_type_t<T>, Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value)
 				: conditional_default_constructor_base(constructor_tag())
 				, _impl(in_place<_detail::_alternative_index_v<T, Types...>>, std::forward<Args>(args)...)
 			{
@@ -847,7 +895,7 @@ namespace noname
 			//! Constructs a variant with the specified alternative 'T' and initializes the contained value with the arguments 'il, std::forward<Args>(args)...'.
 			template <class T, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>,
 																				   std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
-			constexpr explicit variant(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
+			constexpr explicit variant(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args) noexcept(std::is_nothrow_constructible<T, std::initializer_list<U>, Args...>::value)
 				: conditional_default_constructor_base(constructor_tag())
 				, _impl(in_place<_detail::_alternative_index_v<T, Types...>>, il, std::forward<Args>(args)...)
 			{
@@ -856,7 +904,7 @@ namespace noname
 			//! Constructs a variant with the alternative 'T_i' specified by the index 'I' and initializes the contained value with the arguments 'std::forward<Args>(args)...'.
 			template <std::size_t I, class... Args, NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>,
 																			    std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
-			constexpr explicit variant(in_place_index_t<I>, Args&&... args)
+			constexpr explicit variant(in_place_index_t<I>, Args&&... args) noexcept(std::is_nothrow_constructible<nth_element_t<I, Types...>, Args...>::value)
 				: conditional_default_constructor_base(constructor_tag())
 				, _impl(in_place<I>, std::forward<Args>(args)...)
 			{
@@ -865,7 +913,7 @@ namespace noname
 			//! Constructs a variant with the alternative 'T_i' specified by the index 'I' and initializes the contained value with the arguments 'il, std::forward<Args>(args)...'.
 			template <std::size_t I, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>,
 																						 std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
-			constexpr explicit variant(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
+			constexpr explicit variant(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args) noexcept(std::is_nothrow_constructible<nth_element_t<I, Types...>, std::initializer_list<U>, Args...>::value)
 				: conditional_default_constructor_base(constructor_tag())
 				, _impl(in_place<I>, il, std::forward<Args>(args)...)
 			{

@@ -82,6 +82,10 @@ TEST_CASE("Testing variant")
 		static_assert((std::is_assignable<var_t, double>::value == false), "variant should not be assignable from this type (ambigious)");
 		static_assert((std::is_assignable<var_t, int>::value == true), "variant should be assignable from this type");
 		static_assert((std::is_assignable<var_t, char>::value == true), "variant should be assignable from this type");
+
+		static_assert((std::is_nothrow_default_constructible<constexpr_var_t>::value == true), "variant should be nothrow default constructible");
+		static_assert((std::is_nothrow_copy_constructible<constexpr_var_t>::value == true), "variant should be nothrow copy constructible");
+		static_assert((std::is_nothrow_move_constructible<constexpr_var_t>::value == true), "variant should be nothrow move constructible");
 	}
 
 	SECTION("Testing type_traits, non trivial types")
@@ -104,6 +108,10 @@ TEST_CASE("Testing variant")
 		static_assert((std::is_assignable<var_t, int>::value == true), "variant should be assignable from this type");
 		static_assert((std::is_assignable<var_t, char>::value == true), "variant should be assignable from this type");
 		static_assert((std::is_assignable<var_t, std::string>::value == true), "variant should be assignable from this type");
+
+		//static_assert((std::is_nothrow_default_constructible<var_t>::value == true), "variant should be nothrow default constructible");
+		static_assert((std::is_nothrow_copy_constructible<var_t>::value == false), "variant should be nothrow copy constructible");
+		//static_assert((std::is_nothrow_move_constructible<var_t>::value == true), "variant should be nothrow move constructible");
 	}
 
 	SECTION("Testing type_traits, special types (no default construction, no copy, etc.)")
