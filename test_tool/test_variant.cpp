@@ -109,9 +109,9 @@ TEST_CASE("Testing variant")
 	SECTION("Testing type_traits, special types (no default construction, no copy, etc.)")
 	{
 		static_assert((std::is_default_constructible<pointer_var_t>::value == false), "variant should not be default constructible (because of std::reference_wrapper)");
-		//static_assert((std::is_copy_constructible<pointer_var_t>::value == false), "variant should not be copy constructible (because of std::unique_ptr)");
+		static_assert((std::is_copy_constructible<pointer_var_t>::value == false), "variant should not be copy constructible (because of std::unique_ptr)");
 		static_assert((std::is_move_constructible<pointer_var_t>::value == true), "variant should be move constructible");
-		//static_assert((std::is_copy_assignable<pointer_var_t>::value == false), "variant should not be copy assignable (because of std::unique_ptr)");
+		static_assert((std::is_copy_assignable<pointer_var_t>::value == false), "variant should not be copy assignable (because of std::unique_ptr)");
 		static_assert((std::is_move_assignable<pointer_var_t>::value == true), "variant should be move assignable");
 		static_assert((std::is_destructible<pointer_var_t>::value == true), "variant should be destructible");
 

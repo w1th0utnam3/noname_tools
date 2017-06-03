@@ -40,7 +40,6 @@
 // TODO: swap()
 // TODO: comparison operators
 // TODO: type based in-place constructor
-// TODO: SFINAE away copy and move constructor, etc.
 // TODO: noexcept according to reference
 // TODO: visit() with multiple variants
 
@@ -127,8 +126,9 @@ namespace noname
 		{
 			//! Index value of the specified alternative type or variant_npos if there are several indices for the type.
 			template <typename T, class... Types>
-			struct _alternative_index : std::conditional_t<(count_element_v<T, Types...> > 1), std::integral_constant<std::size_t, variant_npos>
-				, element_index<T, Types...>>
+			struct _alternative_index : std::conditional_t<(count_element_v<T, Types...> > 1), 
+														   std::integral_constant<std::size_t, variant_npos>,
+														   element_index<T, Types...>>
 			{
 			};
 
@@ -702,128 +702,109 @@ namespace noname
 				}
 			};
 
-			template <bool isDefaultConstructible, class... Types>
-			struct _variant_default_constructor_layer;
-
-			template <class... Types>
-			struct _variant_default_constructor_layer<true, Types...> : _variant_impl_base<sizeof...(Types)-1, Types...>
-			{
-				using base = _variant_impl_base<sizeof...(Types)-1, Types...>;
-
-				_variant_default_constructor_layer() = default;
-
-				template <typename T>
-				constexpr _variant_default_constructor_layer(T&& t)
-					: base(in_place<_alternative_index_v<best_match<T&&, Types...>, Types...>>, std::forward<T>(t))
-				{
-				}
-
-				template <class T, class... Args>
-				constexpr explicit _variant_default_constructor_layer(in_place_type_t<T>, Args&&... args)
-					: base(in_place<_alternative_index_v<T, Types...>>, std::forward<Args>(args)...)
-				{
-				}
-
-				template <class T, class U, class... Args>
-				constexpr explicit _variant_default_constructor_layer(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
-					: base(in_place<_alternative_index_v<T, Types...>>, il, std::forward<Args>(args)...)
-				{
-				}
-
-				template <std::size_t I, class... Args>
-				constexpr explicit _variant_default_constructor_layer(in_place_index_t<I>, Args&&... args)
-					: base(in_place<I>, std::forward<Args>(args)...)
-				{
-				}
-
-				template <std::size_t I, class U, class... Args>
-				constexpr explicit _variant_default_constructor_layer(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
-					: base(in_place<I>, il, std::forward<Args>(args)...)
-				{
-				}
-			};
-
-			template <class... Types>
-			struct _variant_default_constructor_layer<false, Types...> : _variant_impl_base<sizeof...(Types)-1, Types...>
-			{
-				using base = _variant_impl_base<sizeof...(Types)-1, Types...>;
-
-				_variant_default_constructor_layer() = delete;
-
-				template <typename T>
-				constexpr _variant_default_constructor_layer(T&& t)
-					: base(in_place<_alternative_index_v<best_match<T&&, Types...>, Types...>>, std::forward<T>(t))
-				{
-				}
-
-				template <class T, class... Args>
-				constexpr explicit _variant_default_constructor_layer(in_place_type_t<T>, Args&&... args)
-					: base(in_place<_alternative_index_v<T, Types...>>, std::forward<Args>(args)...)
-				{
-				}
-
-				template <class T, class U, class... Args>
-				constexpr explicit _variant_default_constructor_layer(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
-					: base(in_place<_alternative_index_v<T, Types...>>, il, std::forward<Args>(args)...)
-				{
-				}
-
-				template <std::size_t I, class... Args>
-				constexpr explicit _variant_default_constructor_layer(in_place_index_t<I>, Args&&... args)
-					: base(in_place<I>, std::forward<Args>(args)...)
-				{
-				}
-
-				template <std::size_t I, class U, class... Args>
-				constexpr explicit _variant_default_constructor_layer(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
-					: base(in_place<I>, il, std::forward<Args>(args)...)
-				{
-				}
-			};
-
-			template <class... Types>
-			struct _variant_impl_composer : _variant_default_constructor_layer<std::is_default_constructible<nth_element_t<0, Types...>>::value, Types...>
-			{
-				using base = _variant_default_constructor_layer<std::is_default_constructible<nth_element_t<0, Types...>>::value, Types...>;
-
-				_variant_impl_composer() = default;
-
-				template <typename T>
-				constexpr _variant_impl_composer(T&& t)
-					: base(in_place<_alternative_index_v<best_match<T&&, Types...>, Types...>>, std::forward<T>(t))
-				{}
-
-				template <class T, class... Args>
-				constexpr explicit _variant_impl_composer(in_place_type_t<T>, Args&&... args)
-					: base(in_place<_alternative_index_v<T, Types...>>, std::forward<Args>(args)...) {}
-
-				template <class T, class U, class... Args>
-				constexpr explicit _variant_impl_composer(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
-					: base(in_place<_alternative_index_v<T, Types...>>, il, std::forward<Args>(args)...) {}
-
-				template <std::size_t I, class... Args>
-				constexpr explicit _variant_impl_composer(in_place_index_t<I>, Args&&... args)
-					: base(in_place<I>, std::forward<Args>(args)...) {}
-
-				template <std::size_t I, class U, class... Args>
-				constexpr explicit _variant_impl_composer(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
-					: base(in_place<I>, il, std::forward<Args>(args)...) {}
-			};
-
 			// Only trivially destructible types can be used in constexpr objects
 			template <class... Types>
 			using _variant_impl_t = typename std::conditional<
 				_is_constexpr_pack<Types...>::value,
 				_constexpr_variant_impl<sizeof...(Types)-1, Types...>,
-				_variant_impl_composer<Types...>
+				_variant_impl_base<sizeof...(Types)-1, Types...>
 			>::type;
+
+			struct constructor_tag {};
+
+			template <bool has_default_constructor>
+			struct conditional_default_constructor;
+
+			template <>
+			struct conditional_default_constructor<true>
+			{
+				constexpr conditional_default_constructor() = default;
+				constexpr conditional_default_constructor(constructor_tag) {};
+			};
+
+			template <>
+			struct conditional_default_constructor<false>
+			{
+				constexpr conditional_default_constructor() = delete;
+				constexpr conditional_default_constructor(constructor_tag) {};
+			};
+
+			template <bool has_copy_constructor>
+			struct conditional_copy_constructor;
+
+			template <>
+			struct conditional_copy_constructor<true> {};
+
+			template <>
+			struct conditional_copy_constructor<false>
+			{
+				constexpr conditional_copy_constructor() = default;
+				constexpr conditional_copy_constructor(const conditional_copy_constructor&) = delete;
+				constexpr conditional_copy_constructor(conditional_copy_constructor&&) = default;
+				constexpr conditional_copy_constructor& operator=(const conditional_copy_constructor&) = default;
+				constexpr conditional_copy_constructor& operator=(conditional_copy_constructor&&) = default;
+			};
+
+			template <bool has_move_constructor>
+			struct conditional_move_constructor;
+
+			template <>
+			struct conditional_move_constructor<true> {};
+
+			template <>
+			struct conditional_move_constructor<false>
+			{
+				constexpr conditional_move_constructor() = default;
+				constexpr conditional_move_constructor(const conditional_move_constructor&) = default;
+				constexpr conditional_move_constructor(conditional_move_constructor&&) = delete;
+				constexpr conditional_move_constructor& operator=(const conditional_move_constructor&) = default;
+				constexpr conditional_move_constructor& operator=(conditional_move_constructor&&) = default;
+			};
+
+			template <bool has_copy_assignment>
+			struct conditional_copy_assignment;
+
+			template <>
+			struct conditional_copy_assignment<true> {};
+
+			template <>
+			struct conditional_copy_assignment<false>
+			{
+				constexpr conditional_copy_assignment() = default;
+				constexpr conditional_copy_assignment(const conditional_copy_assignment&) = default;
+				constexpr conditional_copy_assignment(conditional_copy_assignment&&) = default;
+				constexpr conditional_copy_assignment& operator=(const conditional_copy_assignment&) = delete;
+				constexpr conditional_copy_assignment& operator=(conditional_copy_assignment&&) = default;
+			};
+
+			template <bool has_move_assignment>
+			struct conditional_move_assignment;
+
+			template <>
+			struct conditional_move_assignment<true> {};
+
+			template <>
+			struct conditional_move_assignment<false>
+			{
+				constexpr conditional_move_assignment() = default;
+				constexpr conditional_move_assignment(const conditional_move_assignment&) = default;
+				constexpr conditional_move_assignment(conditional_move_assignment&&) = default;
+				constexpr conditional_move_assignment& operator=(const conditional_move_assignment&) = default;
+				constexpr conditional_move_assignment& operator=(conditional_move_assignment&&) = delete;
+			};
 
 		} // namespace _detail
 
 		//! Type-safe union. An instance of variant at any given time either holds a value of one of its alternative types, or it holds no value.
 		template <class... Types>
-		class variant
+		class variant : conditional_default_constructor<conjunction<std::is_default_constructible<Types>...>::value>,
+						conditional_copy_constructor<conjunction<std::is_copy_constructible<Types>...>::value>,
+						conditional_move_constructor<conjunction<std::is_move_constructible<Types>...>::value>,
+						conditional_copy_assignment<conjunction<std::is_copy_assignable<Types>...>::value>,
+						conditional_move_assignment<conjunction<std::is_move_assignable<Types>...>::value>
 		{
+			using conditional_default_constructor_base = conditional_default_constructor<conjunction<std::is_default_constructible<Types>...>::value>;
+
 			template <std::size_t I, class... Ts>
 			friend inline constexpr std::enable_if_t<_is_constexpr_pack<Ts...>::value, std::add_pointer_t<variant_alternative_t<I, variant<Ts...>>>> _detail::_get_if(variant<Ts...>* var_ptr);
 
@@ -849,7 +830,8 @@ namespace noname
 			template <typename T, NONAME_REQUIRES(conjunction<std::is_constructible<best_match<T&&, Types...>, T>, 
 															  negation<std::is_same<std::decay_t<T>, variant>>>)>
 			constexpr variant(T&& t)
-				: _impl(in_place<_detail::_alternative_index_v<best_match<T&&, Types...>, Types...>>, std::forward<T>(t))
+				: conditional_default_constructor_base(constructor_tag())
+				, _impl(in_place<_detail::_alternative_index_v<best_match<T&&, Types...>, Types...>>, std::forward<T>(t))
 			{
 			}
 
@@ -857,7 +839,8 @@ namespace noname
 			template <class T, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>,
 																		  std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_type_t<T>, Args&&... args)
-				: _impl(in_place<_detail::_alternative_index_v<T, Types...>>, std::forward<Args>(args)...)
+				: conditional_default_constructor_base(constructor_tag())
+				, _impl(in_place<_detail::_alternative_index_v<T, Types...>>, std::forward<Args>(args)...)
 			{
 			}
 
@@ -865,7 +848,8 @@ namespace noname
 			template <class T, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<_detail::_alternative_index_v<T, Types...> != variant_npos>,
 																				   std::is_constructible<nth_element_t<_detail::_alternative_index_v<T, Types...>, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_type_t<T>, std::initializer_list<U> il, Args&&... args)
-				: _impl(in_place<_detail::_alternative_index_v<T, Types...>>, il, std::forward<Args>(args)...)
+				: conditional_default_constructor_base(constructor_tag())
+				, _impl(in_place<_detail::_alternative_index_v<T, Types...>>, il, std::forward<Args>(args)...)
 			{
 			}
 
@@ -873,7 +857,8 @@ namespace noname
 			template <std::size_t I, class... Args, NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>,
 																			    std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_index_t<I>, Args&&... args)
-				: _impl(in_place<I>, std::forward<Args>(args)...)
+				: conditional_default_constructor_base(constructor_tag())
+				, _impl(in_place<I>, std::forward<Args>(args)...)
 			{
 			}
 
@@ -881,7 +866,8 @@ namespace noname
 			template <std::size_t I, class U, class... Args, NONAME_REQUIRES(conjunction<bool_constant<I < sizeof...(Types)>,
 																						 std::is_constructible<nth_element_t<I, Types...>, Args...>>)>
 			constexpr explicit variant(in_place_index_t<I>, std::initializer_list<U> il, Args&&... args)
-				: _impl(in_place<I>, il, std::forward<Args>(args)...)
+				: conditional_default_constructor_base(constructor_tag())
+				, _impl(in_place<I>, il, std::forward<Args>(args)...)
 			{
 			}
 
@@ -941,7 +927,7 @@ namespace noname
 			variant& operator=(variant&& rhs) = default;
 
 			//! Converting assignment.
-			template <class T, NONAME_REQUIRES(conjunction<negation<std::is_same<typename std::decay<T>::type, variant>>, 
+			template <class T, NONAME_REQUIRES(conjunction<negation<std::is_same<std::decay_t<T>, variant>>, 
 														   std::is_assignable<best_match<T&&, Types...>&, T>,
 														   std::is_constructible<best_match<T&&, Types...>, T>>)>
 			variant& operator=(T&& t) noexcept(std::is_nothrow_assignable<best_match<T&&, Types...>&, T>::value && std::is_nothrow_constructible<best_match<T&&, Types...>, T>::value)
