@@ -784,7 +784,7 @@ namespace noname
 			template <class... Types>
 			struct _variant_impl_composer : _variant_default_constructor_layer<std::is_default_constructible<nth_element_t<0, Types...>>::value, Types...>
 			{
-				using base = _variant_default_constructor_layer<std::is_default_constructible<nth_element<0, Types...>>::value, Types...>;
+				using base = _variant_default_constructor_layer<std::is_default_constructible<nth_element_t<0, Types...>>::value, Types...>;
 
 				_variant_impl_composer() = default;
 
