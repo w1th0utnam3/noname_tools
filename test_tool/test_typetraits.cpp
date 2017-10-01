@@ -33,6 +33,13 @@ using namespace noname;
 
 TEST_CASE("Testing typetraits")
 {
+	SECTION("Testing dependent_false")
+	{
+		REQUIRE((tools::dependent_false<int>::value == false));
+		REQUIRE((tools::dependent_false<double>::value == false));
+		REQUIRE((tools::dependent_false<void>::value == false));
+	}
+
 	SECTION("Testing void_t")
 	{
 		REQUIRE((std::is_same<tools::void_t<bool, int, double>, void>::value == true));

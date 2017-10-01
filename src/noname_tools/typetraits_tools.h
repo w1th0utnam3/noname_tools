@@ -30,6 +30,10 @@ namespace noname
 {
 	namespace tools
 	{
+		//! A type which is always false_type and can be used in static_assert to always trigger an assertion.
+		template<class T>
+		struct dependent_false : std::false_type {};
+
 		namespace _detail
 		{
 			//! Helper used for void_t and required by MSVC
@@ -39,7 +43,7 @@ namespace noname
 
 		using namespace _detail;
 
-		//! Utility metafunction that maps a sequence of any types to the type void
+		//! Utility metafunction that maps a sequence of any types to the type void.
 		template <typename... T>
 		using void_t = typename _detail::_make_void<T...>::type;
 
