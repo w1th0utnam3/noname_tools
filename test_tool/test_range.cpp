@@ -78,4 +78,54 @@ TEST_CASE("Testing iterator_range")
 		REQUIRE(range.begin() == i);
 		REQUIRE(range.end() == 47.11f);
 	}
+
+	SECTION("Call to make_range with range size")
+	{
+		static const int int_array[] = { 0, 1, 2, 3 };
+		static const auto arr_length = sizeof(int_array) / sizeof(int);
+
+		const auto range = tools::make_range(&int_array[0], arr_length);
+
+		REQUIRE(*range.begin() == 0);
+		REQUIRE(*std::prev(range.end()) == 3);
+
+		int sum = 0;
+		for (int i : range) sum += i;
+
+		REQUIRE(sum == 6);
+	}
+
+	SECTION("Call to make_range with array")
+	{
+		static const int int_array[] = { 0, 1, 2, 3, 4 };
+
+		const auto range = tools::make_range(int_array);
+
+		REQUIRE(*range.begin() == 0);
+		REQUIRE(*std::prev(range.end()) == 4);
+
+		int sum = 0;
+		for (int i : range) sum += i;
+
+		REQUIRE(sum == 10);
+	}
+
+	SECTION("Call to make_range with array of arrays")
+	{
+		static const int int_array[][2] = { { 1, 2 }, { 3, 4 }, { 5, 6 } };
+
+		const auto range = tools::make_range(int_array);
+
+		REQUIRE((*range.begin())[0] == 1);
+		REQUIRE((*std::prev(range.end()))[0] == 5);
+
+		int sum = 0;
+		for (const auto& arr : range) {
+			for (int i = 0; i < 2; i++) {
+				sum += arr[i];
+			}
+		}
+
+		REQUIRE(sum == 21);
+	}
 }

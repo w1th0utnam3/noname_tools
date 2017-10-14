@@ -109,5 +109,26 @@ namespace noname
 		{
 			return iterator_range<typename std::decay<begin_t>::type, typename std::decay<end_t>::type>(std::forward<begin_t>(begin), std::forward<end_t>(end));
 		}
+
+		//! Creates an iterator_range object from an iterator and a range length, deducing the target type from the types of arguments
+		template <typename it_t>
+		constexpr iterator_range<typename std::decay<it_t>::type> make_range(it_t&& begin, std::size_t range_size)
+		{
+			typename std::decay<it_t>::type end = begin;
+			std::advance(end, range_size);
+
+			return iterator_range<typename std::decay<it_t>::type>(begin, end);
+		}
+
+		//! Creates an iterator_range object from a statically allocated array
+		template <typename T, std::size_t array_size>
+		constexpr iterator_range<typename std::add_pointer<T>::type> make_range(T(&arr)[array_size])
+		{
+			typename std::add_pointer<T>::type begin = &arr[0];
+			typename std::add_pointer<T>::type end = begin;
+			std::advance(end, array_size);
+
+			return iterator_range<typename std::add_pointer<T>::type>(begin, end);
+		}
 	}
 }
