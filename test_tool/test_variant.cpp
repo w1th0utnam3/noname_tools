@@ -152,7 +152,7 @@ TEST_CASE("Testing variant")
 	SECTION("Testing constexpr constructor and get_if")
 	{
 		constexpr const constexpr_var_t* p = nullptr;
-		static_assert(tools::get_if<2>(p) == nullptr, "get_if has to return nullptr for nullptr parameter.");
+		REQUIRE(tools::get_if<2>(p) == nullptr); // get_if has to return nullptr for nullptr parameter (not constexpr).
 
 		constexpr const constexpr_var_t v0(tools::in_place<0>, 3.14);
 		constexpr const constexpr_var_t v1(tools::in_place<1>, 27);
