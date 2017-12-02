@@ -210,7 +210,7 @@ namespace noname
 			private:
 				explicit in_place_tag(_detail::__in_place_tag) {}
 				
-				friend inline in_place_tag in_place(_detail::__in_place_tag __t);
+				friend inline in_place_tag in_place(_detail::__in_place_tag);
 
 				template <class _Tp>
 				friend inline in_place_tag in_place(_detail::__in_place_type_tag<_Tp>);
@@ -220,7 +220,7 @@ namespace noname
 				
 		};
 		
-		inline in_place_tag in_place(_detail::__in_place_tag __t)
+		inline in_place_tag in_place(_detail::__in_place_tag)
 		{
 			NONAME_ASSERT(false, "The in_place function cannot be invoked");
 		}
