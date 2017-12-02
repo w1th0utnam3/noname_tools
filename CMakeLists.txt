@@ -7,8 +7,9 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 include_directories ("${CMAKE_CURRENT_LIST_DIR}/src")
-include_directories ("${CMAKE_CURRENT_LIST_DIR}/submodules/Catch/include")
+include_directories ("${CMAKE_CURRENT_LIST_DIR}/submodules/Catch/single_include")
 
+file(GLOB NONAME_SOURCES "${CMAKE_CURRENT_LIST_DIR}/test_tool/main.cpp")
 file(GLOB NONAME_SOURCES "${CMAKE_CURRENT_LIST_DIR}/test_tool/*.cpp")
 file(GLOB NONAME_HEADERS "${CMAKE_CURRENT_LIST_DIR}/src/noname_tools/*.h")
 
