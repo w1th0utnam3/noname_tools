@@ -7,5 +7,6 @@
 #include "string_tools.h"
 #include "taggedvalue_tools.h"
 #include "tuple_tools.h"
+#include "typelist_tools.h"
 #include "variant_tools.h"
 #include "vector_tools.h"
