@@ -35,8 +35,8 @@ namespace noname
 		class iterator_range
 		{
 		public:
-			typedef begin_t begin_type;
-			typedef end_t end_type;
+			using begin_type = begin_t;
+			using end_type = end_t;
 
 			//! Construct a range with the specified begin and end iterators
 			constexpr iterator_range(begin_type first, end_type last)
@@ -69,9 +69,8 @@ namespace noname
 		class iterator_range<iterator_t, void>
 		{
 		public:
-			//! Iterator type of the range
-			typedef iterator_t begin_type;
-			typedef iterator_t end_type;
+			using begin_type = iterator_t;
+			using end_type = iterator_t;
 
 			//! Construct a range with the specified begin and end iterators
 			constexpr iterator_range(begin_type first, end_type last)
