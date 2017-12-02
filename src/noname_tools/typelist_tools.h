@@ -52,14 +52,14 @@ namespace noname
 			struct _plain_typelist 
 			{};
 
-			//! Base type for the typelist, has every type_alias<T> with T from Ts as base
+			//! Base type for the typelist, has every type_alias<T> with T from Ts as a base
 			template <typename... Ts>
 			struct NONAME_EBO _base_typelist : type_alias<Ts>... 
 			{};
 
 			//------
 
-			//! Converts a _plain_typelist to a _base_typlist
+			//! Provides a type alias with a _base_typlist corresponding to the supplied _plain_typelist
 			template <typename T>
 			struct plain_to_base_typelist;
 
@@ -74,14 +74,14 @@ namespace noname
 			// Code to remove duplicates inspired from:
 			// https://stackoverflow.com/questions/13827319/eliminate-duplicate-entries-from-c11-variadic-template-arguments
 
-			//! Helper type to check whether T is part of the typelist
+			//! Helper type to check whether T is part of the typelist, has a type alias for std::(true/false)_type
 			template <typename T, typename Typelist>
 			struct is_in;
 
 			template <typename T, typename Typelist>
 			struct is_in 
 			{
-				// Assume TElement is not in the list unless proven otherwise
+				// Assume T is not in the list unless proven otherwise
 				using type = std::false_type;
 			};
 
@@ -92,33 +92,34 @@ namespace noname
 				using type = std::true_type;
 			};
 
-			// If it is not the first element, check the remaining list
 			template <typename T, typename Ts_Head, typename... Ts_Tail>
 			struct is_in<T, _plain_typelist<Ts_Head, Ts_Tail...>>
 			{
+				// If it is not the first element, check the remaining list
 				using type = typename is_in<T, _plain_typelist<Ts_Tail...>>::type;
 			};
 
 			//------
 
-			// Append a type to a type_list unless it already exists
+			//! Append a type to a _plain_typelist unless it is already part of it
 			template <typename T, typename Typelist, typename T_is_duplicate = typename is_in<T, Typelist>::type>
 			struct add_unique;
 
-			// If T is in the list, return the list unmodified
 			template <typename T, typename... Ts>
 			struct add_unique<T, _plain_typelist<Ts...>, std::true_type>
 			{
+				// If T is in the list, return the list unmodified
 				using type = _plain_typelist<Ts...>;
 			};
 
-			// If T is not in the list, append it
 			template <typename T, typename... Ts>
 			struct add_unique<T, _plain_typelist<Ts...>, std::false_type>
 			{
+				// If T is not in the list, append it
 				using type = _plain_typelist<T, Ts...>;
 			};
 
+			//! Provides a type alias for a _plain_typelists which contains only unique T from Ts
 			template <typename... Ts>
 			struct create_unique_typelist;
 
@@ -136,7 +137,7 @@ namespace noname
 
 			//------
 
-			//! Creates a _base_typelist with only unique T from Ts
+			//! Provides a type alias for a _base_typelist which contains only unique T from Ts
 			template <typename... Ts>
 			struct unique_base_typelist
 			{
