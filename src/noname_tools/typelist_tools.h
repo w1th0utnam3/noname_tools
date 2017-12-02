@@ -33,7 +33,7 @@
 #define NONAME_EBO
 #endif
 
-// TODO: Allow non-unique typelists (we have to be careful with inheritance)
+// TODO: Add some operations for type lists: is_in, unique, join, zip?
 
 namespace noname
 {
@@ -45,8 +45,108 @@ namespace noname
 			using type = T;
 		};
 
+		namespace _detail
+		{
+			//! Dumb typelist without any special functionality
+			template <typename... Ts>
+			struct _plain_typelist 
+			{};
+
+			//! Base type for the typelist, has every type_alias<T> with T from Ts as base
+			template <typename... Ts>
+			struct NONAME_EBO _base_typelist : type_alias<Ts>... 
+			{};
+
+			//------
+
+			//! Converts a _plain_typelist to a _base_typlist
+			template <typename T>
+			struct plain_to_base_typelist;
+
+			template <typename... Ts>
+			struct plain_to_base_typelist<_plain_typelist<Ts...>>
+			{
+				using type = _base_typelist<Ts...>;
+			};
+
+			//------
+
+			// Code to remove duplicates inspired from:
+			// https://stackoverflow.com/questions/13827319/eliminate-duplicate-entries-from-c11-variadic-template-arguments
+
+			//! Helper type to check whether T is part of the typelist
+			template <typename T, typename Typelist>
+			struct is_in;
+
+			template <typename T, typename Typelist>
+			struct is_in 
+			{
+				// Assume TElement is not in the list unless proven otherwise
+				using type = std::false_type;
+			};
+
+			template <typename T, typename... Ts>
+			struct is_in<T, _plain_typelist<T, Ts...>>
+			{
+				// If it matches the first type, it is definitely in the list
+				using type = std::true_type;
+			};
+
+			// If it is not the first element, check the remaining list
+			template <typename T, typename Ts_Head, typename... Ts_Tail>
+			struct is_in<T, _plain_typelist<Ts_Head, Ts_Tail...>>
+			{
+				using type = typename is_in<T, _plain_typelist<Ts_Tail...>>::type;
+			};
+
+			//------
+
+			// Append a type to a type_list unless it already exists
+			template <typename T, typename Typelist, typename T_is_duplicate = typename is_in<T, Typelist>::type>
+			struct add_unique;
+
+			// If T is in the list, return the list unmodified
+			template <typename T, typename... Ts>
+			struct add_unique<T, _plain_typelist<Ts...>, std::true_type>
+			{
+				using type = _plain_typelist<Ts...>;
+			};
+
+			// If T is not in the list, append it
+			template <typename T, typename... Ts>
+			struct add_unique<T, _plain_typelist<Ts...>, std::false_type>
+			{
+				using type = _plain_typelist<T, Ts...>;
+			};
+
+			template <typename... Ts>
+			struct create_unique_typelist;
+
+			template <>
+			struct create_unique_typelist<>
+			{
+				using type = _plain_typelist<>;
+			};
+
+			template <typename T, typename... Ts>
+			struct create_unique_typelist<T, Ts...>
+			{
+				using type = typename add_unique<T, typename create_unique_typelist<Ts...>::type>::type;
+			};
+
+			//------
+
+			//! Creates a _base_typelist with only unique T from Ts
+			template <typename... Ts>
+			struct unique_base_typelist
+			{
+				using type = typename plain_to_base_typelist<typename create_unique_typelist<Ts...>::type>::type;
+			};
+		}
+
+		//! A basic typelist construct
 		template <typename... Ts>
-		struct NONAME_EBO typelist : public type_alias<Ts>... {};
+		struct NONAME_EBO typelist : _detail::unique_base_typelist<Ts...>::type {};
 
 		template <typename T>
 		struct typelist_size;
@@ -75,7 +175,7 @@ namespace noname
 
 		namespace _detail
 		{
-			template <typename Typelist, typename F, std::size_t ...Indices>
+			template <typename Typelist, typename F, std::size_t... Indices>
 			F typelist_for_each(Typelist&& tl, F f, std::index_sequence<Indices...>)
 			{
 				using swallow = int[];
