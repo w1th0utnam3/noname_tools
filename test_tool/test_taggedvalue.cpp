@@ -161,3 +161,113 @@ TEST_CASE("Testing tagged_value")
 		REQUIRE(tv2 == "Test123");
 	}
 }
+
+template <typename Tag>
+using ti = tools::tagged_value<Tag, int>;
+
+template <typename Tag>
+using ts = tools::tagged_value<Tag, std::string>;
+
+TEST_CASE("Testing tagged_array")
+{
+	struct tag_1 {};
+	struct tag_2 {};
+	struct tag_3 {};
+
+	using tai_type = tools::tagged_array<int, tag_1, tag_2, tag_3>;
+	using tas_type = tools::tagged_array<std::string, tag_1, tag_2, tag_3>;
+
+	const std::string long_string = "Hello World! Hello World! Hello World! Hello World!";
+
+	SECTION("Making static tests")
+	{
+		constexpr tai_type arr;
+
+		static_assert(arr.size() == 3, "Size has to match number of tags");
+	}
+
+	SECTION("Testing value based constructor")
+	{
+		{
+			tai_type arr(27, 42, 3);
+
+			REQUIRE(tools::get<tag_1>(arr) == 27);
+			REQUIRE(tools::get<tag_2>(arr) == 42);
+			REQUIRE(tools::get<tag_3>(arr) == 3);
+		}
+
+		{
+			tas_type arr("Hallo", "Test", "123");
+			REQUIRE(tools::get<tag_1>(arr) == "Hallo");
+			REQUIRE(tools::get<tag_2>(arr) == "Test");
+			REQUIRE(tools::get<tag_3>(arr) == "123");
+		}
+	}
+
+	SECTION("Testing tagged_value based constructor")
+	{
+		static_assert(std::is_same<ti<tag_1>, tools::tagged_value<tag_1, int>>::value, "Test");
+
+		tai_type arr(
+			ti<tag_1>(27), 
+			ti<tag_2>(42), 
+			ti<tag_3>(3)
+		);
+
+		REQUIRE(tools::get<tag_1>(arr) == 27);
+		REQUIRE(tools::get<tag_2>(arr) == 42);
+		REQUIRE(tools::get<tag_3>(arr) == 3);
+	}
+
+	SECTION("Testing initializer based constructor")
+	{
+		tai_type arr(
+			{ tag_1(), 27 },
+			{ tag_2(), 42 },
+			{ tag_3(), 3 }
+		);
+
+		REQUIRE(tools::get<tag_1>(arr) == 27);
+		REQUIRE(tools::get<tag_2>(arr) == 42);
+		REQUIRE(tools::get<tag_3>(arr) == 3);
+
+		const tai_type c_arr = arr;
+
+		REQUIRE(tools::get<tag_1>(c_arr) == 27);
+		REQUIRE(tools::get<tag_2>(c_arr) == 42);
+		REQUIRE(tools::get<tag_3>(c_arr) == 3);
+	}
+
+	SECTION("Testing r-value get")
+	{
+		REQUIRE(tools::get<tag_2>(
+			tai_type(
+				{ tag_1(), 27 },
+				{ tag_2(), 42 },
+				{ tag_3(), 3 })
+			) == 42);
+
+		auto s = tools::get<tag_1>(tools::tagged_array<std::string, tag_1>({ tag_1(), long_string }));
+		static_assert(std::is_same<decltype(s), std::string>::value, "get has to return the correct type");
+		REQUIRE(s == long_string);
+	}
+
+	SECTION("Testing index based get")
+	{
+		tai_type arr(
+			{ tag_1(), 27 },
+			{ tag_2(), 42 },
+			{ tag_3(), 3 }
+		);
+
+		REQUIRE(tools::get<0>(arr) == 27);
+		REQUIRE(tools::get<1>(arr) == 42);
+		REQUIRE(tools::get<2>(arr) == 3);
+
+		const tai_type c_arr = arr;
+
+		REQUIRE(tools::get<0>(c_arr) == 27);
+		REQUIRE(tools::get<1>(c_arr) == 42);
+		REQUIRE(tools::get<2>(c_arr) == 3);
+	}
+}
