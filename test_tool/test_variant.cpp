@@ -89,6 +89,41 @@ TEST_CASE("Testing variant")
 		static_assert((std::is_nothrow_move_constructible<constexpr_var_t>::value == true), "variant should be nothrow move constructible");
 	}
 
+	SECTION("Testing constexpr with non-trivial functions")
+	{
+		struct NonTrivialCopyConstructor_t
+		{
+			bool wasCopyConstructed = false;
+
+			NonTrivialCopyConstructor_t() = default;
+			NonTrivialCopyConstructor_t(const NonTrivialCopyConstructor_t&) : wasCopyConstructed(true) {}
+		};
+
+		typedef tools::variant<double, int, char, double, NonTrivialCopyConstructor_t> special_constexpr_var_t;
+
+		static_assert((std::is_default_constructible<special_constexpr_var_t>::value == true), "variant should be default constructible");
+		//static_assert((std::is_copy_constructible<special_constexpr_var_t>::value == true), "variant should be copy constructible");
+		//static_assert((std::is_move_constructible<special_constexpr_var_t>::value == true), "variant should be move constructible");
+		//static_assert((std::is_copy_assignable<special_constexpr_var_t>::value == true), "variant should be copy assignable");
+		//static_assert((std::is_move_assignable<special_constexpr_var_t>::value == true), "variant should be move assignable");
+		static_assert((std::is_destructible<special_constexpr_var_t>::value == true), "variant should be destructible");
+
+		static_assert((std::is_trivially_default_constructible<special_constexpr_var_t>::value == false), "variant should not be trivially default constructible (because of value initialization and index=0)");
+		//static_assert((std::is_trivially_copy_constructible<special_constexpr_var_t>::value == false), "variant should be trivially copy constructible");
+		//static_assert((std::is_trivially_move_constructible<special_constexpr_var_t>::value == false), "variant should be trivially move constructible");
+		//static_assert((std::is_trivially_copy_assignable<special_constexpr_var_t>::value == false), "variant should be trivially copy assignable");
+		//static_assert((std::is_trivially_move_assignable<special_constexpr_var_t>::value == false), "variant should be trivially move assignable");
+		static_assert((std::is_trivially_destructible<special_constexpr_var_t>::value == true), "variant should be trivially destructible");
+
+		//static_assert((std::is_assignable<var_t, double>::value == false), "variant should not be assignable from this type (ambigious)");
+		//static_assert((std::is_assignable<var_t, int>::value == true), "variant should be assignable from this type");
+		//static_assert((std::is_assignable<var_t, char>::value == true), "variant should be assignable from this type");
+
+		static_assert((std::is_nothrow_default_constructible<special_constexpr_var_t>::value == true), "variant should be nothrow default constructible");
+		//static_assert((std::is_nothrow_copy_constructible<special_constexpr_var_t>::value == true), "variant should be nothrow copy constructible");
+		//static_assert((std::is_nothrow_move_constructible<special_constexpr_var_t>::value == true), "variant should be nothrow move constructible");
+	}
+
 	SECTION("Testing type_traits, non trivial types")
 	{
 		static_assert((std::is_default_constructible<var_t>::value == true), "variant should be default constructible");

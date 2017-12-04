@@ -5,12 +5,11 @@ the [Catch](https://github.com/philsquared/Catch) header-only unit-test framewor
 
 ## Todos
 
+- Update this file with all implemented features
 - Check compilation with VS2015
-- Finish variant implementation
 - Try to compile with C++11 and clang
 - Add missing unit-tests
 - Additional features:
-  - implement C++17 library features such as std::string_view, std::any
   - make as many features as possible available with C++11 only
   - string split iterator
   - replace explicit container usages with iterators
@@ -21,12 +20,11 @@ At the moment `noname_tools` contains the following headers:
 
 - [`algorithm_tools.h`](#algorithm_toolsh) - Additional algorithms not present in `<algorithm>`
 - [`file_tools.h`](#file_toolsh) - Helper methods to read files to strings
-- [`optional_tools.h`](#optional_toolsh) - C++17 `std::optional` for C++14, depends on `type_traits.h` and `utility_tools.h`
 - [`range_tools.h`](#range_toolsh) - Basic `iterator_range` type
 - [`string_tools.h`](#string_toolsh) - String truncate, split...
 - [`tuple_tools.h`](#tuple_toolsh) - Operations on `std::tuple`
 - [`type_traits.h`](#type_traitsh) - C++17 and Library fundamentals v2 helpers for C++14 (`void_t`, `is_detected`,...)
-- [`utility_tools.h`](#utility_toolsh) - helper types for `optional` (possibly also for `any` and `variant` later)
+- [`utility_tools.h`](#utility_toolsh) - helper types
 - [`vector_tools.h`](#vector_toolsh) - Operations on `std::vector`
 
 Below is a list of all types and functions from these headers. All declarations are in the `noname::tools` namespace.
@@ -59,33 +57,6 @@ inline std::vector<std::string> read_all_lines(const std::string& file_path);
 
 //! Reads the specified number of lines from a file or reads the whole file if number of lines is zero
 inline std::vector<std::string> read_lines(const std::string& file_path, size_t number_of_lines = 0);
-```
-
-### optional_tools.h
-
-Custom implementation of [std::optional](http://en.cppreference.com/w/cpp/utility/optional) from the C++17 draft for use in C++14. The interface is identical to the reference except for the fact that the comparison operators and std::hash specialization are not yet implemented. All constructors, assignments and access operations are implemented. Unit tested to conform to the reference documentation.
-```c++
-//! The class template optional manages an optional contained value, i.e. a value that may or may not be present.
-class optional<T>;
-
-//! Creates an optional object from value.
-template<class T>
-constexpr optional<std::decay_t<T>> make_optional(T&& value)
-//! Creates an optional object constructed in-place from args....
-template<class T, class... Args>
-constexpr optional<T> make_optional(Args&&... args)
-//! Creates an optional object constructed in-place from il and args....
-template<class T, class U, class... Args>
-constexpr optional<T> make_optional(std::initializer_list<U> il, Args&&... args)
-
-//! Defines a type of object to be thrown by optional::value when accessing an optional object that does not contain a value.
-class bad_optional_access : public std::logic_error;
-
-//! nullopt_t is an empty class type used to indicate optional type with uninitialized state.
-struct nullopt_t;
-
-//! Disambiguation tag to construct an optional in-place. Actually calling any of the in_place functions results in undefined behavior.
-in_place_tag in_place();
 ```
 
 ### range_tools.h
