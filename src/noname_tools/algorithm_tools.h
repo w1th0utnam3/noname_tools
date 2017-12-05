@@ -25,6 +25,8 @@
 #include <iterator>
 #include <algorithm>
 
+#include "utility_tools.h"
+
 namespace noname
 {
 	namespace tools
@@ -173,20 +175,6 @@ namespace noname
 
 		namespace _detail
 		{
-			//! Container to allow copy assignment of callable objects
-			template <typename Func>
-			struct _callable_container
-			{
-				Func callable;
-
-				// Inspired by: https://stackoverflow.com/questions/12545072/what-does-it-mean-for-an-allocator-to-be-stateless
-				_callable_container& operator=(const _callable_container& other) {
-					this->callable.~Func();
-					new (&this->callable) Func{ other.callable };
-					return *this;
-				}
-			};
-
 			//! Output iterator adapter which forwards to a callable
 			template <typename Func>
 			struct _output_iterator_adapter
@@ -198,7 +186,7 @@ namespace noname
 				using iterator_category = std::output_iterator_tag;
 
 				//! The callable used for the output iterator
-				_callable_container<Func> f;
+				callable_container<Func> f;
 
 				//! Assignment operator to emulate output iterators, forwards its argument to the stored callable
 				template <typename T,

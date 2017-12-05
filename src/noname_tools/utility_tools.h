@@ -35,6 +35,20 @@ namespace noname
 		// TODO: Rename nth_element because of std::nth_element algorithm
 		// TODO: Implement lambda overload
 
+		//! Container to allow copy assignment of callable objects
+		template <typename Func>
+		struct callable_container
+		{
+			Func callable;
+
+			// Inspired by: https://stackoverflow.com/questions/12545072/what-does-it-mean-for-an-allocator-to-be-stateless
+			callable_container& operator=(const callable_container& other) {
+				this->callable.~Func();
+				new (&this->callable) Func{ other.callable };
+				return *this;
+			}
+		};
+
 		//! Type used by nth_element to indicate that the type index is out of range of the parameter pack
 		struct out_of_range_t {};
 
