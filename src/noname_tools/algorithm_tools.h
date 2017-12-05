@@ -170,5 +170,73 @@ namespace noname
 
 			return dest;
 		}
+
+		namespace _detail
+		{
+			//! Container to allow copy assignment of callable objects
+			template <typename Func>
+			struct _callable_container
+			{
+				Func callable;
+
+				// Inspired by: https://stackoverflow.com/questions/12545072/what-does-it-mean-for-an-allocator-to-be-stateless
+				_callable_container& operator=(const _callable_container& other) {
+					this->callable.~Func();
+					new (&this->callable) Func{ other.callable };
+					return *this;
+				}
+			};
+
+			//! Output iterator adapter which forwards to a callable
+			template <typename Func>
+			struct _output_iterator_adapter
+			{
+				using value_type = void;
+				using difference_type = void;
+				using pointer = void;
+				using reference = void;
+				using iterator_category = std::output_iterator_tag;
+
+				//! The callable used for the output iterator
+				_callable_container<Func> f;
+
+				//! Assignment operator to emulate output iterators, forwards its argument to the stored callable
+				template <typename T,
+					/* Use SFINAE to avoid confusion with copy-assignment operator */
+					typename = typename std::enable_if<!std::is_same<typename std::decay<T>::type, _output_iterator_adapter>::value>::type>
+					_output_iterator_adapter& operator=(const T& value)
+				{
+					f.callable(value);
+					return *this;
+				}
+
+				//! Assignment operator to emulate output iterators, forwards its argument to the stored callable
+				template <typename T,
+					/* Use SFINAE to avoid confusion with copy-assignment operator */
+					typename = typename std::enable_if<!std::is_same<typename std::decay<T>::type, _output_iterator_adapter>::value>::type>
+					_output_iterator_adapter& operator=(T&& value)
+				{
+					f.callable(std::forward<T>(value));
+					return *this;
+				}
+
+				//! No-op, function is provided to satisfy the requirements of OutputIterator
+				_output_iterator_adapter& operator*() { return *this; }
+				//! No-op, function is provided to satisfy the requirements of OutputIterator
+				_output_iterator_adapter& operator++() { return *this; }
+				//! No-op, function is provided to satisfy the requirements of OutputIterator
+				_output_iterator_adapter& operator++(int) { return *this; }
+			};
+		}
+
+		//! Returns an OutputIterator like type which forwards output assignments to the supplied callable.
+		/*
+		* Construction, copy construction, destruction etc. of the callable may not have any side effects.
+		*/
+		template <typename Func>
+		auto make_output_iterator_adapter(Func f)
+		{
+			return _detail::_output_iterator_adapter<typename std::decay<Func>::type>{std::forward<Func>(f)};
+		}
 	}
 }

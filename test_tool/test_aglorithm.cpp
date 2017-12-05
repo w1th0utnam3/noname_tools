@@ -25,9 +25,11 @@
 #include "catch.hpp"
 
 #include <vector>
+#include <array>
 #include <numeric>
 #include <functional>
 #include <type_traits>
+#include <algorithm>
 
 using namespace noname;
 
@@ -283,5 +285,23 @@ TEST_CASE("Testing find_unequal_successor")
 			REQUIRE((std::is_same<decltype(it), const decltype(source)::const_iterator>::value) == true);
 			REQUIRE(it == source.end());
 		}
+	}
+}
+
+TEST_CASE("Testing make_output_iterator_adapter")
+{
+	SECTION("Testing in-place constructed, generic lambda")
+	{
+		const std::array<int, 7> a1{ 0, 10, 20, 30, 40, 50, 60 };
+		const std::array<int, 6> a2{ 5, 10, 22, 30, 33, 60 };
+		std::vector<int> out1;
+		std::vector<int> out2;
+
+		std::set_difference(a1.begin(), a1.end(), a2.begin(), a2.begin(), std::back_inserter(out1));
+		std::set_difference(a1.begin(), a1.end(), a2.begin(), a2.begin(), tools::make_output_iterator_adapter(
+			[&](auto i) { out2.push_back(i); }
+		));
+
+		REQUIRE(std::equal(out1.begin(), out1.end(), out2.begin(), out2.end()) == true);
 	}
 }
