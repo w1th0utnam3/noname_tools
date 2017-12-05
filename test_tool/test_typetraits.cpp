@@ -20,7 +20,8 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //	SOFTWARE.
 
-#include <noname_tools/tools>
+#include <noname_tools/typetraits_tools.h>
+#include <noname_tools/utility_tools.h>
 
 #include "catch.hpp"
 

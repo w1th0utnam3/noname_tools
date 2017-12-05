@@ -224,7 +224,7 @@ namespace noname
 		}
 
 		template <typename TagT, typename ValueT, typename... TagTs>
-		inline inline constexpr ValueT& get(tagged_array<ValueT, TagTs...>& t) noexcept
+		inline constexpr ValueT& get(tagged_array<ValueT, TagTs...>& t) noexcept
 		{
 			return std::get<tagged_value<TagT, ValueT>>(t.values);
 		}

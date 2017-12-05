@@ -23,6 +23,7 @@
 //	SOFTWARE.
 
 #include <iterator>
+#include <algorithm>
 
 namespace noname
 {

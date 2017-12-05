@@ -29,6 +29,9 @@
 #include <memory>
 #include <array>
 
+#include "typetraits_tools.h"
+#include "utility_tools.h"
+
 #if defined(_MSC_VER) && _MSC_VER < 1910
 #define NONAME_CONSTEXPR
 #else
