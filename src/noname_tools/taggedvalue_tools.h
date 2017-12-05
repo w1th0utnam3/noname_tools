@@ -28,7 +28,7 @@
 #include "typetraits_tools.h"
 #include "utility_tools.h"
 
-// TODO: Member get() for tagged_array
+// TODO: Runtime index based access for tagged_array
 
 namespace noname
 {
@@ -187,56 +187,56 @@ namespace noname
 			std::tuple<tagged_value<TagTs, ValueT>...> values;
 
 			template <std::size_t I, typename _ValueT, typename... _TagTs>
-			friend constexpr _ValueT& get(tagged_array<_ValueT, _TagTs...>& t) noexcept;
+			friend inline constexpr _ValueT& get(tagged_array<_ValueT, _TagTs...>& t) noexcept;
 
 			template <std::size_t I, typename _ValueT, typename... _TagTs>
-			friend constexpr _ValueT&& get(tagged_array<_ValueT, _TagTs...>&& t) noexcept;
+			friend inline constexpr _ValueT&& get(tagged_array<_ValueT, _TagTs...>&& t) noexcept;
 
 			template <std::size_t I, typename _ValueT, typename... _TagTs>
-			friend constexpr const _ValueT& get(const tagged_array<_ValueT, _TagTs...>& t) noexcept;
+			friend inline constexpr const _ValueT& get(const tagged_array<_ValueT, _TagTs...>& t) noexcept;
 
 			template <typename TagT, typename _ValueT, typename... _TagTs>
-			friend constexpr _ValueT& get(tagged_array<_ValueT, _TagTs...>& t) noexcept;
+			friend inline constexpr _ValueT& get(tagged_array<_ValueT, _TagTs...>& t) noexcept;
 
 			template <typename TagT, typename _ValueT, typename... _TagTs>
-			friend constexpr _ValueT&& get(tagged_array<_ValueT, _TagTs...>&& t) noexcept;
+			friend inline constexpr _ValueT&& get(tagged_array<_ValueT, _TagTs...>&& t) noexcept;
 
 			template <typename TagT, typename _ValueT, typename... _TagTs>
-			friend constexpr const _ValueT& get(const tagged_array<_ValueT, _TagTs...>& t) noexcept;
+			friend inline constexpr const _ValueT& get(const tagged_array<_ValueT, _TagTs...>& t) noexcept;
 		};
 
 		template <std::size_t I, typename ValueT, typename... TagTs>
-		constexpr ValueT& get(tagged_array<ValueT, TagTs...>& t) noexcept
+		inline constexpr ValueT& get(tagged_array<ValueT, TagTs...>& t) noexcept
 		{
 			return std::get<I>(t.values);
 		}
 
 		template <std::size_t I, typename ValueT, typename... TagTs>
-		constexpr ValueT&& get(tagged_array<ValueT, TagTs...>&& t) noexcept
+		inline constexpr ValueT&& get(tagged_array<ValueT, TagTs...>&& t) noexcept
 		{
 			return std::move(std::get<I>(std::move(t.values)).value);
 		}
 		
 		template <std::size_t I, typename ValueT, typename... TagTs>
-		constexpr const ValueT& get(const tagged_array<ValueT, TagTs...>& t) noexcept
+		inline constexpr const ValueT& get(const tagged_array<ValueT, TagTs...>& t) noexcept
 		{
 			return std::get<I>(t.values);
 		}
 
 		template <typename TagT, typename ValueT, typename... TagTs>
-		constexpr ValueT& get(tagged_array<ValueT, TagTs...>& t) noexcept
+		inline inline constexpr ValueT& get(tagged_array<ValueT, TagTs...>& t) noexcept
 		{
 			return std::get<tagged_value<TagT, ValueT>>(t.values);
 		}
 
 		template <typename TagT, typename ValueT, typename... TagTs>
-		constexpr ValueT&& get(tagged_array<ValueT, TagTs...>&& t) noexcept
+		inline constexpr ValueT&& get(tagged_array<ValueT, TagTs...>&& t) noexcept
 		{
 			return std::move(std::get<tagged_value<TagT, ValueT>>(std::move(t.values)).value);
 		}
 
 		template <typename TagT, typename ValueT, typename... TagTs>
-		constexpr const ValueT& get(const tagged_array<ValueT, TagTs...>& t) noexcept
+		inline constexpr const ValueT& get(const tagged_array<ValueT, TagTs...>& t) noexcept
 		{
 			return std::get<tagged_value<TagT, ValueT>>(t.values);
 		}
