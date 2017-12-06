@@ -25,26 +25,39 @@
 #include <utility>
 #include <type_traits>
 #include <iterator>
+#include <memory>
+
+#include "utility_tools.h"
+
+// TODO: Tests for index_iterator
 
 namespace noname
 {
 	namespace tools
 	{
 		//! Range object with begin() and end() methods to use range-based for loops with any pair of iterators, sentinel version
-		template <typename begin_t, typename end_t = void>
+		template <typename BeginT, typename EndT = void>
 		class iterator_range
 		{
 		public:
-			using begin_type = begin_t;
-			using end_type = end_t;
+			using begin_type = typename std::decay<BeginT>::type;
+			using end_type = typename std::decay<EndT>::type;
+
+			static_assert(std::is_convertible<decltype(std::declval<begin_type>() != std::declval<end_type>()), bool>::value,
+				"Error: Expression [first != last] must return a type convertible to bool in order to use the range object for range based for loops!");
 
 			//! Construct a range with the specified begin and end iterators
 			constexpr iterator_range(begin_type first, end_type last)
-				: first(std::move(first))
-				  , last(std::move(last))
+				: first(first)
+				, last(last)
 			{
-				static_assert(std::is_convertible<decltype(first != last), bool>::value,
-					"Error: Expression [first != last] must return a type convertible to bool in order to use the range object for range based for loops!");
+			}
+
+			//! Construct a range with the specified begin and end iterators
+			constexpr iterator_range(begin_type&& first, end_type&& last)
+				: first(std::move(first))
+				, last(std::move(last))
+			{
 			}
 
 			//! Returns begin of the range
@@ -65,17 +78,17 @@ namespace noname
 		};
 
 		//! Range object with begin() and end() methods to use range-based for loops with any pair of iterators
-		template <typename iterator_t>
-		class iterator_range<iterator_t, void>
+		template <typename IteratorT>
+		class iterator_range<IteratorT, void>
 		{
 		public:
-			using begin_type = iterator_t;
-			using end_type = iterator_t;
+			using begin_type = IteratorT;
+			using end_type = IteratorT;
 
 			//! Construct a range with the specified begin and end iterators
 			constexpr iterator_range(begin_type first, end_type last)
 				: first(std::move(first))
-				  , last(std::move(last))
+				, last(std::move(last))
 			{
 			}
 
@@ -92,7 +105,7 @@ namespace noname
 			}
 
 			//! Returns the size of the range
-			size_t size() const
+			std::size_t size() const
 			{
 				return std::distance(first, last);
 			}
@@ -103,24 +116,151 @@ namespace noname
 		};
 
 		//! Creates an iterator_range object, deducing the target type from the types of arguments
-		template <typename begin_t, typename end_t>
-		constexpr iterator_range<typename std::decay<begin_t>::type, typename std::decay<end_t>::type> make_range(begin_t&& begin, end_t&& end)
+		template <typename BeginT, typename EndT>
+		inline constexpr iterator_range<typename std::decay<BeginT>::type, typename std::decay<EndT>::type> make_range(BeginT&& begin, EndT&& end)
 		{
-			return iterator_range<typename std::decay<begin_t>::type, typename std::decay<end_t>::type>(std::forward<begin_t>(begin), std::forward<end_t>(end));
-		}
-
-		//! Creates an iterator_range object from an iterator and a range length, deducing the target type from the types of arguments
-		template <typename it_t>
-		constexpr iterator_range<typename std::decay<it_t>::type> make_range(it_t&& begin, std::size_t range_size)
-		{
-			return iterator_range<typename std::decay<it_t>::type>(begin, begin + range_size);
+			return iterator_range<typename std::decay<BeginT>::type, typename std::decay<EndT>::type>(std::forward<BeginT>(begin), std::forward<EndT>(end));
 		}
 
 		//! Creates an iterator_range object from a statically allocated array
 		template <typename T, std::size_t N>
-		constexpr iterator_range<typename std::add_pointer<T>::type> make_range(T(&array)[N])
+		inline constexpr iterator_range<typename std::add_pointer<T>::type> make_range(T(&array)[N])
 		{
 			return iterator_range<typename std::add_pointer<T>::type>(std::begin(array), std::end(array));
+		}
+
+		//! Creates an iterator_range object from an iterator and a range length, deducing the target type from the types of arguments
+		template <typename IteratorT, typename DiffT = std::ptrdiff_t>
+		inline constexpr iterator_range<typename std::decay<IteratorT>::type> make_range_sized(IteratorT&& begin, DiffT range_size)
+		{
+			return iterator_range<typename std::decay<IteratorT>::type>(begin, begin + range_size);
+		}
+
+		template <typename Func, typename DiffT = std::ptrdiff_t>
+		struct index_iterator
+		{
+			using difference_type = DiffT;
+			using reference = decltype(std::declval<Func>()(DiffT()));
+			using value_type = typename std::decay<reference>::type;
+			using pointer = typename std::add_pointer<value_type>::type;
+			using iterator_category = std::random_access_iterator_tag;
+
+			index_iterator()
+				: dereferencer{ [](difference_type) { return value_type(); } }
+				, index{ -1 }
+			{}
+
+			index_iterator(Func&& f, DiffT i)
+				: dereferencer{ std::forward<Func>(f) }
+				, index{ i }
+			{}
+
+			index_iterator& operator++()
+			{
+				++index;
+				return *this;
+			}
+
+			index_iterator& operator--()
+			{
+				--index;
+				return *this;
+			}
+
+			index_iterator& operator+=(difference_type n)
+			{
+				index += n;
+				return *this;
+			}
+
+			difference_type operator-(const index_iterator& b)
+			{
+				return index - b.index;
+			}
+
+			bool operator==(const index_iterator& b) { return index == b.index; }
+			bool operator!=(const index_iterator& b) { return !(*this == b); }
+			bool operator<(const index_iterator& b) { return index < b.index; }
+			bool operator>(const index_iterator& b) { return index > b.index; }
+			bool operator>=(const index_iterator& b) { return !(*this < b); }
+			bool operator<=(const index_iterator& b) { return !(*this > b); }
+
+			reference operator*()
+			{
+				return dereferencer.callable(index);
+			}
+
+			const reference operator*() const
+			{
+				return dereferencer.callable(index);
+			}
+
+			pointer operator->()
+			{
+				return &(*(*this));
+			}
+
+			const pointer operator->() const
+			{
+				return &(*(*this));
+			}
+
+			reference operator[](difference_type n)
+			{
+				return *((*this) + n);
+			}
+
+		private:
+			callable_container<Func> dereferencer;
+			difference_type index;
+		};
+
+		template <typename Func, typename DiffT = std::ptrdiff_t>
+		index_iterator<Func, DiffT> operator++(index_iterator<Func, DiffT>& a, int)
+		{
+			auto temp(a); ++a;
+			return temp;
+		}
+
+		template <typename Func, typename DiffT = std::ptrdiff_t>
+		index_iterator<Func, DiffT> operator--(index_iterator<Func, DiffT>& a, int)
+		{
+			auto temp(a); --a;
+			return temp;
+		}
+
+		template <typename Func, typename DiffT = std::ptrdiff_t>
+		index_iterator<Func, DiffT> operator+(const index_iterator<Func, DiffT>& a, typename index_iterator<Func, DiffT>::difference_type n)
+		{
+			auto temp(a);
+			return temp += n;
+		}
+
+		template <typename Func, typename DiffT = std::ptrdiff_t>
+		index_iterator<Func, DiffT> operator+(typename index_iterator<Func, DiffT>::difference_type n, const index_iterator<Func, DiffT>& a)
+		{
+			auto temp(a);
+			return temp += n;
+		}
+
+		template <typename Func, typename DiffT = std::ptrdiff_t>
+		index_iterator<Func, DiffT>& operator-=(index_iterator<Func, DiffT>& a, typename index_iterator<Func, DiffT>::difference_type n)
+		{
+			return a += -n;
+		}
+
+		template <typename Func, typename DiffT = std::ptrdiff_t>
+		index_iterator<Func, DiffT> operator-(const index_iterator<Func, DiffT>& a, typename index_iterator<Func, DiffT>::difference_type n)
+		{
+			auto temp(a);
+			return temp -= n;
+		}
+
+		template <typename Func, typename DiffT = std::ptrdiff_t>
+		inline auto make_index_iterator_range(Func f, DiffT n, DiffT i0 = 0)
+		{
+			using IteratorType = index_iterator<typename std::decay<Func>::type, typename std::decay<DiffT>::type>;
+			return make_range_sized(IteratorType(std::forward<Func>(f), i0), n);
 		}
 	}
 }

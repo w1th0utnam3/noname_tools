@@ -84,7 +84,7 @@ TEST_CASE("Testing iterator_range")
 		static const int int_array[] = { 0, 1, 2, 3 };
 		static const auto arr_length = sizeof(int_array) / sizeof(int);
 
-		const auto range = tools::make_range(&int_array[0], arr_length);
+		const auto range = tools::make_range_sized(&int_array[0], arr_length);
 
 		REQUIRE(*range.begin() == 0);
 		REQUIRE(*std::prev(range.end()) == 3);
