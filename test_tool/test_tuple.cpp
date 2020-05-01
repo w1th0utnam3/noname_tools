@@ -22,7 +22,7 @@
 
 #include <noname_tools/tuple_tools.h>
 
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 #include <tuple>
 #include <string>

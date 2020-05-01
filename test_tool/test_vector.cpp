@@ -22,7 +22,7 @@
 
 #include <noname_tools/vector_tools.h>
 
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 #include <string>
 #include <type_traits>

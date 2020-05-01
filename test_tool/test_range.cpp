@@ -22,7 +22,7 @@
 
 #include <noname_tools/range_tools.h>
 
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 #include <vector>
 #include <type_traits>

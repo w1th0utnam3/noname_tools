@@ -1,6 +1,6 @@
 //	MIT License
 //
-//	Copyright (c) 2017 Fabian Löschner
+//	Copyright (c) 2017 Fabian Lï¿½schner
 //
 //	Permission is hereby granted, free of charge, to any person obtaining a copy
 //	of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 
 #include <noname_tools/taggedvalue_tools.h>
 
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 using namespace noname;
 

@@ -23,7 +23,7 @@
 #include <noname_tools/typetraits_tools.h>
 #include <noname_tools/utility_tools.h>
 
-#include "catch.hpp"
+#include "catch2/catch.hpp"
 
 #include <string>
 #include <type_traits>
