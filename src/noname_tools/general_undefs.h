@@ -22,10 +22,18 @@
 //	SOFTWARE.
 #endif
 
+#if defined(NONAME_ASSERT)
+#undef NONAME_ASSERT
+#endif
+
 #if defined(NONAME_INLINE_VARIABLE)
 #undef NONAME_INLINE_VARIABLE
 #endif
 
-#if defined(NONAME_ASSERT)
-#undef NONAME_ASSERT
+#if defined(NONAME_INVOKE_RESULT)
+#undef NONAME_INVOKE_RESULT
+#endif
+
+#if defined(NONAME_INVOKE_RESULT_T)
+#undef NONAME_INVOKE_RESULT_T
 #endif

@@ -26,6 +26,27 @@
 
 #if __cplusplus >= 201703L
 #define NONAME_INLINE_VARIABLE inline
-#else
+#define NONAME_INVOKE_RESULT std::invoke_result
+#define NONAME_INVOKE_RESULT_T std::invoke_result_t
+#endif
+
+#if __cplusplus < 201703L && _MSC_VER >= 1912
+#define NONAME_INLINE_VARIABLE inline
+#endif
+
+#if __cplusplus < 201703L && _MSC_VER >= 1911
+#define NONAME_INVOKE_RESULT std::invoke_result
+#define NONAME_INVOKE_RESULT_T std::invoke_result_t
+#endif
+
+#if !defined(NONAME_INLINE_VARIABLE)
 #define NONAME_INLINE_VARIABLE
+#endif
+
+#if !defined(NONAME_INVOKE_RESULT)
+#define NONAME_INVOKE_RESULT std::result_of
+#endif
+
+#if !defined(NONAME_INVOKE_RESULT_T)
+#define NONAME_INVOKE_RESULT_T std::result_of_t
 #endif

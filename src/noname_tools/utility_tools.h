@@ -201,7 +201,7 @@ namespace noname
 
 		// Applies overloading rules to find the unique best conversion from 'T' to any type of 'Ts...'. Based on http://stackoverflow.com/a/39548402/929037.
 		template <typename T, typename... Ts>
-		using best_match = _detail::best_match_impl<std::result_of_t<_detail::overload<Ts...>(T)>, Ts...>;
+		using best_match = _detail::best_match_impl<NONAME_INVOKE_RESULT_T<_detail::overload<Ts...>(T)>, Ts...>;
 	}
 }
 
