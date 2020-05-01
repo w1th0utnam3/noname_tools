@@ -31,50 +31,44 @@
 
 using namespace noname;
 
-TEST_CASE("Testing sorted_vector")
-{
-	SECTION("Call with initializer list")
-	{
-		const auto sortedVector = tools::sorted_vector<std::string>({ "ccc","bbb","aaa" });
+TEST_CASE("Testing sorted_vector") {
+    SECTION("Call with initializer list") {
+        const auto sortedVector = tools::sorted_vector<std::string>({"ccc", "bbb", "aaa"});
 
-		REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
-		REQUIRE(sortedVector.size() == 3);
-		REQUIRE(sortedVector.at(0) == "aaa");
-		REQUIRE(sortedVector.at(1) == "bbb");
-		REQUIRE(sortedVector.at(2) == "ccc");
-	}
+        REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
+        REQUIRE(sortedVector.size() == 3);
+        REQUIRE(sortedVector.at(0) == "aaa");
+        REQUIRE(sortedVector.at(1) == "bbb");
+        REQUIRE(sortedVector.at(2) == "ccc");
+    }
 
-	SECTION("Call with r-value vector")
-	{
-		const auto sortedVector = tools::sorted_vector<std::string>(std::vector<std::string>({ "ccc","bbb","aaa" }));
+    SECTION("Call with r-value vector") {
+        const auto sortedVector = tools::sorted_vector<std::string>(std::vector<std::string>({"ccc", "bbb", "aaa"}));
 
-		REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
-		REQUIRE(sortedVector.size() == 3);
-		REQUIRE(sortedVector.at(0) == "aaa");
-		REQUIRE(sortedVector.at(1) == "bbb");
-		REQUIRE(sortedVector.at(2) == "ccc");
-	}
+        REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
+        REQUIRE(sortedVector.size() == 3);
+        REQUIRE(sortedVector.at(0) == "aaa");
+        REQUIRE(sortedVector.at(1) == "bbb");
+        REQUIRE(sortedVector.at(2) == "ccc");
+    }
 
-	SECTION("Call with empty r-value vector")
-	{
-		const auto sortedVector = tools::sorted_vector<std::string>(std::vector<std::string>());
+    SECTION("Call with empty r-value vector") {
+        const auto sortedVector = tools::sorted_vector<std::string>(std::vector<std::string>());
 
-		REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
-		REQUIRE(sortedVector.size() == 0);
-	}
+        REQUIRE((std::is_same<decltype(sortedVector), const std::vector<std::string>>::value) == true);
+        REQUIRE(sortedVector.size() == 0);
+    }
 }
 
-TEST_CASE("Testing move_construct_vector")
-{
-	SECTION("")
-	{
-		const auto vector = tools::move_construct_vector(
-			std::make_unique<int>(1), 
-			std::make_unique<int>(2), 
-			std::make_unique<int>(3)
-		);
+TEST_CASE("Testing move_construct_vector") {
+    SECTION("") {
+        const auto vector = tools::move_construct_vector(
+                std::make_unique<int>(1),
+                std::make_unique<int>(2),
+                std::make_unique<int>(3)
+        );
 
-		REQUIRE((std::is_same<decltype(vector), const std::vector<std::unique_ptr<int>>>::value) == true);
-		REQUIRE(vector.size() == 3);
-	}
+        REQUIRE((std::is_same<decltype(vector), const std::vector<std::unique_ptr<int>>>::value) == true);
+        REQUIRE(vector.size() == 3);
+    }
 }

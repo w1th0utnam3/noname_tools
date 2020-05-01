@@ -26,55 +26,50 @@
 #include <string>
 #include <fstream>
 
-namespace noname
-{
-	namespace tools
-	{
-		// TODO: Make methods templated in string type
+namespace noname {
+    namespace tools {
+        // TODO: Make methods templated in string type
 
-		//! Reads a complete file into a string
-		inline std::string read_file(const std::string& file_path)
-		{
-			std::string contents;
-			std::ifstream input(file_path, std::ios::in | std::ios::binary);
-			if (input) {
-				input.seekg(0, std::ios::end);
-				contents.resize(input.tellg());
-				input.seekg(0, std::ios::beg);
-				input.read(&contents[0], contents.size());
-				input.close();
-			}
-			return contents;
-		}
+        //! Reads a complete file into a string
+        inline std::string read_file(const std::string &file_path) {
+            std::string contents;
+            std::ifstream input(file_path, std::ios::in | std::ios::binary);
+            if (input) {
+                input.seekg(0, std::ios::end);
+                contents.resize(input.tellg());
+                input.seekg(0, std::ios::beg);
+                input.read(&contents[0], contents.size());
+                input.close();
+            }
+            return contents;
+        }
 
-		//! Reads all lines from the specified file to a vector
-		inline std::vector<std::string> read_all_lines(const std::string& file_path)
-		{
-			std::vector<std::string> lines;
-			std::string currentLine;
-			std::ifstream file(file_path);
-			while (std::getline(file, currentLine)) lines.push_back(currentLine);
-			file.close();
-			return lines;
-		}
+        //! Reads all lines from the specified file to a vector
+        inline std::vector<std::string> read_all_lines(const std::string &file_path) {
+            std::vector<std::string> lines;
+            std::string currentLine;
+            std::ifstream file(file_path);
+            while (std::getline(file, currentLine)) lines.push_back(currentLine);
+            file.close();
+            return lines;
+        }
 
-		//! Reads the specified number of lines from a file or reads the whole file if number of lines is zero
-		inline std::vector<std::string> read_lines(const std::string& file_path, const size_t number_of_lines = 0)
-		{
-			if (number_of_lines == 0) return read_all_lines(file_path);
+        //! Reads the specified number of lines from a file or reads the whole file if number of lines is zero
+        inline std::vector<std::string> read_lines(const std::string &file_path, const size_t number_of_lines = 0) {
+            if (number_of_lines == 0) return read_all_lines(file_path);
 
-			std::vector<std::string> lines;
-			lines.reserve(number_of_lines);
+            std::vector<std::string> lines;
+            lines.reserve(number_of_lines);
 
-			std::string currentLine;
-			std::ifstream file(file_path);
-			size_t counter = 0;
-			while (counter < number_of_lines && std::getline(file, currentLine)) {
-				lines.push_back(currentLine);
-				counter++;
-			}
-			file.close();
-			return lines;
-		}
-	}
+            std::string currentLine;
+            std::ifstream file(file_path);
+            size_t counter = 0;
+            while (counter < number_of_lines && std::getline(file, currentLine)) {
+                lines.push_back(currentLine);
+                counter++;
+            }
+            file.close();
+            return lines;
+        }
+    }
 }
