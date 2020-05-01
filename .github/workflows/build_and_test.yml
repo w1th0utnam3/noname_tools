@@ -1,8 +1,6 @@
 name: Build and test master
 
 on:
-  # Trigger the workflow on push or pull request,
-  # but only for the master branch
   push:
     branches:
       - master
@@ -76,9 +74,6 @@ jobs:
         submodules: 'true'
 
     - name: ctest --build-and-test
-      env:
-        CC: ${{ matrix.cc }}
-        CXX: ${{ matrix.cxx }}
       run: |
         mkdir build
         cd build
