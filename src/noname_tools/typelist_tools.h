@@ -25,6 +25,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "typetraits_tools.h"
 #include "utility_tools.h"
 
 #if defined(_MSC_VER)
@@ -33,18 +34,12 @@
 #define NONAME_EBO
 #endif
 
-// TODO: Add some operations for type lists: is_in, unique, join, zip?
+// TODO: Add some operations for type lists: concat, zip?
 
 namespace noname
 {
 	namespace tools
 	{
-		template <typename T>
-		struct type_alias
-		{
-			using type = T;
-		};
-
 		namespace _detail
 		{
 			//! Dumb typelist without any special functionality
@@ -52,9 +47,9 @@ namespace noname
 			struct _plain_typelist 
 			{};
 
-			//! Base type for the typelist, has every type_alias<T> with T from Ts as a base
+			//! Base type for the typelist, has every type_identity<T> with T from Ts as a base
 			template <typename... Ts>
-			struct NONAME_EBO _base_typelist : type_alias<Ts>... 
+			struct NONAME_EBO _base_typelist : type_identity<Ts>... 
 			{};
 
 			//------
@@ -181,13 +176,13 @@ namespace noname
 			{
 				using swallow = int[];
 				(void)swallow {
-					1, (f(static_cast<type_alias<nth_typelist_element_t<Indices, typename std::decay<Typelist>::type>>>(tl)), void(), int{})...
+					1, (f(static_cast<type_identity<nth_typelist_element_t<Indices, typename std::decay<Typelist>::type>>>(tl)), void(), int{})...
 				};
 				return f;
 			}
 		}
 
-		//! Calls a function for each element of a typelist in order and returns the function, the function is called with a type_alias<T> for each T from the list
+		//! Calls a function for each element of a typelist in order and returns the function, the function is called with a type_identity<T> for each T from the list
 		template <typename Typelist, typename F>
 		F typelist_for_each(F f)
 		{
