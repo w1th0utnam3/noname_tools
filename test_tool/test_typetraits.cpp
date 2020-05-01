@@ -21,7 +21,6 @@
 //	SOFTWARE.
 
 #include <noname_tools/typetraits_tools.h>
-#include <noname_tools/utility_tools.h>
 
 #include "catch2/catch.hpp"
 
@@ -104,24 +103,4 @@ TEST_CASE("Testing typetraits") {
         REQUIRE((std::is_same<tools::remove_cvref_t<const double[2]>, double[2]>::value == true));
         REQUIRE((std::is_same<tools::remove_cvref_t<const double (&)[2]>, double[2]>::value == true));
     }
-}
-
-TEST_CASE("Testing utility types") {
-    REQUIRE((std::is_same<tools::nth_element_t<0, int, void, double>, int>::value == true));
-    REQUIRE((std::is_same<tools::nth_element_t<1, int, void, double>, void>::value == true));
-    REQUIRE((std::is_same<tools::nth_element_t<2, int, void, double>, double>::value == true));
-
-    REQUIRE((tools::element_index_v<int, int, double, void> == 0));
-    REQUIRE((tools::element_index_v<double, int, double, void> == 1));
-    REQUIRE((tools::element_index_v<void, int, double, void> == 2));
-    REQUIRE((tools::element_index_v<std::string, int, double, void> == tools::element_not_found));
-
-    REQUIRE((tools::count_element_v<int, void, double, int, int, char, int> == 3));
-    REQUIRE((tools::count_element_v<int> == 0));
-
-    REQUIRE((tools::unique_elements_v<int, double, char> == true));
-    REQUIRE((tools::unique_elements_v<int, double, int, char> == false));
-    REQUIRE((tools::unique_elements_v<int> == true));
-    REQUIRE((tools::unique_elements_v<> == false));
-    REQUIRE((tools::unique_elements_v<void, double> == true));
 }
