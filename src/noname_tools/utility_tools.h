@@ -202,57 +202,6 @@ namespace noname
 		// Applies overloading rules to find the unique best conversion from 'T' to any type of 'Ts...'. Based on http://stackoverflow.com/a/39548402/929037.
 		template <typename T, typename... Ts>
 		using best_match = _detail::best_match_impl<std::result_of_t<_detail::overload<Ts...>(T)>, Ts...>;
-
-		namespace _detail
-		{
-			struct __in_place_tag {};
-			template <class> struct __in_place_type_tag {};
-			template <std::size_t> struct __in_place_index_tag {};
-		}
-		
-		//! Disambiguation tag to create an optional, any or variant in-place. Actually calling any of the in_place functions results in undefined behavior.
-		struct in_place_tag;
-		
-		using in_place_t = in_place_tag(&)(_detail::__in_place_tag);
-		template <class _Tp>
-		using in_place_type_t = in_place_tag(&)(_detail::__in_place_type_tag<_Tp>);
-		template <std::size_t _Nx>
-		using in_place_index_t = in_place_tag(&)(_detail::__in_place_index_tag<_Nx>);
-		
-		struct in_place_tag
-		{
-			in_place_tag() = delete;
-			private:
-				explicit in_place_tag(_detail::__in_place_tag) {}
-				
-				friend inline in_place_tag in_place(_detail::__in_place_tag);
-
-				template <class _Tp>
-				friend inline in_place_tag in_place(_detail::__in_place_type_tag<_Tp>);
-
-				template <std::size_t _Nx>
-				friend inline in_place_tag in_place(_detail::__in_place_index_tag<_Nx>);
-				
-		};
-		
-		inline in_place_tag in_place(_detail::__in_place_tag)
-		{
-			NONAME_ASSERT(false, "The in_place function cannot be invoked");
-		}
-		
-		template <class _Tp>
-		inline in_place_tag in_place(_detail::__in_place_type_tag<_Tp>)
-		{
-			NONAME_ASSERT(false, "The in_place function cannot be invoked");
-			return in_place_tag(_detail::__in_place_tag{});
-		}
-
-		template <std::size_t _Nx>
-		inline in_place_tag in_place(_detail::__in_place_index_tag<_Nx>)
-		{
-			NONAME_ASSERT(false, "The in_place function cannot be invoked");
-			return in_place_tag(_detail::__in_place_tag{});
-		}
 	}
 }
 
