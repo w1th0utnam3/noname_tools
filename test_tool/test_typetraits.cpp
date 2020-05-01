@@ -34,6 +34,13 @@ using namespace noname;
 
 TEST_CASE("Testing typetraits")
 {
+    SECTION("Testing type_identity")
+    {
+        REQUIRE((std::is_same<tools::type_identity<int>::type, int>::value == true));
+        REQUIRE((std::is_same<tools::type_identity<double>::type, double>::value == true));
+        REQUIRE((std::is_same<tools::type_identity<char>::type, char>::value == true));
+    }
+
 	SECTION("Testing dependent_false")
 	{
 		REQUIRE((tools::dependent_false<int>::value == false));
@@ -84,19 +91,30 @@ TEST_CASE("Testing typetraits")
 
 	SECTION("Testing is_referenceable")
 	{
-		REQUIRE((tools::is_referenceable<double>::value == true));
-		REQUIRE((tools::is_referenceable<double&>::value == true));
-		REQUIRE((tools::is_referenceable<void>::value == false));
+		REQUIRE((tools::is_referenceable_v<double> == true));
+		REQUIRE((tools::is_referenceable_v<double&> == true));
+		REQUIRE((tools::is_referenceable_v<void> == false));
 	}
 
 	SECTION("Testing is_swappable")
 	{
-		REQUIRE((tools::is_swappable_with<double, double>::value == true));
-		REQUIRE((tools::is_swappable_with<double, void>::value == false));
+		REQUIRE((tools::is_swappable_with_v<double, double> == true));
+		REQUIRE((tools::is_swappable_with_v<double, void> == false));
 
-		REQUIRE((tools::is_swappable<double>::value == true));
-		REQUIRE((tools::is_swappable<void>::value == false));
+		REQUIRE((tools::is_swappable_v<double> == true));
+		REQUIRE((tools::is_swappable_v<void> == false));
 	}
+
+    SECTION("Testing remove_cvref")
+    {
+        REQUIRE((std::is_same<tools::remove_cvref_t<double>, double>::value == true));
+        REQUIRE((std::is_same<tools::remove_cvref_t<double&>, double>::value == true));
+        REQUIRE((std::is_same<tools::remove_cvref_t<double&&>, double>::value == true));
+        REQUIRE((std::is_same<tools::remove_cvref_t<const double&>, double>::value == true));
+        REQUIRE((std::is_same<tools::remove_cvref_t<const volatile double&>, double>::value == true));
+        REQUIRE((std::is_same<tools::remove_cvref_t<const double[2]>, double[2]>::value == true));
+        REQUIRE((std::is_same<tools::remove_cvref_t<const double(&)[2]>, double[2]>::value == true));
+    }
 }
 
 TEST_CASE("Testing utility types")

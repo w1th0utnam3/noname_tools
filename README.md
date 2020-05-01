@@ -89,6 +89,10 @@ F tuple_for_each(Tuple&& tuple, F f);
 
 Some type traits and helper types from the C++17 draft for use in C++14. Also includes the [detection idiom](http://en.cppreference.com/w/cpp/experimental/is_detected) alias templates from Library fundamentals v2.
 ```c++
+//! Provides the member typedef type that names T (i.e., the identity transformation).
+template< class T >
+struct type_identity;
+
 //! Utility metafunction that maps a sequence of any types to the type void
 template <typename... T>
 using void_t = ...;
@@ -136,6 +140,13 @@ using is_swappable_with = ...;
 //! Checks if a type is referenceable and whether std::is_swappable_with<T&, T&>::value is true
 template<class T>
 using is_swappable = ...;
+
+//! Combines std::remove_cv and std::remove_reference
+template<class T>
+struct remove_cvref;
+//! Helper for remove_cvref, defined as remove_cvref::type.
+template<class T>
+using remove_cvref_t = typename remove_cvref<T>::type;
 ```
 
 ### utility_tools.h

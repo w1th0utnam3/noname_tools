@@ -26,7 +26,7 @@
 #include <cstdio>
 #include <type_traits>
 
-#define NONAME_ASSERT(x, m) ((x) ? (void)0 : (std::fprintf(stderr, "%s\n", m), std::abort()))
+#include "general_defs.h"
 
 namespace noname
 {
@@ -90,7 +90,7 @@ namespace noname
 		using nth_element_t = typename nth_element<I, Ts...>::type;
 
 		//! Value used by element_index to indicate that the type was not found in the parameter pack.
-		constexpr std::size_t element_not_found = -1;
+        NONAME_INLINE_VARIABLE constexpr std::size_t element_not_found = -1;
 
 		namespace _detail
 		{
@@ -116,7 +116,7 @@ namespace noname
 		};
 
 		template <typename T, typename... Ts>
-		constexpr std::size_t element_index_v = element_index<T, Ts...>::value;
+        NONAME_INLINE_VARIABLE constexpr std::size_t element_index_v = element_index<T, Ts...>::value;
 
 		namespace _detail {
 			template<typename... Ts>
@@ -143,7 +143,7 @@ namespace noname
 		};
 
 		template <typename T, typename... Ts>
-		constexpr std::size_t count_element_v = count_element<T, Ts...>::value;
+        NONAME_INLINE_VARIABLE constexpr std::size_t count_element_v = count_element<T, Ts...>::value;
 
 		namespace _detail
 		{
@@ -173,7 +173,7 @@ namespace noname
 		};
 
 		template <typename... Ts>
-		constexpr bool unique_elements_v = unique_elements<Ts...>::value;
+        NONAME_INLINE_VARIABLE constexpr bool unique_elements_v = unique_elements<Ts...>::value;
 
 		namespace _detail
 		{
@@ -205,4 +205,4 @@ namespace noname
 	}
 }
 
-#undef NONAME_ASSERT
+#include "general_undefs.h"

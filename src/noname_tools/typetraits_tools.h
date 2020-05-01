@@ -26,10 +26,18 @@
 #include <algorithm>
 #include <type_traits>
 
+#include "general_defs.h"
+
 namespace noname
 {
 	namespace tools
 	{
+		//! Provides the member typedef type that names T (i.e., the identity transformation).
+		template< class T >
+		struct type_identity {
+			using type = T;
+		};
+
 		//! A type which is always false_type and can be used in static_assert to always trigger an assertion.
 		template<class T>
 		struct dependent_false : std::false_type {};
@@ -142,16 +150,37 @@ namespace noname
 			using _is_swappable_with_unidirectional = disjunction<_is_swappable_with_overload<T, U>, _is_swappable_with_std<T, U>>;
 		} // namespace _detail
 
-		//! Checks if the supplied type is referenceable, i.e. whether T& is a well-formed type
+		//! Checks if the supplied type is referenceable, i.e. whether T& is a well-formed type.
 		template<class T>
 		using is_referenceable = is_detected<_detail::_reference_t, T>;
 
-		//! Checks if the expressions swap(std::declval<T>(), std::declval<U>()) and swap(std::declval<U>(), std::declval<T>()) are both well formed after "using std::swap"
+		template <class T>
+		NONAME_INLINE_VARIABLE constexpr bool is_referenceable_v = is_referenceable<T>::value;
+
+		//! Checks if the expressions swap(std::declval<T>(), std::declval<U>()) and swap(std::declval<U>(), std::declval<T>()) are both well formed after "using std::swap".
 		template<class T, class U>
 		using is_swappable_with = conjunction<_detail::_is_swappable_with_unidirectional<T, U>, _detail::_is_swappable_with_unidirectional<U, T>>;
 
-		//! Checks if a type is referenceable and whether std::is_swappable_with<T&, T&>::value is true
+		//! Checks if a type is referenceable and whether std::is_swappable_with<T&, T&>::value is true.
 		template<class T>
 		using is_swappable = conjunction<is_referenceable<T>, is_swappable_with<T,T>>;
+
+		template <class T, class U>
+        NONAME_INLINE_VARIABLE constexpr bool is_swappable_with_v = is_swappable_with<T, U>::value;
+		
+		template <class T>
+        NONAME_INLINE_VARIABLE constexpr bool is_swappable_v = is_swappable<T>::value;
+
+		//! Combines std::remove_cv and std::remove_reference.
+		template<class T>
+		struct remove_cvref {
+			typedef typename std::remove_cv<typename std::remove_reference<T>::type>::type type;
+		};
+
+		//! Helper for remove_cvref, defined as remove_cvref::type.
+		template<class T>
+		using remove_cvref_t = typename remove_cvref<T>::type;
 	}
 }
+
+#include "general_undefs.h"
