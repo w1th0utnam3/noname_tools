@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <type_traits>
+#include <tuple>
 
 #include "general_defs.h"
 
@@ -32,6 +33,28 @@ namespace noname {
     namespace tools {
         // TODO: Rename nth_element because of std::nth_element algorithm
         // TODO: Implement lambda overload
+
+        namespace _detail {
+            template<typename T, T... I>
+            constexpr auto integer_sequence_tuple_impl(std::integer_sequence<T, I...>) {
+                return std::make_tuple(std::integral_constant<T, I>{}...);
+            }
+        }
+
+        //! A tuple containing the N values of the integer type T from `std::integral_constant<T, 0>` to `std::integral_constant<T, N-1>`.
+        template<typename T, T N>
+        NONAME_INLINE_VARIABLE constexpr auto integer_sequence_tuple = _detail::integer_sequence_tuple_impl(std::make_integer_sequence<T, N>{});
+
+#ifdef NONAME_CPP17
+        // TODO: Try to find alternative without tuple
+        // TODO: Try to find alternative without std::apply
+
+        //! Invokes the callable F with the N values from `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
+        template<std::size_t N, typename F>
+        constexpr decltype(auto) apply_to_sequence(F &&fn) {
+            return std::apply(std::forward<F>(fn), integer_sequence_tuple<std::size_t, N>);
+        }
+#endif
 
         //! Container to allow copy assignment of callable objects
         template<typename Func>

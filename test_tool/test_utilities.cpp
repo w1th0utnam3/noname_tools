@@ -25,8 +25,36 @@
 #include "catch2/catch.hpp"
 
 #include <type_traits>
+#include <tuple>
 
 using namespace noname;
+
+TEST_CASE("Testing integer_sequence_tuple") {
+    constexpr const int N = 5;
+    const auto t1 = tools::integer_sequence_tuple<int, N>;
+
+    REQUIRE(std::tuple_size<decltype(t1)>::value == N);
+    REQUIRE(std::get<0>(t1) == 0);
+    REQUIRE(std::get<1>(t1) == 1);
+    REQUIRE(std::get<2>(t1) == 2);
+    REQUIRE(std::get<3>(t1) == 3);
+    REQUIRE(std::get<4>(t1) == 4);
+}
+
+#ifdef NONAME_CPP17
+TEST_CASE("Testing apply_to_sequence") {
+    // TODO: Verify conestexpr-ness
+    constexpr const int N = 5;
+
+    int sum = 0;
+    auto compute_sum = [&sum](auto... Is) {
+        sum = (Is() + ...);
+    };
+
+    tools::apply_to_sequence<N>(compute_sum);
+    REQUIRE(sum == (N * (N - 1))/2);
+}
+#endif
 
 TEST_CASE("Testing utility types") {
     REQUIRE((std::is_same<tools::nth_element_t<0, int, void, double>, int>::value == true));
