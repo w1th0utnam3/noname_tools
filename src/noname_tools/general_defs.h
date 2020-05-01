@@ -30,6 +30,7 @@
 #define NONAME_INVOKE_RESULT_T std::invoke_result_t
 #endif
 
+#if !defined(NONAME_CPP14)
 #if __cplusplus < 201703L && _MSC_VER >= 1912
 #define NONAME_INLINE_VARIABLE inline
 #endif
@@ -37,6 +38,7 @@
 #if __cplusplus < 201703L && _MSC_VER >= 1911
 #define NONAME_INVOKE_RESULT std::invoke_result
 #define NONAME_INVOKE_RESULT_T std::invoke_result_t
+#endif
 #endif
 
 #if !defined(NONAME_INLINE_VARIABLE)

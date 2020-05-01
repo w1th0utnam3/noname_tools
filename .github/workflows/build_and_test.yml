@@ -1,0 +1,85 @@
+name: Build and test master
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the master branch
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build_ubuntu:
+    name: Ubuntu 18.04
+    runs-on: ubuntu-18.04
+
+    strategy:
+      matrix:
+        compiler: [gcc7, gcc8, gcc9, clang6, clang8, clang9]
+        cpp_standard: [C++14, C++17]
+        include:
+          - compiler: gcc7
+            cc: /usr/bin/gcc-7
+            cxx: /usr/bin/g++-7
+          - compiler: gcc8
+            cc: /usr/bin/gcc-8
+            cxx: /usr/bin/g++-8
+          - compiler: gcc9
+            cc: /usr/bin/gcc-9
+            cxx: /usr/bin/g++-9
+          - compiler: clang6
+            cc: /usr/bin/clang-6.0
+            cxx: /usr/bin/clang++-6.0
+          - compiler: clang8
+            cc: /usr/bin/clang-8
+            cxx: /usr/bin/clang++-8
+          - compiler: clang9
+            cc: /usr/bin/clang-9
+            cxx: /usr/bin/clang++-9
+          - cpp_standard: C++14
+            cpp_flag: -DCMAKE_CXX_STANDARD=14
+          - cpp_standard: C++17
+            cpp_flag: -DCMAKE_CXX_STANDARD=17
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+
+    - name: ctest --build-and-test
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: |
+        mkdir build
+        cd build
+        ctest --build-and-test .. . --build-generator "Unix Makefiles" --build-options ${{ matrix.cpp_flag }} --test-command test_tool
+
+  build_windows:
+    name: Windows VS2019
+    runs-on: windows-2019
+
+    strategy:
+      matrix:
+        cpp_standard: [C++14, C++17]
+        include:
+          - cpp_standard: C++14
+            cpp_flag: -DCMAKE_CXX_STANDARD=14
+          - cpp_standard: C++17
+            cpp_flag: -DCMAKE_CXX_STANDARD=17
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+
+    - name: ctest --build-and-test
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: |
+        mkdir build
+        cd build
+        ctest --build-and-test .. . --build-generator "Visual Studio 16 2019" --build-noclean --build-options ${{ matrix.cpp_flag }} --test-command test_tool.exe
