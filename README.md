@@ -6,11 +6,8 @@ the [Catch](https://github.com/philsquared/Catch) header-only unit-test framewor
 ## Todos
 
 - Update this file with all implemented features
-- Check compilation with VS2015
-- Try to compile with C++11 and clang
 - Add missing unit-tests
 - Additional features:
-  - make as many features as possible available with C++11 only
   - string split iterator
   - replace explicit container usages with iterators
 
@@ -23,7 +20,7 @@ At the moment `noname_tools` contains the following headers:
 - [`range_tools.h`](#range_toolsh) - Basic `iterator_range` type
 - [`string_tools.h`](#string_toolsh) - String truncate, split...
 - [`tuple_tools.h`](#tuple_toolsh) - Operations on `std::tuple`
-- [`type_traits.h`](#type_traitsh) - C++17 and Library fundamentals v2 helpers for C++14 (`void_t`, `is_detected`,...)
+- [`typetraits_tools.h`](#typetraits_toolssh) - C++17 and Library fundamentals v2 helpers for C++14 (`void_t`, `is_detected`,...)
 - [`utility_tools.h`](#utility_toolsh) - helper types
 - [`vector_tools.h`](#vector_toolsh) - Operations on `std::vector`
 
