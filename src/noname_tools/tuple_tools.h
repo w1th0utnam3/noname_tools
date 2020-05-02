@@ -33,7 +33,7 @@ namespace noname {
     namespace tools {
         namespace _detail {
             template<typename Tuple, typename F, std::size_t ...Indices>
-            F tuple_for_each(Tuple &&tuple, F f, std::index_sequence<Indices...>) {
+            F tuple_for_each_impl(Tuple &&tuple, F f, std::index_sequence<Indices...>) {
                 using swallow = int[];
                 (void) swallow{
                         1, (f(std::get<Indices>(std::forward<Tuple>(tuple))), void(), int{})...
@@ -47,7 +47,7 @@ namespace noname {
         F tuple_for_each(Tuple &&tuple, F f) {
             // Code from: https://codereview.stackexchange.com/questions/51407/stdtuple-foreach-implementation
             static constexpr const std::size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
-            return _detail::tuple_for_each(
+            return _detail::tuple_for_each_impl(
                     std::forward<Tuple>(tuple),
                     std::forward<F>(f),
                     std::make_index_sequence<N>{});

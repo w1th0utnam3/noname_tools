@@ -159,7 +159,7 @@ namespace noname {
 
         namespace _detail {
             template<typename Typelist, typename F, std::size_t... Indices>
-            F typelist_for_each(Typelist &&tl, F f, std::index_sequence<Indices...>) {
+            F typelist_for_each_impl(Typelist &&tl, F f, std::index_sequence<Indices...>) {
                 using swallow = int[];
                 (void) swallow{
                         1,
@@ -174,7 +174,7 @@ namespace noname {
         F typelist_for_each(F f) {
             static constexpr Typelist tl;
             static constexpr std::size_t N(typelist_size_v<std::remove_reference_t<Typelist>>);
-            return _detail::typelist_for_each(
+            return _detail::typelist_for_each_impl(
                     tl,
                     std::forward<F>(f),
                     std::make_index_sequence<N>{}
