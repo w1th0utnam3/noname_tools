@@ -28,13 +28,6 @@
 
 namespace noname {
     namespace tools {
-        // TODO: Rename nth_element because of std::nth_element algorithm
-        // TODO: Implement lambda overload
-
-#ifdef NONAME_CPP17
-        // TODO: Try to find alternative without tuple
-        // TODO: Try to find alternative without std::apply
-
         namespace _detail {
             template<typename F, std::size_t ...Is>
             constexpr decltype(auto) apply_index_sequence(F&& fn, std::index_sequence<Is...>) {
@@ -47,8 +40,6 @@ namespace noname {
         constexpr decltype(auto) apply_index_sequence(F&& fn) {
             return _detail::apply_index_sequence(std::forward<F>(fn), std::make_index_sequence<N>{});
         }
-
-#endif
 
         //! Container to allow copy assignment of callable objects
         template<typename Func>

@@ -24,24 +24,27 @@
 
 #include "catch2/catch.hpp"
 
+#include <array>
 #include <type_traits>
 
 using namespace noname;
-
-#ifdef NONAME_CPP17
 
 TEST_CASE("Testing apply_to_sequence") {
     constexpr const int N = 5;
 
     int sum = 0;
     auto compute_sum = [N, &sum](auto... Is) {
-        sum = (Is() + ...);
+        std::array<typename std::common_type<typename decltype(Is)::value_type...>::type, sizeof...(Is)> vals = {Is...};
+        for (const auto v : vals) {
+            sum += v;
+        }
     };
 
     tools::apply_index_sequence<N>(compute_sum);
     REQUIRE(sum == (N * (N - 1))/2);
 }
 
+#ifdef NONAME_CPP17
 TEST_CASE("Testing constexpr apply_to_sequence") {
     static constexpr const int N = 5;
     constexpr int csum = []() {
@@ -56,5 +59,4 @@ TEST_CASE("Testing constexpr apply_to_sequence") {
     REQUIRE(csum == (N * (N - 1))/2);
     REQUIRE(std::integral_constant<int,csum>::value == std::integral_constant<int, (N * (N - 1))/2>::value);
 }
-
 #endif
