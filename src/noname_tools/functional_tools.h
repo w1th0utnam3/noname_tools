@@ -29,16 +29,22 @@
 namespace noname {
     namespace tools {
         namespace _detail {
-            template<typename F, std::size_t ...Is>
-            constexpr decltype(auto) apply_index_sequence(F&& f, std::index_sequence<Is...>) {
-                return f(std::integral_constant<std::size_t, Is>{}...);
+            template<typename F, typename T, T... Is>
+            constexpr decltype(auto) apply_integer_sequence(F&& f, std::integer_sequence<T, Is...>) {
+                return f(std::integral_constant<T, Is>{}...);
             }
+        }
+
+        //! Calls the callable `f` with the N arguments given by `std::integral_constant<T, 0>` to `std::integral_constant<T, N-1>`.
+        template<typename T, T N, typename F>
+        constexpr decltype(auto) apply_integer_sequence(F&& f) {
+            return _detail::apply_integer_sequence(std::forward<F>(f), std::make_integer_sequence<T, N>{});
         }
 
         //! Calls the callable `f` with the N arguments given by `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
         template<std::size_t N, typename F>
         constexpr decltype(auto) apply_index_sequence(F&& f) {
-            return _detail::apply_index_sequence(std::forward<F>(f), std::make_index_sequence<N>{});
+            return _detail::apply_integer_sequence(std::forward<F>(f), std::make_integer_sequence<std::size_t, N>{});
         }
 
         //! Container to allow copy assignment of callable objects

@@ -29,12 +29,14 @@
 
 using namespace noname;
 
-TEST_CASE("Testing apply_to_sequence") {
+TEST_CASE("Testing apply_index_sequence") {
     constexpr const int N = 5;
 
     int sum = 0;
     auto compute_sum = [N, &sum](auto... Is) {
-        std::array<typename std::common_type<typename decltype(Is)::value_type...>::type, sizeof...(Is)> vals = {Is...};
+        using ValueT = typename std::common_type<typename decltype(Is)::value_type...>::type;
+        REQUIRE(std::is_same<ValueT, std::size_t>::value == true);
+        std::array<ValueT, sizeof...(Is)> vals = {Is...};
         for (const auto v : vals) {
             sum += v;
         }
@@ -44,8 +46,25 @@ TEST_CASE("Testing apply_to_sequence") {
     REQUIRE(sum == (N * (N - 1))/2);
 }
 
+TEST_CASE("Testing apply_integer_sequence") {
+    constexpr const char N = 5;
+
+    char sum = 0;
+    auto compute_sum = [N, &sum](auto... Is) {
+        using ValueT = typename std::common_type<typename decltype(Is)::value_type...>::type;
+        REQUIRE(std::is_same<ValueT, char>::value == true);
+        std::array<ValueT, sizeof...(Is)> vals = {Is...};
+        for (const auto v : vals) {
+            sum += v;
+        }
+    };
+
+    tools::apply_integer_sequence<char, N>(compute_sum);
+    REQUIRE(sum == (N * (N - 1))/2);
+}
+
 #ifdef NONAME_CPP17
-TEST_CASE("Testing constexpr apply_to_sequence") {
+TEST_CASE("Testing constexpr apply_index_sequence") {
     static constexpr const int N = 5;
     constexpr int csum = []() {
         int sum = 0;
