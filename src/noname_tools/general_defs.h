@@ -24,13 +24,15 @@
 
 #define NONAME_ASSERT(x, m) ((x) ? (void)0 : (std::fprintf(stderr, "%s\n", m), std::abort()))
 
+
+#ifndef NONAME_CPP14
+
 #if __cplusplus >= 201703L
 #define NONAME_INLINE_VARIABLE inline
 #define NONAME_INVOKE_RESULT std::invoke_result
 #define NONAME_INVOKE_RESULT_T std::invoke_result_t
 #endif
 
-#ifndef NONAME_CPP14
 #if __cplusplus < 201703L && _MSC_VER >= 1912
 #define NONAME_INLINE_VARIABLE inline
 #endif
@@ -39,6 +41,7 @@
 #define NONAME_INVOKE_RESULT std::invoke_result
 #define NONAME_INVOKE_RESULT_T std::invoke_result_t
 #endif
+
 #endif
 
 #ifndef NONAME_INLINE_VARIABLE
