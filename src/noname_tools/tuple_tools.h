@@ -25,6 +25,8 @@
 #include <tuple>
 #include <utility>
 
+#include "general_defs.h"
+
 namespace noname {
     namespace tools {
         namespace _detail {
@@ -48,5 +50,16 @@ namespace noname {
                     std::forward<F>(f),
                     std::make_index_sequence<N>{});
         }
+
+        namespace _detail {
+            template<typename T, T... I>
+            constexpr auto integer_sequence_tuple_impl(std::integer_sequence<T, I...>) {
+                return std::make_tuple(std::integral_constant<T, I>{}...);
+            }
+        }
+
+        //! A tuple containing the N values of the integer type T from `std::integral_constant<T, 0>` to `std::integral_constant<T, N-1>`.
+        template<typename T, T N>
+        NONAME_INLINE_VARIABLE constexpr auto integer_sequence_tuple = _detail::integer_sequence_tuple_impl(std::make_integer_sequence<T, N>{});
     }
 }

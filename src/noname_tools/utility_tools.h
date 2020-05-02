@@ -28,22 +28,12 @@
 #include <tuple>
 
 #include "general_defs.h"
+#include "tuple_tools.h"
 
 namespace noname {
     namespace tools {
         // TODO: Rename nth_element because of std::nth_element algorithm
         // TODO: Implement lambda overload
-
-        namespace _detail {
-            template<typename T, T... I>
-            constexpr auto integer_sequence_tuple_impl(std::integer_sequence<T, I...>) {
-                return std::make_tuple(std::integral_constant<T, I>{}...);
-            }
-        }
-
-        //! A tuple containing the N values of the integer type T from `std::integral_constant<T, 0>` to `std::integral_constant<T, N-1>`.
-        template<typename T, T N>
-        NONAME_INLINE_VARIABLE constexpr auto integer_sequence_tuple = _detail::integer_sequence_tuple_impl(std::make_integer_sequence<T, N>{});
 
 #ifdef NONAME_CPP17
         // TODO: Try to find alternative without tuple
@@ -215,5 +205,3 @@ namespace noname {
         using best_match = _detail::best_match_impl<NONAME_INVOKE_RESULT_T<_detail::overload<Ts...>(T)>, Ts...>;
     }
 }
-
-#include "general_undefs.h"

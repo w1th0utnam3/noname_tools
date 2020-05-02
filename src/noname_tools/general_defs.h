@@ -30,7 +30,7 @@
 #define NONAME_INVOKE_RESULT_T std::invoke_result_t
 #endif
 
-#if !defined(NONAME_CPP14)
+#ifndef NONAME_CPP14
 #if __cplusplus < 201703L && _MSC_VER >= 1912
 #define NONAME_INLINE_VARIABLE inline
 #endif
@@ -41,14 +41,14 @@
 #endif
 #endif
 
-#if !defined(NONAME_INLINE_VARIABLE)
+#ifndef NONAME_INLINE_VARIABLE
 #define NONAME_INLINE_VARIABLE
 #endif
 
-#if !defined(NONAME_INVOKE_RESULT)
+#ifndef NONAME_INVOKE_RESULT
 #define NONAME_INVOKE_RESULT std::result_of
 #endif
 
-#if !defined(NONAME_INVOKE_RESULT_T)
+#ifndef NONAME_INVOKE_RESULT_T
 #define NONAME_INVOKE_RESULT_T std::result_of_t
 #endif

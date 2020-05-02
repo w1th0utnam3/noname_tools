@@ -191,5 +191,3 @@ namespace noname {
         using remove_cvref_t = typename remove_cvref<T>::type;
     }
 }
-
-#include "general_undefs.h"
