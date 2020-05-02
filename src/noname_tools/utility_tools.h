@@ -22,43 +22,12 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //	SOFTWARE.
 
-#include <cstdlib>
-#include <cstdio>
 #include <type_traits>
-#include <tuple>
 
 #include "general_defs.h"
-#include "tuple_tools.h"
 
 namespace noname {
     namespace tools {
-        // TODO: Rename nth_element because of std::nth_element algorithm
-        // TODO: Implement lambda overload
-
-#ifdef NONAME_CPP17
-        // TODO: Try to find alternative without tuple
-        // TODO: Try to find alternative without std::apply
-
-        //! Invokes the callable F with the N values from `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
-        template<std::size_t N, typename F>
-        constexpr decltype(auto) apply_to_sequence(F &&fn) {
-            return std::apply(std::forward<F>(fn), integer_sequence_tuple<std::size_t, N>);
-        }
-#endif
-
-        //! Container to allow copy assignment of callable objects
-        template<typename Func>
-        struct callable_container {
-            Func callable;
-
-            // Inspired by: https://stackoverflow.com/questions/12545072/what-does-it-mean-for-an-allocator-to-be-stateless
-            callable_container &operator=(const callable_container &other) {
-                this->callable.~Func();
-                new(&this->callable) Func{other.callable};
-                return *this;
-            }
-        };
-
         //! Type used by nth_element to indicate that the type index is out of range of the parameter pack
         struct out_of_range_t {
         };

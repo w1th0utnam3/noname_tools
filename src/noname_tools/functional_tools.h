@@ -1,0 +1,60 @@
+#pragma once
+
+//	MIT License
+//
+//	Copyright (c) 2016 Fabian Löschner
+//
+//	Permission is hereby granted, free of charge, to any person obtaining a copy
+//	of this software and associated documentation files (the "Software"), to deal
+//	in the Software without restriction, including without limitation the rights
+//	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//	copies of the Software, and to permit persons to whom the Software is
+//	furnished to do so, subject to the following conditions:
+//
+//	The above copyright notice and this permission notice shall be included in all
+//	copies or substantial portions of the Software.
+//
+//	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//	SOFTWARE.
+
+#include <type_traits>
+#include <tuple>
+
+#include "tuple_tools.h"
+
+namespace noname {
+    namespace tools {
+        // TODO: Rename nth_element because of std::nth_element algorithm
+        // TODO: Implement lambda overload
+
+#ifdef NONAME_CPP17
+        // TODO: Try to find alternative without tuple
+        // TODO: Try to find alternative without std::apply
+
+        //! Invokes the callable F with the N values from `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
+        template<std::size_t N, typename F>
+        constexpr decltype(auto) apply_to_sequence(F &&fn) {
+            return std::apply(std::forward<F>(fn), integer_sequence_tuple<std::size_t, N>);
+        }
+
+#endif
+
+        //! Container to allow copy assignment of callable objects
+        template<typename Func>
+        struct callable_container {
+            Func callable;
+
+            // Inspired by: https://stackoverflow.com/questions/12545072/what-does-it-mean-for-an-allocator-to-be-stateless
+            callable_container &operator=(const callable_container &other) {
+                this->callable.~Func();
+                new(&this->callable) Func{other.callable};
+                return *this;
+            }
+        };
+    }
+}

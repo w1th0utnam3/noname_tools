@@ -20,7 +20,7 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //	SOFTWARE.
 
-#include <noname_tools/utility_tools.h>
+#include <noname_tools/functional_tools.h>
 
 #include "catch2/catch.hpp"
 
@@ -28,22 +28,31 @@
 
 using namespace noname;
 
-TEST_CASE("Testing utility types") {
-    REQUIRE((std::is_same<tools::nth_element_t<0, int, void, double>, int>::value == true));
-    REQUIRE((std::is_same<tools::nth_element_t<1, int, void, double>, void>::value == true));
-    REQUIRE((std::is_same<tools::nth_element_t<2, int, void, double>, double>::value == true));
+#ifdef NONAME_CPP17
+TEST_CASE("Testing apply_to_sequence") {
+    constexpr const int N = 5;
 
-    REQUIRE((tools::element_index_v<int, int, double, void> == 0));
-    REQUIRE((tools::element_index_v<double, int, double, void> == 1));
-    REQUIRE((tools::element_index_v<void, int, double, void> == 2));
-    REQUIRE((tools::element_index_v<std::string, int, double, void> == tools::element_not_found));
+    int sum = 0;
+    auto compute_sum = [N, &sum](auto... Is) {
+        sum = (Is() + ...);
+    };
 
-    REQUIRE((tools::count_element_v<int, void, double, int, int, char, int> == 3));
-    REQUIRE((tools::count_element_v<int> == 0));
-
-    REQUIRE((tools::unique_elements_v<int, double, char> == true));
-    REQUIRE((tools::unique_elements_v<int, double, int, char> == false));
-    REQUIRE((tools::unique_elements_v<int> == true));
-    REQUIRE((tools::unique_elements_v<> == false));
-    REQUIRE((tools::unique_elements_v<void, double> == true));
+    tools::apply_to_sequence<N>(compute_sum);
+    REQUIRE(sum == (N * (N - 1))/2);
 }
+
+TEST_CASE("Testing constexpr apply_to_sequence") {
+    static constexpr const int N = 5;
+    constexpr int csum = []() {
+        int sum = 0;
+        auto compute_sum = [&sum](auto... Is) {
+            sum = (Is() + ...);
+        };
+        tools::apply_to_sequence<N>(compute_sum);
+        return sum;
+    }();
+
+    REQUIRE(csum == (N * (N - 1))/2);
+    REQUIRE(std::integral_constant<int,csum>::value == std::integral_constant<int, (N * (N - 1))/2>::value);
+}
+#endif
