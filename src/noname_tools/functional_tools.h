@@ -30,15 +30,15 @@ namespace noname {
     namespace tools {
         namespace _detail {
             template<typename F, std::size_t ...Is>
-            constexpr decltype(auto) apply_index_sequence(F&& fn, std::index_sequence<Is...>) {
-                return fn(std::integral_constant<std::size_t, Is>{}...);
+            constexpr decltype(auto) apply_index_sequence(F&& f, std::index_sequence<Is...>) {
+                return f(std::integral_constant<std::size_t, Is>{}...);
             }
         }
 
-        //! Calls the callable F with the N arguments given by `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
+        //! Calls the callable `f` with the N arguments given by `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
         template<std::size_t N, typename F>
-        constexpr decltype(auto) apply_index_sequence(F&& fn) {
-            return _detail::apply_index_sequence(std::forward<F>(fn), std::make_index_sequence<N>{});
+        constexpr decltype(auto) apply_index_sequence(F&& f) {
+            return _detail::apply_index_sequence(std::forward<F>(f), std::make_index_sequence<N>{});
         }
 
         //! Container to allow copy assignment of callable objects
