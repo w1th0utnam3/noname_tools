@@ -27,6 +27,8 @@
 
 #include "general_defs.h"
 
+// TODO: Make tuple_for_each constexpr where supported. Maybe just for C++17?
+
 namespace noname {
     namespace tools {
         namespace _detail {
@@ -44,7 +46,7 @@ namespace noname {
         template<typename Tuple, typename F>
         F tuple_for_each(Tuple &&tuple, F f) {
             // Code from: https://codereview.stackexchange.com/questions/51407/stdtuple-foreach-implementation
-            static constexpr std::size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
+            static constexpr const std::size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
             return _detail::tuple_for_each(
                     std::forward<Tuple>(tuple),
                     std::forward<F>(f),
