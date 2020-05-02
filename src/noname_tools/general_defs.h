@@ -24,8 +24,19 @@
 
 #define NONAME_ASSERT(x, m) ((x) ? (void)0 : (std::fprintf(stderr, "%s\n", m), std::abort()))
 
-
 #ifndef NONAME_CPP14
+
+#ifndef NONAME_CPP17
+#define NONAME_CPP17
+#endif
+
+#ifndef NONAME_OPTIONAL_INCLUDE
+#define NONAME_OPTIONAL_INCLUDE <optional>
+#endif
+
+#ifndef NONAME_OPTIONAL_T
+#define NONAME_OPTIONAL_T std::optional
+#endif
 
 #if __cplusplus >= 201703L
 #define NONAME_INLINE_VARIABLE inline
