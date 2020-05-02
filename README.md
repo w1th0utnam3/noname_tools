@@ -1,7 +1,25 @@
 # noname_tools [![Build Status](https://github.com/w1th0utnam3/noname_tools/workflows/Build%20and%20test%20master/badge.svg)](https://github.com/w1th0utnam3/noname_tools/actions?query=workflow%3A%22Build+and+test+master%22)
 
-This collection of C++ header files contains algorithms and small helper classes that I wrote during several small coding projects I worked on. To use the tools just copy the files from the `src/noname_tools` folder into your project. Including the `tools` file automatically includes all other headers. The repository contains a project with test-cases for the tools. It's based on 
-the [Catch](https://github.com/philsquared/Catch) header-only unit-test framework which is licensed under the [Boost Software License](https://github.com/philsquared/Catch/blob/master/LICENSE_1_0.txt) and it is included as a submodule. Compilation was tested with VS2017, GCC 6.3.0 and GCC 7.2.0. You probably have to turn on C++14 support if this isn't your compiler's default setting. The code of this project that is written by contributors of this repository is licensed under the [MIT License](https://github.com/w1th0utnam3/noname_tools/blob/master/LICENSE). 
+This collection of C++ header files contains algorithms and small helper classes that accumulated 
+from several small coding projects of mine. 
+The code of this project that is written by contributors of this repository is licensed under 
+the [MIT License](https://github.com/w1th0utnam3/noname_tools/blob/master/LICENSE). 
+
+## Usage
+
+To use the tools just copy the files from the `src/noname_tools` folder into your project. 
+Including the `tools` file automatically includes all other headers. 
+The repository contains a project with test-cases for the tools. 
+It's based on the [Catch](https://github.com/philsquared/Catch) header-only unit-test framework 
+which is licensed under the [Boost Software License](https://github.com/philsquared/Catch/blob/master/LICENSE_1_0.txt). 
+Catch is included as a submodule. 
+Use `git clone --recurse-submodules` to check out this repository including its submodules. 
+Compilation is tested using [GitHub Actions](https://github.com/w1th0utnam3/noname_tools/actions?query=workflow%3A%22Build+and+test+master%22) 
+with VS2019, GCC 7.x, 8.x and 9.x, Clang 6.x, 8.x and 9.x in C++14 and C++17 mode of all compilers.   
+
+To use the headers from this repo, you have to turn on C++14/C++17 support if this isn't your compiler's default setting. 
+Note that you have to explicitly define the macro `NONAME_CPP14` before including any `noname_tools` header to 
+make sure that no C++17 feature is used by accident in the implementation.
 
 ## Todos
 
@@ -10,6 +28,7 @@ the [Catch](https://github.com/philsquared/Catch) header-only unit-test framewor
 - Additional features:
   - string split iterator
   - replace explicit container usages with iterators
+- Make `typelist_for_each` and `tuple_for_each` constexpr where possible
 
 ## Included tools
 
@@ -17,10 +36,12 @@ At the moment `noname_tools` contains the following headers:
 
 - [`algorithm_tools.h`](#algorithm_toolsh) - Additional algorithms not present in `<algorithm>`
 - [`file_tools.h`](#file_toolsh) - Helper methods to read files to strings
+- `functional_tools.h` - Helpers related to callables (`apply_index_sequence`, `callable_container`...)
 - [`range_tools.h`](#range_toolsh) - Basic `iterator_range` type
 - [`string_tools.h`](#string_toolsh) - String truncate, split...
 - [`tuple_tools.h`](#tuple_toolsh) - Operations on `std::tuple`
-- [`typetraits_tools.h`](#typetraits_toolssh) - C++17 and Library fundamentals v2 helpers for C++14 (`void_t`, `is_detected`,...)
+- `typelist_tools.h` - Type and associated helpers to store and pass around lists of types, more lightweight alternative to using `std::tuple` in template metaprogramming
+- [`typetraits_tool.h`](#typetraits_toolssh) - C++20, C++17 and _Library fundamentals v2_ helpers for C++14 (`void_t`, `is_detected`,...)
 - [`utility_tools.h`](#utility_toolsh) - helper types
 - [`vector_tools.h`](#vector_toolsh) - Operations on `std::vector`
 
