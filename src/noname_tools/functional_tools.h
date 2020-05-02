@@ -42,7 +42,7 @@ namespace noname {
             }
         }
 
-        //! Invokes the callable F with the N values from `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
+        //! Calls the callable F with the N arguments given by `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
         template<std::size_t N, typename F>
         constexpr decltype(auto) apply_index_sequence(F&& fn) {
             return _detail::apply_index_sequence(std::forward<F>(fn), std::make_index_sequence<N>{});
