@@ -22,8 +22,7 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //	SOFTWARE.
 
-#include <type_traits>
-#include <tuple>
+#include <utility>
 
 #include "tuple_tools.h"
 
@@ -36,10 +35,17 @@ namespace noname {
         // TODO: Try to find alternative without tuple
         // TODO: Try to find alternative without std::apply
 
+        namespace _detail {
+            template<typename F, std::size_t ...Is>
+            constexpr decltype(auto) apply_index_sequence(F&& fn, std::index_sequence<Is...>) {
+                return fn(std::integral_constant<std::size_t, Is>{}...);
+            }
+        }
+
         //! Invokes the callable F with the N values from `std::integral_constant<std::size_t, 0>` to `std::integral_constant<std::size_t, N-1>`.
         template<std::size_t N, typename F>
-        constexpr decltype(auto) apply_to_sequence(F &&fn) {
-            return std::apply(std::forward<F>(fn), integer_sequence_tuple<std::size_t, N>);
+        constexpr decltype(auto) apply_index_sequence(F&& fn) {
+            return _detail::apply_index_sequence(std::forward<F>(fn), std::make_index_sequence<N>{});
         }
 
 #endif
@@ -50,7 +56,7 @@ namespace noname {
             Func callable;
 
             // Inspired by: https://stackoverflow.com/questions/12545072/what-does-it-mean-for-an-allocator-to-be-stateless
-            callable_container &operator=(const callable_container &other) {
+            callable_container& operator=(const callable_container& other) {
                 this->callable.~Func();
                 new(&this->callable) Func{other.callable};
                 return *this;

@@ -29,6 +29,7 @@
 using namespace noname;
 
 #ifdef NONAME_CPP17
+
 TEST_CASE("Testing apply_to_sequence") {
     constexpr const int N = 5;
 
@@ -37,7 +38,7 @@ TEST_CASE("Testing apply_to_sequence") {
         sum = (Is() + ...);
     };
 
-    tools::apply_to_sequence<N>(compute_sum);
+    tools::apply_index_sequence<N>(compute_sum);
     REQUIRE(sum == (N * (N - 1))/2);
 }
 
@@ -48,11 +49,12 @@ TEST_CASE("Testing constexpr apply_to_sequence") {
         auto compute_sum = [&sum](auto... Is) {
             sum = (Is() + ...);
         };
-        tools::apply_to_sequence<N>(compute_sum);
+        tools::apply_index_sequence<N>(compute_sum);
         return sum;
     }();
 
     REQUIRE(csum == (N * (N - 1))/2);
     REQUIRE(std::integral_constant<int,csum>::value == std::integral_constant<int, (N * (N - 1))/2>::value);
 }
+
 #endif
