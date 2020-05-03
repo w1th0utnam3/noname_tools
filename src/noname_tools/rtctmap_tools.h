@@ -180,7 +180,7 @@ namespace noname {
                 static constexpr const std::size_t N = ValueArray.size();
                 return _detail::rtct_mapper<decltype(_detail::make_integral_constant_typelist_from_array<ValueT, N, ValueArray>())>{};
             }
-        }
 #endif
+        }
     }
 }

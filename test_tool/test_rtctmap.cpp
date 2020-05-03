@@ -164,4 +164,5 @@ TEST_CASE("Testing public make_* functions") {
         REQUIRE(!result.has_value());
     }
 }
+
 #endif
