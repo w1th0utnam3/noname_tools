@@ -23,6 +23,7 @@
 //	SOFTWARE.
 
 #include <type_traits>
+#include <utility>
 
 #include "general_defs.h"
 #include "functional_tools.h"
