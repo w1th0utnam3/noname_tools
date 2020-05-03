@@ -161,7 +161,7 @@ namespace noname {
             }
 
             template<typename T, T... Values>
-            auto make_map() {
+            constexpr auto make_map() {
                 using ValueT = remove_cvref_t<T>;
                 return _detail::rtct_mapper<decltype(
                         _detail::make_integral_constant_typelist<ValueT,
@@ -169,15 +169,15 @@ namespace noname {
             }
 
             template<typename T, T N>
-            auto make_sequence_map() {
+            constexpr auto make_sequence_map() {
                 return _detail::rtct_mapper<decltype(_detail::make_integer_sequence_typelist<remove_cvref_t<T>, N>())>{};
             }
 
             template<const auto& ValueArray>
-            auto make_array_map() {
+            constexpr auto make_array_map() {
                 using ArrayT = remove_cvref_t<decltype(ValueArray)>;
                 using ValueT = typename ArrayT::value_type;
-                static constexpr const std::size_t N = ValueArray.size();
+                constexpr const std::size_t N = ValueArray.size();
                 return _detail::rtct_mapper<decltype(_detail::make_integral_constant_typelist_from_array<ValueT, N, ValueArray>())>{};
             }
 #endif
