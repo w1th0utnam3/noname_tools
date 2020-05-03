@@ -104,9 +104,14 @@ TEST_CASE("Testing internals of the rtct_map map_transform() function") {
     }
 }
 
+template <int Value>
+int squared() {
+    return Value * Value;
+}
+
 TEST_CASE("Testing public rtct_map::make_* functions") {
     const auto square = [](const auto x) {
-        return x * x;
+        return squared<x>();
     };
 
     SECTION("Test rtct_map::make_map") {
