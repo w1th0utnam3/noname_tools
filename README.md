@@ -38,6 +38,7 @@ At the moment `noname_tools` contains the following headers:
 - [`file_tools.h`](#file_toolsh) - Helper methods to read files to strings
 - `functional_tools.h` - Helpers related to callables (`apply_index_sequence`, `callable_container`...)
 - [`range_tools.h`](#range_toolsh) - Basic `iterator_range` type
+- `rtctmap_tools` - Functions to construct mappings for any type that can be used as a NTTP from a run-time argument to its corresponding value from a compile compile-time specified list of possible values
 - [`string_tools.h`](#string_toolsh) - String truncate, split...
 - [`tuple_tools.h`](#tuple_toolsh) - Operations on `std::tuple`
 - `typelist_tools.h` - Type and associated helpers to store and pass around lists of types, more lightweight alternative to using `std::tuple` in template metaprogramming
