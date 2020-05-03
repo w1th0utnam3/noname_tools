@@ -32,7 +32,7 @@ using namespace noname;
 
 static constexpr const auto ARRAY = std::array { 7, 3, 14, 27 };
 
-TEST_CASE("Testing internal _detail::rtct_map") {
+TEST_CASE("Testing internals of the rtct_map map() function") {
     int result = 0;
     const auto square = [&result](const auto x) {
         result = x * x;
@@ -40,8 +40,8 @@ TEST_CASE("Testing internal _detail::rtct_map") {
 
     SECTION("Test with make_integral_constant_typelist") {
         for (int i = 0; i < 7; ++i) {
-            const bool ran = tools::ctrt_map::_detail::rtct_map(square, i,
-                    tools::ctrt_map::_detail::make_integral_constant_typelist<int, 0, 1, 2, 3, 4, 5, 6>());
+            const bool ran = tools::rtct_map::_detail::rtct_map(square, i,
+                                                                tools::rtct_map::_detail::make_integral_constant_typelist<int, 0, 1, 2, 3, 4, 5, 6>());
             REQUIRE(ran);
             REQUIRE(result == i * i);
         }
@@ -50,8 +50,8 @@ TEST_CASE("Testing internal _detail::rtct_map") {
     SECTION("Test with make_integer_sequence_typelist") {
         static constexpr const int N = 9;
         for (int i = 0; i < N; ++i) {
-            const bool ran = tools::ctrt_map::_detail::rtct_map(square, i,
-                    tools::ctrt_map::_detail::make_integer_sequence_typelist<int, N>());
+            const bool ran = tools::rtct_map::_detail::rtct_map(square, i,
+                                                                tools::rtct_map::_detail::make_integer_sequence_typelist<int, N>());
             REQUIRE(ran);
             REQUIRE(result == i * i);
         }
@@ -61,33 +61,33 @@ TEST_CASE("Testing internal _detail::rtct_map") {
         static constexpr const int N = ARRAY.size();
         using ValueT = typename decltype(ARRAY)::value_type;
         for (int i = 0; i < N; ++i) {
-            const bool ran = tools::ctrt_map::_detail::rtct_map(square, ARRAY[i],
-                    tools::ctrt_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>());
+            const bool ran = tools::rtct_map::_detail::rtct_map(square, ARRAY[i],
+                                                                tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>());
             REQUIRE(ran);
             REQUIRE(result == ARRAY[i] * ARRAY[i]);
         }
 
-        const bool ran = tools::ctrt_map::_detail::rtct_map(square, 0,
-                tools::ctrt_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>());
+        const bool ran = tools::rtct_map::_detail::rtct_map(square, 0,
+                                                            tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>());
         REQUIRE(!ran);
     }
 }
 
-TEST_CASE("Testing internal _detail::rtct_map_transform") {
+TEST_CASE("Testing internals of the rtct_map map_transform() function") {
     const auto square = [](const auto x) {
         return x * x;
     };
 
     SECTION("Test with make_integral_constant_typelist") {
         for (int i = 0; i < 7; ++i) {
-            REQUIRE(tools::ctrt_map::_detail::rtct_map_transform(square, i, tools::ctrt_map::_detail::make_integral_constant_typelist<int, 0, 1, 2, 3, 4, 5, 6>()) == i * i);
+            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(square, i, tools::rtct_map::_detail::make_integral_constant_typelist<int, 0, 1, 2, 3, 4, 5, 6>()) == i * i);
         }
     }
 
     SECTION("Test with make_integer_sequence_typelist") {
         static constexpr const int N = 9;
         for (int i = 0; i < N; ++i) {
-            REQUIRE(tools::ctrt_map::_detail::rtct_map_transform(square, i, tools::ctrt_map::_detail::make_integer_sequence_typelist<int, N>()) == i * i);
+            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(square, i, tools::rtct_map::_detail::make_integer_sequence_typelist<int, N>()) == i * i);
         }
     }
 
@@ -95,22 +95,22 @@ TEST_CASE("Testing internal _detail::rtct_map_transform") {
         static constexpr const int N = ARRAY.size();
         using ValueT = typename decltype(ARRAY)::value_type;
         for (int i = 0; i < N; ++i) {
-            REQUIRE(tools::ctrt_map::_detail::rtct_map_transform(square, ARRAY[i],
-                    tools::ctrt_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()) == ARRAY[i] * ARRAY[i]);
+            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(square, ARRAY[i],
+                                                                 tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()) == ARRAY[i] * ARRAY[i]);
         }
 
-        REQUIRE(!tools::ctrt_map::_detail::rtct_map_transform(square, 0,
-                tools::ctrt_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()).has_value());
+        REQUIRE(!tools::rtct_map::_detail::rtct_map_transform(square, 0,
+                                                              tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()).has_value());
     }
 }
 
-TEST_CASE("Testing public make_* functions") {
+TEST_CASE("Testing public rtct_map::make_* functions") {
     const auto square = [](const auto x) {
         return x * x;
     };
 
-    SECTION("Test make_map") {
-        const auto map = tools::ctrt_map::make_map<int, 0, 1, 2, 3, 4, 5, 6>();
+    SECTION("Test rtct_map::make_map") {
+        const auto map = tools::rtct_map::make_map<int, 0, 1, 2, 3, 4, 5, 6>();
 
         for (int i = 0; i < 7; ++i) {
             const auto result = map.map_transform(square, i);
@@ -129,9 +129,9 @@ TEST_CASE("Testing public make_* functions") {
         }
     }
 
-    SECTION("Test make_sequence_map") {
+    SECTION("Test rtct_map::make_sequence_map") {
         static constexpr const int N = 9;
-        const auto sequence_map = tools::ctrt_map::make_sequence_map<decltype(N), N>();
+        const auto sequence_map = tools::rtct_map::make_sequence_map<decltype(N), N>();
 
         for (int i = 0; i < N; ++i) {
             const auto result = sequence_map.map_transform(square, i);
@@ -150,9 +150,9 @@ TEST_CASE("Testing public make_* functions") {
         }
     }
 
-    SECTION("Test make_array_map") {
+    SECTION("Test rtct_map::make_array_map") {
         static constexpr const int N = ARRAY.size();
-        const auto array_map = tools::ctrt_map::make_array_map<ARRAY>();
+        const auto array_map = tools::rtct_map::make_array_map<ARRAY>();
 
         for (int i = 0; i < N; ++i) {
             const auto result = array_map.map_transform(square, ARRAY[i]);

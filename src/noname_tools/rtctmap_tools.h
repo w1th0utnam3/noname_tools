@@ -41,7 +41,7 @@
 
 namespace noname {
     namespace tools {
-        namespace ctrt_map {
+        namespace rtct_map {
 #ifdef NONAME_CPP17
             namespace _detail {
 
