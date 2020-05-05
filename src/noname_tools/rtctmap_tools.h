@@ -93,7 +93,7 @@ namespace noname {
                 /// types `std::integral_constant<decltype(V), V>` for every `V` in `Values`.
                 template<typename F, typename T, auto... Values>
                 constexpr bool rtct_map(F&& f, T value, integral_constant_typelist_t<Values...>) {
-                    return (((Values == value) ? ((void)f(integral_constant_t<Values>{}), true) : false) || ...);
+                    return (((Values == value) ? (static_cast<void>(f(integral_constant_t<Values>{})), true) : false) || ...);
                 }
 
                 /// The `std::common_type_t` of all invocations of the given callable `F` with each one of the NTTP values wrapped into a `std::integral_constant`
@@ -114,7 +114,7 @@ namespace noname {
                 constexpr auto rtct_map_transform(F&& f, T value, integral_constant_typelist_t<Values...>) {
                     using target_optional_t = optional_return_t<F, Values...>;
                     auto return_value = target_optional_t{};
-                    (void)(((Values == value) ? (return_value = target_optional_t(f(integral_constant_t<Values>{})), true) : false) || ...);
+                    static_cast<void>((((Values == value) ? (static_cast<void>(return_value = target_optional_t(f(integral_constant_t<Values>{}))), true) : false) || ...));
                     return return_value;
                 }
 
@@ -126,8 +126,8 @@ namespace noname {
                     }
 
                     template<typename F, typename T>
-                    constexpr decltype(auto) map_transform(F&& f, T value) const {
-                        return rtct_map_transform(std::forward<F>(f), value, TypelistT{});
+                    constexpr decltype(auto) map_transform(F&& f, T&& value) const {
+                        return rtct_map_transform(std::forward<F>(f), std::forward<T>(value), TypelistT{});
                     }
                 };
             }
