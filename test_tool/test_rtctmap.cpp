@@ -126,6 +126,7 @@ TEST_CASE("Testing internals of the rtct_map map_transform() function") {
                 tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()).has_value());
     }
 
+#if !(defined(__GNUC__) && __GNUC__ < 8) // Disabled for older GCC as std::optional move assignment is not constexpr in GCC 7.x
     SECTION("Test with make_integer_sequence_typelist in constexpr context") {
         static constexpr int N = 9;
 
@@ -143,6 +144,7 @@ TEST_CASE("Testing internals of the rtct_map map_transform() function") {
         REQUIRE(std::integral_constant<int, map_index_to_square(4)>::value == square(4));
         REQUIRE(std::integral_constant<int, map_index_to_square(8)>::value == square(8));
     }
+#endif
 }
 
 template<int Value>
@@ -214,6 +216,7 @@ TEST_CASE("Testing public rtct_map::make_* functions") {
         REQUIRE(!result.has_value());
     }
 
+#if !(defined(__GNUC__) && __GNUC__ < 8) // Disabled for older GCC as std::optional move assignment is not constexpr in GCC 7.x
     SECTION("Test rtct_map::make_sequence_map in constexpr context") {
         static constexpr int N = 9;
 
@@ -230,6 +233,7 @@ TEST_CASE("Testing public rtct_map::make_* functions") {
         REQUIRE(std::integral_constant<int, map_index_to_square(4)>::value == square(4));
         REQUIRE(std::integral_constant<int, map_index_to_square(8)>::value == square(8));
     }
+#endif
 }
 
 #endif
