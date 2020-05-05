@@ -112,8 +112,9 @@ namespace noname {
                 /// must have a common type to which they can be implicitly converted to.
                 template<typename F, typename T, auto... Values>
                 constexpr auto rtct_map_transform(F&& f, T value, integral_constant_typelist_t<Values...>) {
-                    auto return_value = optional_return_t<F, Values...>{};
-                    (void)(((Values == value) ? (return_value = f(integral_constant_t<Values>{}), true) : false) || ...);
+                    using target_optional_t = optional_return_t<F, Values...>;
+                    auto return_value = target_optional_t{};
+                    (void)(((Values == value) ? (return_value = target_optional_t(f(integral_constant_t<Values>{})), true) : false) || ...);
                     return return_value;
                 }
 
