@@ -92,7 +92,7 @@ namespace noname {
                 /// Returns whether it was actually called (i.e. if `value` was present in `Values...` pack). The return value of `f` is discarded. Note that `f` must be invokable with all possible
                 /// types `std::integral_constant<decltype(V), V>` for every `V` in `Values`.
                 template<typename F, typename T, auto... Values>
-                bool rtct_map(F&& f, T value, integral_constant_typelist_t<Values...>) {
+                constexpr bool rtct_map(F&& f, T value, integral_constant_typelist_t<Values...>) {
                     return (((Values == value) ? ((void)f(integral_constant_t<Values>{}), true) : false) || ...);
                 }
 
@@ -111,7 +111,7 @@ namespace noname {
                 /// Note that `f` must be invokable with all possible types `std::integral_constant<decltype(V), V>` for every `V` in `Values`. In addition, the return values of all these invocations
                 /// must have a common type to which they can be implicitly converted to.
                 template<typename F, typename T, auto... Values>
-                auto rtct_map_transform(F&& f, T value, integral_constant_typelist_t<Values...>) {
+                constexpr auto rtct_map_transform(F&& f, T value, integral_constant_typelist_t<Values...>) {
                     auto return_value = optional_return_t<F, Values...>{};
                     (void)(((Values == value) ? (return_value = f(integral_constant_t<Values>{}), true) : false) || ...);
                     return return_value;
@@ -120,13 +120,13 @@ namespace noname {
                 template<typename TypelistT>
                 struct rtct_mapper {
                     template<typename F, typename T>
-                    bool map(F&& f, T&& value) const {
+                    constexpr bool map(F&& f, T&& value) const {
                         return rtct_map(std::forward<F>(f), std::forward<T>(value), TypelistT{});
                     }
 
                     template<typename F, typename T>
-                    decltype(auto) map_transform(F&& f, T&& value) const {
-                        return rtct_map_transform(std::forward<F>(f), std::forward<T>(value), TypelistT{});
+                    constexpr decltype(auto) map_transform(F&& f, T value) const {
+                        return rtct_map_transform(std::forward<F>(f), value, TypelistT{});
                     }
                 };
             }

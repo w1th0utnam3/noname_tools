@@ -30,7 +30,7 @@ using namespace noname;
 
 #ifdef NONAME_CPP17
 
-static constexpr const auto ARRAY = std::array { 7, 3, 14, 27 };
+static constexpr const auto ARRAY = std::array{7, 3, 14, 27};
 
 TEST_CASE("Testing internals of the rtct_map map() function") {
     int result = 0;
@@ -40,8 +40,11 @@ TEST_CASE("Testing internals of the rtct_map map() function") {
 
     SECTION("Test with make_integral_constant_typelist") {
         for (int i = 0; i < 7; ++i) {
-            const bool ran = tools::rtct_map::_detail::rtct_map(square, i,
-                                                                tools::rtct_map::_detail::make_integral_constant_typelist<int, 0, 1, 2, 3, 4, 5, 6>());
+            result = -1;
+            const bool ran = tools::rtct_map::_detail::rtct_map(
+                    square,
+                    i,
+                    tools::rtct_map::_detail::make_integral_constant_typelist<int, 0, 1, 2, 3, 4, 5, 6>());
             REQUIRE(ran);
             REQUIRE(result == i * i);
         }
@@ -50,8 +53,11 @@ TEST_CASE("Testing internals of the rtct_map map() function") {
     SECTION("Test with make_integer_sequence_typelist") {
         static constexpr const int N = 9;
         for (int i = 0; i < N; ++i) {
-            const bool ran = tools::rtct_map::_detail::rtct_map(square, i,
-                                                                tools::rtct_map::_detail::make_integer_sequence_typelist<int, N>());
+            result = -1;
+            const bool ran = tools::rtct_map::_detail::rtct_map(
+                    square,
+                    i,
+                    tools::rtct_map::_detail::make_integer_sequence_typelist<int, N>());
             REQUIRE(ran);
             REQUIRE(result == i * i);
         }
@@ -61,33 +67,45 @@ TEST_CASE("Testing internals of the rtct_map map() function") {
         static constexpr const int N = ARRAY.size();
         using ValueT = typename decltype(ARRAY)::value_type;
         for (int i = 0; i < N; ++i) {
-            const bool ran = tools::rtct_map::_detail::rtct_map(square, ARRAY[i],
-                                                                tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>());
+            result = -1;
+            const bool ran = tools::rtct_map::_detail::rtct_map(
+                    square,
+                    ARRAY[i],
+                    tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>());
             REQUIRE(ran);
             REQUIRE(result == ARRAY[i] * ARRAY[i]);
         }
 
-        const bool ran = tools::rtct_map::_detail::rtct_map(square, 0,
-                                                            tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>());
+        result = -1;
+        const bool ran = tools::rtct_map::_detail::rtct_map(
+                square,
+                0,
+                tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>());
         REQUIRE(!ran);
     }
 }
 
 TEST_CASE("Testing internals of the rtct_map map_transform() function") {
-    const auto square = [](const auto x) {
+    static constexpr auto square = [](const auto x) {
         return x * x;
     };
 
     SECTION("Test with make_integral_constant_typelist") {
         for (int i = 0; i < 7; ++i) {
-            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(square, i, tools::rtct_map::_detail::make_integral_constant_typelist<int, 0, 1, 2, 3, 4, 5, 6>()) == i * i);
+            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(
+                    square,
+                    i,
+                    tools::rtct_map::_detail::make_integral_constant_typelist<int, 0, 1, 2, 3, 4, 5, 6>()) == i * i);
         }
     }
 
     SECTION("Test with make_integer_sequence_typelist") {
         static constexpr const int N = 9;
         for (int i = 0; i < N; ++i) {
-            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(square, i, tools::rtct_map::_detail::make_integer_sequence_typelist<int, N>()) == i * i);
+            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(
+                    square,
+                    i,
+                    tools::rtct_map::_detail::make_integer_sequence_typelist<int, N>()) == i * i);
         }
     }
 
@@ -95,41 +113,68 @@ TEST_CASE("Testing internals of the rtct_map map_transform() function") {
         static constexpr const int N = ARRAY.size();
         using ValueT = typename decltype(ARRAY)::value_type;
         for (int i = 0; i < N; ++i) {
-            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(square, ARRAY[i],
-                                                                 tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()) == ARRAY[i] * ARRAY[i]);
+            REQUIRE(tools::rtct_map::_detail::rtct_map_transform(
+                    square,
+                    ARRAY[i],
+                    tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()) ==
+                    ARRAY[i] * ARRAY[i]);
         }
 
-        REQUIRE(!tools::rtct_map::_detail::rtct_map_transform(square, 0,
-                                                              tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()).has_value());
+        REQUIRE(!tools::rtct_map::_detail::rtct_map_transform(
+                square,
+                0,
+                tools::rtct_map::_detail::make_integral_constant_typelist_from_array<ValueT, N, ARRAY>()).has_value());
+    }
+
+    SECTION("Test with make_integer_sequence_typelist in constexpr context") {
+        static constexpr const int N = 9;
+
+        constexpr auto map_index_to_square = [](int i) {
+            return *tools::rtct_map::_detail::rtct_map_transform(
+                    square,
+                    i,
+                    tools::rtct_map::_detail::make_integer_sequence_typelist<int, N>());
+        };
+
+        REQUIRE(std::integral_constant<int, map_index_to_square(0)>::value == square(0));
+        REQUIRE(std::integral_constant<int, map_index_to_square(1)>::value == square(1));
+        REQUIRE(std::integral_constant<int, map_index_to_square(2)>::value == square(2));
+        REQUIRE(std::integral_constant<int, map_index_to_square(3)>::value == square(3));
+        REQUIRE(std::integral_constant<int, map_index_to_square(4)>::value == square(4));
+        REQUIRE(std::integral_constant<int, map_index_to_square(8)>::value == square(8));
     }
 }
 
-template <int Value>
-int squared() {
+template<int Value>
+constexpr int squared() {
     return Value * Value;
 }
 
 TEST_CASE("Testing public rtct_map::make_* functions") {
-    const auto square = [](const auto x) {
+    static constexpr auto square_tmp = [](const auto x) {
         return squared<x>();
+    };
+
+    static constexpr auto square = [](const auto x) {
+        return x * x;
     };
 
     SECTION("Test rtct_map::make_map") {
         const auto map = tools::rtct_map::make_map<int, 0, 1, 2, 3, 4, 5, 6>();
 
         for (int i = 0; i < 7; ++i) {
-            const auto result = map.map_transform(square, i);
+            const auto result = map.map_transform(square_tmp, i);
             REQUIRE(result.has_value());
             REQUIRE(*result == i * i);
         }
 
         {
-            const auto result = map.map_transform(square, 27);
+            const auto result = map.map_transform(square_tmp, 27);
             REQUIRE(!result.has_value());
         }
 
         {
-            const auto result = map.map_transform(square, -1);
+            const auto result = map.map_transform(square_tmp, -1);
             REQUIRE(!result.has_value());
         }
     }
@@ -139,18 +184,18 @@ TEST_CASE("Testing public rtct_map::make_* functions") {
         const auto sequence_map = tools::rtct_map::make_sequence_map<decltype(N), N>();
 
         for (int i = 0; i < N; ++i) {
-            const auto result = sequence_map.map_transform(square, i);
+            const auto result = sequence_map.map_transform(square_tmp, i);
             REQUIRE(result.has_value());
             REQUIRE(*result == i * i);
         }
 
         {
-            const auto result = sequence_map.map_transform(square, N + 2);
+            const auto result = sequence_map.map_transform(square_tmp, N + 2);
             REQUIRE(!result.has_value());
         }
 
         {
-            const auto result = sequence_map.map_transform(square, -10);
+            const auto result = sequence_map.map_transform(square_tmp, -10);
             REQUIRE(!result.has_value());
         }
     }
@@ -160,13 +205,30 @@ TEST_CASE("Testing public rtct_map::make_* functions") {
         const auto array_map = tools::rtct_map::make_array_map<ARRAY>();
 
         for (int i = 0; i < N; ++i) {
-            const auto result = array_map.map_transform(square, ARRAY[i]);
+            const auto result = array_map.map_transform(square_tmp, ARRAY[i]);
             REQUIRE(result.has_value());
             REQUIRE(*result == ARRAY[i] * ARRAY[i]);
         }
 
-        const auto result = array_map.map_transform(square, 0);
+        const auto result = array_map.map_transform(square_tmp, 0);
         REQUIRE(!result.has_value());
+    }
+
+    SECTION("Test rtct_map::make_sequence_map in constexpr context") {
+        static constexpr const int N = 9;
+
+        constexpr const auto map_index_to_square = [](int i) -> int {
+            const auto sequence_map = tools::rtct_map::make_sequence_map<decltype(N), N>();
+            const auto result = sequence_map.map_transform(square_tmp, i);
+            return *result;
+        };
+
+        REQUIRE(std::integral_constant<int, map_index_to_square(0)>::value == square(0));
+        REQUIRE(std::integral_constant<int, map_index_to_square(1)>::value == square(1));
+        REQUIRE(std::integral_constant<int, map_index_to_square(2)>::value == square(2));
+        REQUIRE(std::integral_constant<int, map_index_to_square(3)>::value == square(3));
+        REQUIRE(std::integral_constant<int, map_index_to_square(4)>::value == square(4));
+        REQUIRE(std::integral_constant<int, map_index_to_square(8)>::value == square(8));
     }
 }
 
