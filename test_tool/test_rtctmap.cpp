@@ -30,7 +30,7 @@ using namespace noname;
 
 #ifdef NONAME_CPP17
 
-static constexpr const auto ARRAY = std::array{7, 3, 14, 27};
+static constexpr auto ARRAY = std::array{7, 3, 14, 27};
 
 TEST_CASE("Testing internals of the rtct_map map() function") {
     int result = 0;
@@ -51,7 +51,7 @@ TEST_CASE("Testing internals of the rtct_map map() function") {
     }
 
     SECTION("Test with make_integer_sequence_typelist") {
-        static constexpr const int N = 9;
+        static constexpr int N = 9;
         for (int i = 0; i < N; ++i) {
             result = -1;
             const bool ran = tools::rtct_map::_detail::rtct_map(
@@ -64,7 +64,7 @@ TEST_CASE("Testing internals of the rtct_map map() function") {
     }
 
     SECTION("Test with make_integral_constant_typelist_from_array") {
-        static constexpr const int N = ARRAY.size();
+        static constexpr int N = ARRAY.size();
         using ValueT = typename decltype(ARRAY)::value_type;
         for (int i = 0; i < N; ++i) {
             result = -1;
@@ -100,7 +100,7 @@ TEST_CASE("Testing internals of the rtct_map map_transform() function") {
     }
 
     SECTION("Test with make_integer_sequence_typelist") {
-        static constexpr const int N = 9;
+        static constexpr int N = 9;
         for (int i = 0; i < N; ++i) {
             REQUIRE(tools::rtct_map::_detail::rtct_map_transform(
                     square,
@@ -110,7 +110,7 @@ TEST_CASE("Testing internals of the rtct_map map_transform() function") {
     }
 
     SECTION("Test with make_integral_constant_typelist_from_array") {
-        static constexpr const int N = ARRAY.size();
+        static constexpr int N = ARRAY.size();
         using ValueT = typename decltype(ARRAY)::value_type;
         for (int i = 0; i < N; ++i) {
             REQUIRE(tools::rtct_map::_detail::rtct_map_transform(
@@ -127,7 +127,7 @@ TEST_CASE("Testing internals of the rtct_map map_transform() function") {
     }
 
     SECTION("Test with make_integer_sequence_typelist in constexpr context") {
-        static constexpr const int N = 9;
+        static constexpr int N = 9;
 
         constexpr auto map_index_to_square = [](int i) {
             return *tools::rtct_map::_detail::rtct_map_transform(
@@ -180,7 +180,7 @@ TEST_CASE("Testing public rtct_map::make_* functions") {
     }
 
     SECTION("Test rtct_map::make_sequence_map") {
-        static constexpr const int N = 9;
+        static constexpr int N = 9;
         const auto sequence_map = tools::rtct_map::make_sequence_map<decltype(N), N>();
 
         for (int i = 0; i < N; ++i) {
@@ -201,7 +201,7 @@ TEST_CASE("Testing public rtct_map::make_* functions") {
     }
 
     SECTION("Test rtct_map::make_array_map") {
-        static constexpr const int N = ARRAY.size();
+        static constexpr int N = ARRAY.size();
         const auto array_map = tools::rtct_map::make_array_map<ARRAY>();
 
         for (int i = 0; i < N; ++i) {
@@ -215,9 +215,9 @@ TEST_CASE("Testing public rtct_map::make_* functions") {
     }
 
     SECTION("Test rtct_map::make_sequence_map in constexpr context") {
-        static constexpr const int N = 9;
+        static constexpr int N = 9;
 
-        constexpr const auto map_index_to_square = [](int i) -> int {
+        constexpr auto map_index_to_square = [](int i) -> int {
             const auto sequence_map = tools::rtct_map::make_sequence_map<decltype(N), N>();
             const auto result = sequence_map.map_transform(square_tmp, i);
             return *result;
