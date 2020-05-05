@@ -13,6 +13,7 @@ jobs:
     name: Ubuntu 18.04
     runs-on: ubuntu-18.04
 
+    continue-on-error: true
     strategy:
       matrix:
         compiler: [gcc7, gcc8, gcc9, clang6, clang8, clang9]
