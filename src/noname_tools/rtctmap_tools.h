@@ -92,20 +92,8 @@ namespace noname {
                 /// Returns whether it was actually called (i.e. if `value` was present in `Values...` pack). The return value of `f` is discarded. Note that `f` must be invokable with all possible
                 /// types `std::integral_constant<decltype(V), V>` for every `V` in `Values`.
                 template<typename F, typename T, auto... Values>
-                bool rtct_map(F&& f, T value, integral_constant_typelist_t<Values...> allowedValues) {
-                    // Invoke `f` if the given value matches the run-time value
-                    const auto checkOverload = [value, &f](auto possibleValue) -> bool {
-                        if (possibleValue() == value) {
-                            (void) f(possibleValue);
-                            return true;
-                        }
-                        return false;
-                    };
-
-                    return apply_integral_constant_typelist([=](const auto& ... is) {
-                        // Fold over all possible allowed values
-                        return (checkOverload(is) || ...);
-                    }, allowedValues);
+                bool rtct_map(F&& f, T value, integral_constant_typelist_t<Values...>) {
+                    return (((Values == value) ? ((void)f(integral_constant_t<Values>{}), true) : false) || ...);
                 }
 
                 /// The `std::common_type_t` of all invocations of the given callable `F` with each one of the NTTP values wrapped into a `std::integral_constant`
@@ -123,27 +111,10 @@ namespace noname {
                 /// Note that `f` must be invokable with all possible types `std::integral_constant<decltype(V), V>` for every `V` in `Values`. In addition, the return values of all these invocations
                 /// must have a common type to which they can be implicitly converted to.
                 template<typename F, typename T, auto... Values>
-                auto rtct_map_transform(F&& f, T value, integral_constant_typelist_t<Values...> allowedValues) {
-                    const auto recursivelyCheckOverloads = [value, &f](auto&& g, auto currentValue,
-                                                                       auto... possibleValues) -> optional_return_t<F, Values...> {
-                        if (currentValue() == value) {
-                            return NONAME_OPTIONAL_T{f(currentValue)};
-                        } else {
-                            if constexpr (sizeof...(possibleValues) == 0) {
-                                // Suppress `g is unused` warnings
-                                (void) g;
-                                // Return empty optional
-                                return {};
-                            } else {
-                                return g(g, possibleValues...);
-                            }
-                        }
-                    };
-
-                    return apply_integral_constant_typelist([=](const auto& ... is) {
-                        // Fold over all possible allowed values
-                        return recursivelyCheckOverloads(recursivelyCheckOverloads, is...);
-                    }, allowedValues);
+                auto rtct_map_transform(F&& f, T value, integral_constant_typelist_t<Values...>) {
+                    auto return_value = optional_return_t<F, Values...>{};
+                    (void)(((Values == value) ? (return_value = f(integral_constant_t<Values>{}), true) : false) || ...);
+                    return return_value;
                 }
 
                 template<typename TypelistT>
@@ -177,8 +148,7 @@ namespace noname {
             constexpr auto make_array_map() {
                 using ArrayT = remove_cvref_t<decltype(ValueArray)>;
                 using ValueT = typename ArrayT::value_type;
-                constexpr const std::size_t N = ValueArray.size();
-                return _detail::rtct_mapper<decltype(_detail::make_integral_constant_typelist_from_array<ValueT, N, ValueArray>())>{};
+                return _detail::rtct_mapper<decltype(_detail::make_integral_constant_typelist_from_array<ValueT, std::size(ValueArray), ValueArray>())>{};
             }
 #endif
         }
