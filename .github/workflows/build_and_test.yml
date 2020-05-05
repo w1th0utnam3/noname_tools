@@ -13,8 +13,8 @@ jobs:
     name: Ubuntu 18.04
     runs-on: ubuntu-18.04
 
-    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         compiler: [gcc7, gcc8, gcc9, clang6, clang8, clang9]
         cpp_standard: [C++14, C++17]
