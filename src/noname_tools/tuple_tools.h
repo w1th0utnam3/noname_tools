@@ -68,13 +68,13 @@ namespace noname {
 
         namespace _detail {
             template<std::size_t... Is, typename Tuple>
-            auto ref_tuple_impl(std::index_sequence<Is...> seq, Tuple& tuple)
+            auto ref_tuple_impl(std::index_sequence<Is...>, Tuple& tuple)
             -> std::tuple<std::reference_wrapper<typename std::tuple_element<Is, Tuple>::type>...> {
                 return std::make_tuple(std::ref(std::get<Is>(tuple))...);
             }
 
             template<std::size_t... Is, typename Tuple>
-            auto cref_tuple_impl(std::index_sequence<Is...> seq, const Tuple& tuple)
+            auto cref_tuple_impl(std::index_sequence<Is...>, const Tuple& tuple)
             -> std::tuple<std::reference_wrapper<typename std::add_const<typename std::tuple_element<Is, Tuple>::type>::type>...> {
                 return std::make_tuple(std::cref(std::get<Is>(tuple))...);
             }
