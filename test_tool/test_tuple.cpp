@@ -29,6 +29,7 @@
 #include <vector>
 #include <utility>
 #include <type_traits>
+#include <functional>
 
 using namespace noname;
 
@@ -115,5 +116,43 @@ TEST_CASE("Testing tuple_for_each") {
         REQUIRE(std::get<0>(tuple) == 42);
         REQUIRE(std::get<1>(tuple) == 42);
         REQUIRE(std::get<2>(tuple) == 42);
+    }
+}
+
+TEST_CASE("Testing ref_tuple/cref_tuple") {
+    SECTION("Testing ref_tuple") {
+        std::tuple<int, double, char> tuple{2, 42.5, 'c'};
+
+        auto ref_tuple = tools::ref_tuple(tuple);
+
+        REQUIRE(std::is_same<std::tuple_element<0, decltype(ref_tuple)>::type, std::reference_wrapper<int>>::value);
+        REQUIRE(std::is_same<std::tuple_element<1, decltype(ref_tuple)>::type, std::reference_wrapper<double>>::value);
+        REQUIRE(std::is_same<std::tuple_element<2, decltype(ref_tuple)>::type, std::reference_wrapper<char>>::value);
+
+        std::get<0>(ref_tuple).get() = 27;
+        std::get<1>(ref_tuple).get() = 43.2;
+        std::get<2>(ref_tuple).get() = 'x';
+
+        REQUIRE(std::get<0>(tuple) == 27);
+        REQUIRE(std::get<1>(tuple) == 43.2);
+        REQUIRE(std::get<2>(tuple) == 'x');
+    }
+
+    SECTION("Testing cref_tuple") {
+        std::tuple<int, double, char> tuple{2, 42.5, 'c'};
+
+        auto cref_tuple = tools::cref_tuple(tuple);
+
+        REQUIRE(std::is_same<std::tuple_element<0, decltype(cref_tuple)>::type, std::reference_wrapper<const int>>::value);
+        REQUIRE(std::is_same<std::tuple_element<1, decltype(cref_tuple)>::type, std::reference_wrapper<const double>>::value);
+        REQUIRE(std::is_same<std::tuple_element<2, decltype(cref_tuple)>::type, std::reference_wrapper<const char>>::value);
+
+        std::get<0>(tuple) = 27;
+        std::get<1>(tuple) = 43.2;
+        std::get<2>(tuple) = 'x';
+
+        REQUIRE(std::get<0>(cref_tuple) == 27);
+        REQUIRE(std::get<1>(cref_tuple) == 43.2);
+        REQUIRE(std::get<2>(cref_tuple) == 'x');
     }
 }

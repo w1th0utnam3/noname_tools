@@ -22,8 +22,10 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //	SOFTWARE.
 
+#include <functional>
 #include <tuple>
 #include <utility>
+#include <type_traits>
 
 #include "general_defs.h"
 
@@ -63,5 +65,35 @@ namespace noname {
         //! A tuple containing the N values of the integer type T from `std::integral_constant<T, 0>` to `std::integral_constant<T, N-1>`.
         template<typename T, T N>
         NONAME_INLINE_VARIABLE constexpr auto integer_sequence_tuple = _detail::integer_sequence_tuple_impl(std::make_integer_sequence<T, N>{});
+
+        namespace _detail {
+            template<std::size_t... Is, typename Tuple>
+            auto ref_tuple_impl(std::index_sequence<Is...> seq, Tuple& tuple)
+            -> std::tuple<std::reference_wrapper<typename std::tuple_element<Is, Tuple>::type>...> {
+                return std::make_tuple(std::ref(std::get<Is>(tuple))...);
+            }
+
+            template<std::size_t... Is, typename Tuple>
+            auto cref_tuple_impl(std::index_sequence<Is...> seq, const Tuple& tuple)
+            -> std::tuple<std::reference_wrapper<typename std::add_const<typename std::tuple_element<Is, Tuple>::type>::type>...> {
+                return std::make_tuple(std::cref(std::get<Is>(tuple))...);
+            }
+        }
+
+        /// Returns a tuple with references wrappers to each element of the given tuple.
+        template <typename Tuple>
+        auto ref_tuple(Tuple& tuple)
+            -> decltype( _detail::ref_tuple_impl(std::make_index_sequence<std::tuple_size<Tuple>::value>{}, tuple) )
+        {
+            return _detail::ref_tuple_impl(std::make_index_sequence<std::tuple_size<Tuple>::value>{}, tuple);
+        }
+
+        /// Returns a tuple with const references wrappers to each element of the given tuple.
+        template <typename Tuple>
+        auto cref_tuple(const Tuple& tuple)
+        -> decltype( _detail::cref_tuple_impl(std::make_index_sequence<std::tuple_size<Tuple>::value>{}, tuple) )
+        {
+            return _detail::cref_tuple_impl(std::make_index_sequence<std::tuple_size<Tuple>::value>{}, tuple);
+        }
     }
 }
